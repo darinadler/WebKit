@@ -659,7 +659,7 @@ private:
     void append(char, char, char, char, char);
     template<typename T> void recordFailure(T&& reason);
     void recordBufferFull();
-    String firstGetterSetterPropertyName() const;
+    String firstGetterSetterPropertyName(JSObject&) const;
     void recordFastPropertyEnumerationFailure(JSObject&);
     bool haveFailure() const;
     unsigned remainingCapacity() const;
@@ -1087,16 +1087,50 @@ inline String FastStringifier::stringify(JSGlobalObject& globalObject, JSValue v
     return stringifier.result();
 }
 
+#if !FAST_STRINGIFY_LOG_USAGE
+
+static inline void logFastStringifyMiss(const String&)
+{
+}
+
+#else
+
+static void logFastStringifyMiss(const String& result)
+{
+    if (result.isNull())
+        dataLogLn("Not fastStringify: ", result);
+}
+
+#endif
+
 static inline String stringify(JSGlobalObject& globalObject, JSValue value, JSValue replacer, JSValue space)
 {
-    if (String result = FastStringifier::stringify(globalObject, value, replacer, space); !result.isNull())
-        return result;
+#ifdef DEBUG
+    // To make sure the FastStringifier gives results that match the full Stringifier,
+    // in debug mode we run both and check that they yield the same string.
+    String fastResult = FastStringifier::stringify(globalObject, value, replacer, space);
+    String fullResult = Stringifier::stringify(globalObject, value, replacer, space);
+    if (fastResult.isNull())
+        logFastStringifyMiss(fullResult);
+    else
+        ASSERT(fastResult == fullResult);
+    return fullResult;
+#else
+    // To optimize JavaScript code that repeatly stringifies objects that FastStringifier
+    // cannot handle, after each FastStringifier fails, ban trying it again for the next few calls.
+    constexpr uint8_t fastStringifierInterval = 10;
+    auto& banCount = globalObject.vm().fastStringifyBanCount;
+    if (banCount)
+        --banCount;
+    else {
+        if (String result = FastStringifier::stringify(globalObject, value, replacer, space); !result.isNull())
+            return result;
+        banCount = fastStringifierInterval;
+    }
     String result = Stringifier::stringify(globalObject, value, replacer, space);
-#if FAST_STRINGIFY_LOG_USAGE
-    if (!result.isNull())
-        dataLogLn("Not fastStringify: ", result);
-#endif
+    logFastStringifyMiss(result);
     return result;
+#endif
 }
 
 // ------------------------------ JSONObject --------------------------------

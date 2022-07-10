@@ -859,6 +859,8 @@ public:
     void verifyCanGC() { }
 #endif
 
+    uint8_t fastStringifyBanCount { 0 };
+
 private:
     VM(VMType, HeapType, WTF::RunLoop* = nullptr, bool* success = nullptr);
     static VM*& sharedInstanceInternal();
