@@ -94,7 +94,7 @@ bool SVGFESpecularLightingElement::setFilterEffectAttribute(FilterEffect& effect
     if (attrName == SVGNames::lighting_colorAttr) {
         RenderObject* renderer = this->renderer();
         ASSERT(renderer);
-        Color color = renderer->style().colorByApplyingColorFilter(renderer->style().svgStyle().lightingColor());
+        Color color = renderer->style().resolvedColorApplyingColorFilter(renderer->style().svgStyle().lightingColor());
         return feSpecularLighting.setLightingColor(color);
     }
     if (attrName == SVGNames::surfaceScaleAttr)
@@ -170,7 +170,7 @@ RefPtr<FilterEffect> SVGFESpecularLightingElement::createFilterEffect(const Filt
 
     auto lightSource = lightElement->lightSource();
 
-    Color color = renderer->style().colorByApplyingColorFilter(renderer->style().svgStyle().lightingColor());
+    Color color = renderer->style().resolvedColorApplyingColorFilter(renderer->style().svgStyle().lightingColor());
 
     return FESpecularLighting::create(color, surfaceScale(), specularConstant(), specularExponent(), kernelUnitLengthX(), kernelUnitLengthY(), WTFMove(lightSource));
 }

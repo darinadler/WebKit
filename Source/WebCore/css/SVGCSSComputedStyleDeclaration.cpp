@@ -125,7 +125,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::svgPropertyValue(CSSPropertyID property
     case CSSPropertyStopColor:
         return currentColorOrValidColor(style, svgStyle.stopColor());
     case CSSPropertyFill:
-        return adjustSVGPaintForCurrentColor(svgStyle.fillPaintType(), svgStyle.fillPaintUri(), svgStyle.fillPaintColor(), style->color());
+        return adjustSVGPaintForCurrentColor(svgStyle.fillPaintType(), svgStyle.fillPaintUri(), style->resolvedColor(svgStyle.fillPaintColor()), style->resolvedColor(style->color()));
     case CSSPropertyKerning:
         return SVGLengthValue::toCSSPrimitiveValue(svgStyle.kerning());
     case CSSPropertyMarkerEnd:
@@ -141,7 +141,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::svgPropertyValue(CSSPropertyID property
             return CSSPrimitiveValue::create(makeString('#', svgStyle.markerStartResource()), CSSUnitType::CSS_URI);
         return CSSPrimitiveValue::createIdentifier(CSSValueNone);
     case CSSPropertyStroke:
-        return adjustSVGPaintForCurrentColor(svgStyle.strokePaintType(), svgStyle.strokePaintUri(), svgStyle.strokePaintColor(), style->color());
+        return adjustSVGPaintForCurrentColor(svgStyle.strokePaintType(), svgStyle.strokePaintUri(), style->resolvedColor(svgStyle.strokePaintColor()), style->resolvedColor(style->color()));
     case CSSPropertyStrokeDasharray:
         return strokeDashArrayToCSSValueList(svgStyle.strokeDashArray());
     case CSSPropertyBaselineShift: {

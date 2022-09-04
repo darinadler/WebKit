@@ -96,7 +96,7 @@ public:
     float alphaAsFloat() const { return isOutOfLine() ? asOutOfLine().resolvedAlpha() : convertByteAlphaTo<float>(asInline().resolved().alpha); }
 
     WEBCORE_EXPORT double luminance() const;
-    WEBCORE_EXPORT double lightness() const; // FIXME: Replace remaining uses with luminance.
+    WEBCORE_EXPORT double deprecatedLightness() const; // FIXME: Replace remaining uses with luminance.
 
     bool anyComponentIsNone() const;
 
@@ -178,7 +178,9 @@ public:
     String debugDescription() const;
 
 private:
+    friend class StyleColor;
     friend void add(Hasher&, const Color&);
+    friend void swap(Color&, Color&);
 
     class OutOfLineComponents : public ThreadSafeRefCounted<OutOfLineComponents> {
     public:
@@ -213,6 +215,8 @@ private:
         OutOfLine                       = 1 << 3,
         HashTableEmptyValue             = 1 << 4,
         HashTableDeletedValue           = 1 << 5,
+        StyleColorFlag1                 = 1 << 6,
+        StyleColorFlag2                 = 1 << 7,
     };
     static OptionSet<FlagsIncludingPrivate> toFlagsIncludingPrivate(OptionSet<Flags> flags) { return OptionSet<FlagsIncludingPrivate>::fromRaw(flags.toRaw()); }
 
@@ -245,12 +249,14 @@ private:
     static uint64_t encodedColorSpace(ColorSpace);
     static uint64_t encodedInlineColor(SRGBA<uint8_t>);
     static uint64_t encodedPackedInlineColor(PackedColor::RGBA);
+    static uint64_t encodedOutOfLinePointer(void*);
     static uint64_t encodedOutOfLineComponents(Ref<OutOfLineComponents>&&);
 
     static OptionSet<FlagsIncludingPrivate> decodedFlags(uint64_t);
     static ColorSpace decodedColorSpace(uint64_t);
     static SRGBA<uint8_t> decodedInlineColor(uint64_t);
     static PackedColor::RGBA decodedPackedInlineColor(uint64_t);
+    static void* decodedOutOfLinePointer(uint64_t);
     static OutOfLineComponents& decodedOutOfLineComponents(uint64_t);
 
     static constexpr uint64_t invalidColorAndFlags = 0;
@@ -279,6 +285,11 @@ WEBCORE_EXPORT std::optional<SRGBA<uint8_t>> roundAndClampToSRGBALossy(CGColorRe
 #endif
 
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const Color&);
+
+inline void swap(Color& a, Color& b)
+{
+    std::swap(a.m_colorAndFlags, b.m_colorAndFlags);
+}
 
 inline bool operator==(const Color& a, const Color& b)
 {
@@ -493,13 +504,18 @@ inline uint64_t Color::encodedPackedInlineColor(PackedColor::RGBA color)
     return color.value;
 }
 
-inline uint64_t Color::encodedOutOfLineComponents(Ref<OutOfLineComponents>&& outOfLineComponents)
+inline uint64_t Color::encodedOutOfLinePointer(void* pointer)
 {
 #if CPU(ADDRESS64)
-    return bitwise_cast<uint64_t>(&outOfLineComponents.leakRef());
+    return bitwise_cast<uint64_t>(pointer);
 #else
-    return bitwise_cast<uint32_t>(&outOfLineComponents.leakRef());
+    return bitwise_cast<uint32_t>(pointer);
 #endif
+}
+
+inline uint64_t Color::encodedOutOfLineComponents(Ref<OutOfLineComponents>&& outOfLineComponents)
+{
+    return encodedOutOfLinePointer(&outOfLineComponents.leakRef());
 }
 
 inline OptionSet<Color::FlagsIncludingPrivate> Color::decodedFlags(uint64_t value)
@@ -522,13 +538,18 @@ inline PackedColor::RGBA Color::decodedPackedInlineColor(uint64_t value)
     return PackedColor::RGBA { static_cast<uint32_t>(value & colorValueMask) };
 }
 
-inline Color::OutOfLineComponents& Color::decodedOutOfLineComponents(uint64_t value)
+inline void* Color::decodedOutOfLinePointer(uint64_t value)
 {
 #if CPU(ADDRESS64)
-    return *bitwise_cast<OutOfLineComponents*>(value & colorValueMask);
+    return bitwise_cast<void*>(value & colorValueMask);
 #else
-    return *bitwise_cast<OutOfLineComponents*>(static_cast<uint32_t>(value & colorValueMask));
+    return bitwise_cast<void*>(static_cast<uint32_t>(value & colorValueMask));
 #endif
+}
+
+inline Color::OutOfLineComponents& Color::decodedOutOfLineComponents(uint64_t value)
+{
+    return *static_cast<OutOfLineComponents*>(decodedOutOfLinePointer(value));
 }
 
 inline void Color::setColor(SRGBA<uint8_t> color, OptionSet<FlagsIncludingPrivate> flags)

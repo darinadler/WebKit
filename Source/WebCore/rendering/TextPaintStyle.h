@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@ class GraphicsContext;
 class RenderText;
 class RenderStyle;
 class ShadowData;
+
 struct PaintInfo;
 
 struct TextPaintStyle {
@@ -64,5 +65,7 @@ TextPaintStyle computeTextSelectionPaintStyle(const TextPaintStyle&, const Rende
 
 enum FillColorType { UseNormalFillColor, UseEmphasisMarkColor };
 void updateGraphicsContext(GraphicsContext&, const TextPaintStyle&, FillColorType = UseNormalFillColor);
+
+std::optional<ShadowData> resolvedTextShadowForPainting(const RenderStyle&, const PaintInfo&);
 
 } // namespace WebCore

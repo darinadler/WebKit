@@ -55,7 +55,7 @@ ShadowApplier::ShadowApplier(GraphicsContext& context, const ShadowData* shadow,
     float shadowY = orientation == FontOrientation::Horizontal ? shadow->y().value() : -shadow->x().value();
     FloatSize shadowOffset(shadowX, shadowY);
     auto shadowRadius = shadow->radius();
-    Color shadowColor = shadow->color();
+    Color shadowColor = shadow->color().alreadyResolvedColor();
     if (colorFilter)
         colorFilter->transformColor(shadowColor);
 

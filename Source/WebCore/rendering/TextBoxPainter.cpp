@@ -671,7 +671,7 @@ void TextBoxPainter<TextBoxPath>::paintCompositionUnderline(const CompositionUnd
     width -= 2;
 
     auto& style = m_renderer.style();
-    Color underlineColor = underline.compositionUnderlineColor == CompositionUnderlineColor::TextColor ? style.visitedDependentColorWithColorFilter(CSSPropertyWebkitTextFillColor) : style.colorByApplyingColorFilter(underline.color);
+    Color underlineColor = underline.compositionUnderlineColor == CompositionUnderlineColor::TextColor ? style.visitedDependentColorWithColorFilter(CSSPropertyWebkitTextFillColor) : style.resolvedColorApplyingColorFilter(underline.color);
 
     GraphicsContext& context = m_paintInfo.context();
     context.setStrokeColor(underlineColor);

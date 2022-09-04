@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "Color.h"
 #include "FontCascade.h"
 #include "Length.h"
+#include "StyleColor.h"
 
 namespace WebCore {
 
@@ -53,8 +53,8 @@ public:
 #endif
 
     FontCascade fontCascade;
-    Color color;
-    Color visitedLinkColor;
+    StyleColor color;
+    StyleColor visitedLinkColor;
 
 private:
     StyleInheritedData();

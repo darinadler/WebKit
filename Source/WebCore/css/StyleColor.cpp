@@ -37,6 +37,9 @@
 
 namespace WebCore {
 
+class StyleColor::OutOfLineStyleColor : public RefCounted<StyleColor::OutOfLineStyleColor> {
+};
+
 Color StyleColor::colorFromKeyword(CSSValueID keyword, OptionSet<StyleColorOptions> options)
 {
     if (const char* valueName = getValueName(keyword)) {
@@ -79,6 +82,36 @@ bool StyleColor::isColorKeyword(CSSValueID id, OptionSet<CSSColorType> allowedCo
     return (allowedColorTypes.contains(CSSColorType::Absolute) && isAbsoluteColorKeyword(id))
         || (allowedColorTypes.contains(CSSColorType::Current) && id == CSSValueCurrentcolor)
         || (allowedColorTypes.contains(CSSColorType::System) && isSystemColorKeyword(id));
+}
+
+void StyleColor::setOutOfLineStyleColor(const StyleColor& color)
+{
+    m_color.m_colorAndFlags = color.m_color.m_colorAndFlags;
+    outOfLineStyleColor().ref();
+}
+
+void StyleColor::destroyOutOfLineStyleColor()
+{
+    outOfLineStyleColor().deref();
+}
+
+TextStream& operator<<(TextStream& stream, const StyleColor& color)
+{
+    switch (color.type()) {
+    case StyleColor::Type::Normal:
+        return stream << color.m_color;
+    case StyleColor::Type::CurrentColor:
+        return stream << "current color";
+    case StyleColor::Type::OutOfLine:
+        // FIXME: Implement this.
+        return stream << "out of line style color";
+    }
+}
+
+bool StyleColor::isEqualOutOfLineStyleColor(const StyleColor&) const
+{
+    // FIXME: Implement this.
+    return false;
 }
 
 } // namespace WebCore

@@ -787,7 +787,7 @@ inline void BuilderCustom::applyInitialCaretColor(BuilderState& builderState)
 
 inline void BuilderCustom::applyInheritCaretColor(BuilderState& builderState)
 {
-    Color color = builderState.parentStyle().caretColor();
+    auto color = builderState.parentStyle().caretColor();
     if (builderState.applyPropertyToRegularStyle()) {
         if (builderState.parentStyle().hasAutoCaretColor())
             builderState.style().setHasAutoCaretColor();
@@ -929,13 +929,13 @@ inline void BuilderCustom::applyTextOrBoxShadowValue(BuilderState& builderState,
         auto blur = shadowValue.blur ? shadowValue.blur->computeLength<Length>(conversionData) : Length(0, LengthType::Fixed);
         auto spread = shadowValue.spread ? shadowValue.spread->computeLength<Length>(conversionData) : Length(0, LengthType::Fixed);
         ShadowStyle shadowStyle = shadowValue.style && shadowValue.style->valueID() == CSSValueInset ? ShadowStyle::Inset : ShadowStyle::Normal;
-        Color color;
+        StyleColor color;
         if (shadowValue.color)
             color = builderState.colorFromPrimitiveValueWithResolvedCurrentColor(*shadowValue.color);
         else
             color = builderState.style().color();
 
-        auto shadowData = makeUnique<ShadowData>(LengthPoint(x, y), blur, spread, shadowStyle, property == CSSPropertyWebkitBoxShadow, color.isValid() ? color : Color::transparentBlack);
+        auto shadowData = makeUnique<ShadowData>(LengthPoint(x, y), blur, spread, shadowStyle, property == CSSPropertyWebkitBoxShadow, color);
         if (property == CSSPropertyTextShadow)
             builderState.style().setTextShadow(WTFMove(shadowData), !isFirstEntry); // add to the list if this is not the first entry
         else
@@ -1471,7 +1471,7 @@ inline void BuilderCustom::applyValueFill(BuilderState& builderState, CSSValue& 
     if (!localValue)
         return;
 
-    Color color;
+    StyleColor color;
     auto paintType = SVGPaintType::RGBColor;
     if (localValue->isURI()) {
         paintType = SVGPaintType::URI;
@@ -1516,7 +1516,7 @@ inline void BuilderCustom::applyValueStroke(BuilderState& builderState, CSSValue
     if (!localValue)
         return;
 
-    Color color;
+    StyleColor color;
     auto paintType = SVGPaintType::RGBColor;
     if (localValue->isURI()) {
         paintType = SVGPaintType::URI;

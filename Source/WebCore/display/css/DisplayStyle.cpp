@@ -64,7 +64,7 @@ static std::unique_ptr<ShadowData> deepCopy(const ShadowData* shadow, const Rend
 
     for (auto* currShadow = shadow; currShadow; currShadow = currShadow->next()) {
         auto shadowCopy = makeUnique<ShadowData>(*currShadow);
-        shadowCopy->setColor(style.colorByApplyingColorFilter(shadowCopy->color()));
+        shadowCopy->setColor(style.resolvedColorApplyingColorFilter(shadowCopy->color()));
         
         if (!firstShadow) {
             currCopiedShadow = shadowCopy.get();

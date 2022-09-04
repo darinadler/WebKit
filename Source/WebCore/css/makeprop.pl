@@ -1488,7 +1488,7 @@ sub generateInheritValueSetter {
     $setterContent .= $indent . "        return;\n";
     $setterContent .= $indent . "    }\n";
   } elsif (exists $propertiesWithStyleBuilderOptions{$name}{"visited-link-color-support"}) {
-    $setterContent .= $indent . "    Color color = " . $parentStyle . "." . $getter . "();\n";
+    $setterContent .= $indent . "    auto color = " . $parentStyle . "." . $getter . "();\n";
     $setterContent .= generateColorValueSetter($name, "color", $indent . "    ");
     $didCallSetValue = 1;
   } elsif (exists $propertiesWithStyleBuilderOptions{$name}{"animatable"}) {

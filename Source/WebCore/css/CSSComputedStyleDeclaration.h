@@ -89,7 +89,7 @@ private:
     RefPtr<CSSValue> svgPropertyValue(CSSPropertyID);
     Ref<CSSValue> adjustSVGPaintForCurrentColor(SVGPaintType, const String& url, const Color&, const Color& currentColor) const;
     static Ref<CSSValue> valueForShadow(const ShadowData*, CSSPropertyID, const RenderStyle&, AdjustPixelValuesForComputedStyle = AdjustPixelValues);
-    Ref<CSSPrimitiveValue> currentColorOrValidColor(const RenderStyle*, const Color&) const;
+    Ref<CSSPrimitiveValue> currentColorOrValidColor(const RenderStyle*, const StyleColor&) const;
 
     Ref<CSSValueList> getCSSPropertyValuesForShorthandProperties(const StylePropertyShorthand&);
     RefPtr<CSSValueList> getCSSPropertyValuesFor2SidesShorthand(const StylePropertyShorthand&);

@@ -2726,7 +2726,7 @@ static void paintAttachmentTitleBackground(const RenderAttachment& attachment, G
     } else
         backgroundColor = attachmentTitleInactiveBackgroundColor;
 
-    backgroundColor = attachment.style().colorByApplyingColorFilter(backgroundColor);
+    backgroundColor = attachment.style().resolvedColorApplyingColorFilter(backgroundColor);
     context.setFillColor(backgroundColor);
 
     Path backgroundPath = PathUtilities::pathWithShrinkWrappedRects(backgroundRects, attachmentTitleBackgroundRadius);

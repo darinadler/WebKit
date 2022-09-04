@@ -32,21 +32,6 @@
 
 namespace WebCore {
 
-bool BorderData::isEquivalentForPainting(const BorderData& other, bool currentColorDiffers) const
-{
-    if (*this != other)
-        return false;
-
-    if (!currentColorDiffers)
-        return true;
-
-    auto visibleBorderHasCurrentColor = (m_top.isVisible() && RenderStyle::isCurrentColor(m_top.color()))
-        || (m_right.isVisible() && RenderStyle::isCurrentColor(m_right.color()))
-        || (m_bottom.isVisible() && RenderStyle::isCurrentColor(m_bottom.color()))
-        || (m_left.isVisible() && RenderStyle::isCurrentColor(m_left.color()));
-    return !visibleBorderHasCurrentColor;
-}
-
 TextStream& operator<<(TextStream& ts, const BorderValue& borderValue)
 {
     ts << borderValue.width() << " " << borderValue.style() << " " << borderValue.color();

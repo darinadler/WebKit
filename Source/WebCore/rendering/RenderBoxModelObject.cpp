@@ -1200,7 +1200,7 @@ void RenderBoxModelObject::paintBoxShadow(const PaintInfo& info, const LayoutRec
         if (shadowOffset.isZero() && !shadowRadius && !shadowSpread)
             continue;
         
-        Color shadowColor = style.colorByApplyingColorFilter(shadow->color());
+        Color shadowColor = style.resolvedColorApplyingColorFilter(shadow->color());
 
         if (shadow->style() == ShadowStyle::Normal) {
             auto fillRect = borderRect;

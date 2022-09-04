@@ -270,7 +270,7 @@ void TextDecorationPainter::paintBackgroundDecorations(const TextRun& textRun, c
                 boxOrigin.move(0, -extraOffset);
                 extraOffset = 0;
             }
-            auto shadowColor = shadow->color();
+            auto shadowColor = shadow->color().alreadyResolvedColor();
             if (m_shadowColorFilter)
                 m_shadowColorFilter->transformColor(shadowColor);
 

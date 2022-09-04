@@ -4102,7 +4102,7 @@ FontAttributes Editor::fontAttributesAtSelectionStart()
         attributes.foregroundColor = foregroundColor;
 
     if (auto* shadowData = style->textShadow())
-        attributes.fontShadow = { shadowData->color(), { shadowData->x().value(), shadowData->y().value() }, shadowData->radius().value() };
+        attributes.fontShadow = { style->resolvedColor(shadowData->color()), { shadowData->x().value(), shadowData->y().value() }, shadowData->radius().value() };
 
     switch (style->verticalAlign()) {
     case VerticalAlign::Baseline:

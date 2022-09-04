@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ public:
     float width { 0 };
     unsigned short count;
     BorderValue rule;
-    Color visitedLinkColumnRuleColor;
+    StyleColor visitedLinkColumnRuleColor;
 
     bool autoWidth : 1;
     bool autoCount : 1;

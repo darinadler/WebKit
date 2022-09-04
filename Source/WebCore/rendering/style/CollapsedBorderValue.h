@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003, 2005, 2006, 2007, 2008 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@
 
 #pragma once
 
-#include "BorderValue.h"
+#include "Color.h"
+#include "RenderStyleConstants.h"
 #include "LayoutUnit.h"
 
 namespace WebCore {
@@ -38,12 +39,19 @@ public:
     {
     }
 
-    CollapsedBorderValue(const BorderValue& border, const Color& color, BorderPrecedence precedence)
-        : m_width(LayoutUnit(border.nonZero() ? border.width() : 0))
-        , m_color(color)
-        , m_style(static_cast<unsigned>(border.style()))
+    explicit CollapsedBorderValue(BorderPrecedence precedence)
+        : m_style(static_cast<unsigned>(BorderStyle::None))
         , m_precedence(static_cast<unsigned>(precedence))
-        , m_transparent(border.isTransparent())
+        , m_transparent(false)
+    {
+    }
+
+    CollapsedBorderValue(LayoutUnit width, Color&& color, BorderStyle style, BorderPrecedence precedence, bool isTransparent)
+        : m_width(width)
+        , m_color(WTFMove(color))
+        , m_style(static_cast<unsigned>(style))
+        , m_precedence(static_cast<unsigned>(precedence))
+        , m_transparent(isTransparent)
     {
     }
 

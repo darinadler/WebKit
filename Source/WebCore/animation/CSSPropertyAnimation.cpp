@@ -86,6 +86,19 @@ struct CSSPropertyBlendingContext : BlendingContext {
     }
 };
 
+struct ShadowWithColorContext {
+    const ShadowData* shadow { nullptr };
+    const RenderStyle* style { nullptr };
+
+    Color resolvedColor() const;
+};
+
+Color ShadowWithColorContext::resolvedColor() const
+{
+    ASSERT(shadow);
+    return style ? style->resolvedColor(shadow->color()) : shadow->color().alreadyResolvedColor();
+}
+
 static inline int blendFunc(int from, int to, const CSSPropertyBlendingContext& context)
 {
     return blend(from, to, context);
@@ -148,8 +161,11 @@ static inline ShadowStyle blendFunc(ShadowStyle from, ShadowStyle to, const CSSP
     return result > 0 ? ShadowStyle::Normal : ShadowStyle::Inset;
 }
 
-static inline std::unique_ptr<ShadowData> blendFunc(const ShadowData* from, const ShadowData* to, const CSSPropertyBlendingContext& context)
+static inline std::unique_ptr<ShadowData> blendFunc(ShadowWithColorContext fromWithColorContext, ShadowWithColorContext toWithColorContext, const CSSPropertyBlendingContext& context)
 {
+    auto from = fromWithColorContext.shadow;
+    auto to = toWithColorContext.shadow;
+
     ASSERT(from && to);
     ASSERT(from->style() == to->style());
 
@@ -158,7 +174,7 @@ static inline std::unique_ptr<ShadowData> blendFunc(const ShadowData* from, cons
         blend(from->spread(), to->spread(), context),
         blendFunc(from->style(), to->style(), context),
         from->isWebkitBoxShadow(),
-        blend(from->color(), to->color(), context));
+        blend(fromWithColorContext.resolvedColor(), toWithColorContext.resolvedColor(), context));
 }
 
 static inline TransformOperations blendFunc(const TransformOperations& from, const TransformOperations& to, const CSSPropertyBlendingContext& context)
@@ -1373,20 +1389,20 @@ static inline size_t shadowListLength(const ShadowData* shadow)
     return count;
 }
 
-static inline const ShadowData* shadowForBlending(const ShadowData* srcShadow, const ShadowData* otherShadow)
+static inline ShadowWithColorContext shadowForBlending(ShadowWithColorContext srcShadow, ShadowWithColorContext otherShadow)
 {
     static NeverDestroyed<ShadowData> defaultShadowData(LengthPoint(Length(LengthType::Fixed), Length(LengthType::Fixed)), Length(LengthType::Fixed), Length(LengthType::Fixed), ShadowStyle::Normal, false, Color::transparentBlack);
     static NeverDestroyed<ShadowData> defaultInsetShadowData(LengthPoint(Length(LengthType::Fixed), Length(LengthType::Fixed)), Length(LengthType::Fixed), Length(LengthType::Fixed), ShadowStyle::Inset, false, Color::transparentBlack);
     static NeverDestroyed<ShadowData> defaultWebKitBoxShadowData(LengthPoint(Length(LengthType::Fixed), Length(LengthType::Fixed)), Length(LengthType::Fixed), Length(LengthType::Fixed), ShadowStyle::Normal, true, Color::transparentBlack);
     static NeverDestroyed<ShadowData> defaultInsetWebKitBoxShadowData(LengthPoint(Length(LengthType::Fixed), Length(LengthType::Fixed)), Length(LengthType::Fixed), Length(LengthType::Fixed), ShadowStyle::Inset, true, Color::transparentBlack);
 
-    if (srcShadow)
+    if (srcShadow.shadow)
         return srcShadow;
 
-    if (otherShadow->style() == ShadowStyle::Inset)
-        return otherShadow->isWebkitBoxShadow() ? &defaultInsetWebKitBoxShadowData.get() : &defaultInsetShadowData.get();
+    if (otherShadow.shadow->style() == ShadowStyle::Inset)
+        return { otherShadow.shadow->isWebkitBoxShadow() ? &defaultInsetWebKitBoxShadowData.get() : &defaultInsetShadowData.get() };
 
-    return otherShadow->isWebkitBoxShadow() ? &defaultWebKitBoxShadowData.get() : &defaultShadowData.get();
+    return { otherShadow.shadow->isWebkitBoxShadow() ? &defaultWebKitBoxShadowData.get() : &defaultShadowData.get(), nullptr };
 }
 
 class PropertyWrapperShadow final : public AnimationPropertyWrapperBase {
@@ -1462,11 +1478,11 @@ private:
         int toLength = shadowListLength(toShadow);
 
         if (fromLength == toLength || (fromLength <= 1 && toLength <= 1)) {
-            (destination.*m_setter)(blendSimpleOrMatchedShadowLists(fromShadow, toShadow, context), false);
+            (destination.*m_setter)(blendSimpleOrMatchedShadowLists({ fromShadow, &from }, { toShadow, &to }, context), false);
             return;
         }
 
-        (destination.*m_setter)(blendMismatchedShadowLists(fromShadow, toShadow, fromLength, toLength, context), false);
+        (destination.*m_setter)(blendMismatchedShadowLists({ fromShadow, &from }, { toShadow, &to }, fromLength, toLength, context), false);
     }
 
 #if !LOG_DISABLED
@@ -1477,13 +1493,14 @@ private:
     }
 #endif
 
-    std::unique_ptr<ShadowData> addShadowLists(const ShadowData* shadowA, const ShadowData* shadowB) const
+    std::unique_ptr<ShadowData> concatenateShadowListsAndResolveColors(ShadowWithColorContext shadowA, ShadowWithColorContext shadowB) const
     {
         std::unique_ptr<ShadowData> newShadowData;
         ShadowData* lastShadow = nullptr;
-        auto addShadows = [&](const ShadowData* shadow) {
-            while (shadow) {
-                auto blendedShadow = makeUnique<ShadowData>(*shadow);
+        auto addShadows = [&](ShadowWithColorContext shadow) {
+            while (shadow.shadow) {
+                auto blendedShadow = makeUnique<ShadowData>(*shadow.shadow);
+                blendedShadow->setColor(shadow.resolvedColor());
                 auto* blendedShadowPtr = blendedShadow.get();
                 if (!lastShadow)
                     newShadowData = WTFMove(blendedShadow);
@@ -1491,7 +1508,7 @@ private:
                     lastShadow->setNext(WTFMove(blendedShadow));
 
                 lastShadow = blendedShadowPtr;
-                shadow = shadow ? shadow->next() : nullptr;
+                shadow.shadow = shadow.shadow->next();
             }
         };
         addShadows(shadowB);
@@ -1499,20 +1516,20 @@ private:
         return newShadowData;
     }
 
-    std::unique_ptr<ShadowData> blendSimpleOrMatchedShadowLists(const ShadowData* shadowA, const ShadowData* shadowB, const CSSPropertyBlendingContext& context) const
+    std::unique_ptr<ShadowData> blendSimpleOrMatchedShadowLists(ShadowWithColorContext shadowA, ShadowWithColorContext shadowB, const CSSPropertyBlendingContext& context) const
     {
         // from or to might be null in which case we don't want to do additivity, but do replace instead.
-        if (shadowA && shadowB && context.compositeOperation == CompositeOperation::Add)
-            return addShadowLists(shadowA, shadowB);
+        if (shadowA.shadow && shadowB.shadow && context.compositeOperation == CompositeOperation::Add)
+            return concatenateShadowListsAndResolveColors(shadowA, shadowB);
 
         std::unique_ptr<ShadowData> newShadowData;
         ShadowData* lastShadow = nullptr;
 
-        while (shadowA || shadowB) {
-            const ShadowData* srcShadow = shadowForBlending(shadowA, shadowB);
-            const ShadowData* dstShadow = shadowForBlending(shadowB, shadowA);
+        while (shadowA.shadow || shadowB.shadow) {
+            auto srcShadow = shadowForBlending(shadowA, shadowB);
+            auto dstShadow = shadowForBlending(shadowB, shadowA);
 
-            std::unique_ptr<ShadowData> blendedShadow = blendFunc(srcShadow, dstShadow, context);
+            auto blendedShadow = blendFunc(srcShadow, dstShadow, context);
             ShadowData* blendedShadowPtr = blendedShadow.get();
 
             if (!lastShadow)
@@ -1522,43 +1539,44 @@ private:
 
             lastShadow = blendedShadowPtr;
 
-            shadowA = shadowA ? shadowA->next() : 0;
-            shadowB = shadowB ? shadowB->next() : 0;
+            shadowA.shadow = shadowA.shadow ? shadowA.shadow->next() : nullptr;
+            shadowB.shadow = shadowB.shadow ? shadowB.shadow->next() : nullptr;
         }
 
         return newShadowData;
     }
 
-    std::unique_ptr<ShadowData> blendMismatchedShadowLists(const ShadowData* shadowA, const ShadowData* shadowB, int fromLength, int toLength, const CSSPropertyBlendingContext& context) const
+    std::unique_ptr<ShadowData> blendMismatchedShadowLists(ShadowWithColorContext shadowA, ShadowWithColorContext shadowB, int fromLength, int toLength, const CSSPropertyBlendingContext& context) const
     {
-        if (shadowA && shadowB && context.compositeOperation != CompositeOperation::Replace)
-            return addShadowLists(shadowA, shadowB);
+        if (shadowA.shadow && shadowB.shadow && context.compositeOperation != CompositeOperation::Replace)
+            return concatenateShadowListsAndResolveColors(shadowA, shadowB);
+
+        int maxLength = std::max(fromLength, toLength);
+
+        Vector<ShadowWithColorContext, 4> fromShadows(maxLength);
+        Vector<ShadowWithColorContext, 4> toShadows(maxLength);
 
         // The shadows in ShadowData are stored in reverse order, so when animating mismatched lists,
         // reverse them and match from the end.
-        Vector<const ShadowData*, 4> fromShadows(fromLength);
         for (int i = fromLength - 1; i >= 0; --i) {
             fromShadows[i] = shadowA;
-            shadowA = shadowA->next();
+            shadowA.shadow = shadowA.shadow->next();
         }
-
-        Vector<const ShadowData*, 4> toShadows(toLength);
         for (int i = toLength - 1; i >= 0; --i) {
             toShadows[i] = shadowB;
-            shadowB = shadowB->next();
+            shadowB.shadow = shadowB.shadow->next();
         }
 
         std::unique_ptr<ShadowData> newShadowData;
 
-        int maxLength = std::max(fromLength, toLength);
         for (int i = 0; i < maxLength; ++i) {
-            const ShadowData* fromShadow = i < fromLength ? fromShadows[i] : 0;
-            const ShadowData* toShadow = i < toLength ? toShadows[i] : 0;
+            auto& fromShadow = fromShadows[i];
+            auto& toShadow = toShadows[i];
 
-            const ShadowData* srcShadow = shadowForBlending(fromShadow, toShadow);
-            const ShadowData* dstShadow = shadowForBlending(toShadow, fromShadow);
+            auto srcShadow = shadowForBlending(fromShadow, toShadow);
+            auto dstShadow = shadowForBlending(toShadow, fromShadow);
 
-            std::unique_ptr<ShadowData> blendedShadow = blendFunc(srcShadow, dstShadow, context);
+            auto blendedShadow = blendFunc(srcShadow, dstShadow, context);
             // Insert at the start of the list to preserve the order.
             blendedShadow->setNext(WTFMove(newShadowData));
             newShadowData = WTFMove(blendedShadow);
@@ -1571,10 +1589,10 @@ private:
     void (RenderStyle::*m_setter)(std::unique_ptr<ShadowData>, bool);
 };
 
-class PropertyWrapperMaybeInvalidColor : public AnimationPropertyWrapperBase {
+class PropertyWrapperColor : public AnimationPropertyWrapperBase {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    PropertyWrapperMaybeInvalidColor(CSSPropertyID property, const Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const Color&))
+    PropertyWrapperColor(CSSPropertyID property, const StyleColor& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const StyleColor&))
         : AnimationPropertyWrapperBase(property)
         , m_getter(getter)
         , m_setter(setter)
@@ -1584,42 +1602,17 @@ public:
 protected:
     bool equals(const RenderStyle& a, const RenderStyle& b) const override
     {
-        if (&a == &b)
-            return true;
-
-        Color fromColor = value(a);
-        Color toColor = value(b);
-
-        if (!fromColor.isValid() && !toColor.isValid())
-            return true;
-
-        if (!fromColor.isValid())
-            fromColor = a.color();
-        if (!toColor.isValid())
-            toColor = b.color();
-
-        return fromColor == toColor;
+        return &a == &b || value(a) == value(b);
     }
 
     void blend(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const CSSPropertyBlendingContext& context) const override
     {
-        Color fromColor = value(from);
-        Color toColor = value(to);
-
-        if (!fromColor.isValid() && !toColor.isValid())
-            return;
-
-        if (!fromColor.isValid())
-            fromColor = from.color();
-        if (!toColor.isValid())
-            toColor = to.color();
-        (destination.*m_setter)(blendFunc(fromColor, toColor, context));
+        (destination.*m_setter)(blendFunc(value(from), value(to), context));
     }
 
-private:
     Color value(const RenderStyle& style) const
     {
-        return (style.*m_getter)();
+        return style.resolvedColor((style.*m_getter)());
     }
 
 #if !LOG_DISABLED
@@ -1630,25 +1623,17 @@ private:
     }
 #endif
 
-    const Color& (RenderStyle::*m_getter)() const;
-    void (RenderStyle::*m_setter)(const Color&);
+    const StyleColor& (RenderStyle::*m_getter)() const;
+    void (RenderStyle::*m_setter)(const StyleColor&);
 };
 
-
-enum MaybeInvalidColorTag { MaybeInvalidColor };
 class PropertyWrapperVisitedAffectedColor : public AnimationPropertyWrapperBase {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    PropertyWrapperVisitedAffectedColor(CSSPropertyID property, const Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const Color&), const Color& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(const Color&))
+    PropertyWrapperVisitedAffectedColor(CSSPropertyID property, const StyleColor& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const StyleColor&), const StyleColor& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(const StyleColor&))
         : AnimationPropertyWrapperBase(property)
-        , m_wrapper(makeUnique<PropertyWrapper<const Color&>>(property, getter, setter))
-        , m_visitedWrapper(makeUnique<PropertyWrapper<const Color&>>(property, visitedGetter, visitedSetter))
-    {
-    }
-    PropertyWrapperVisitedAffectedColor(CSSPropertyID property, MaybeInvalidColorTag, const Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const Color&), const Color& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(const Color&))
-        : AnimationPropertyWrapperBase(property)
-        , m_wrapper(makeUnique<PropertyWrapperMaybeInvalidColor>(property, getter, setter))
-        , m_visitedWrapper(makeUnique<PropertyWrapperMaybeInvalidColor>(property, visitedGetter, visitedSetter))
+        , m_wrapper(makeUnique<PropertyWrapperColor>(property, getter, setter))
+        , m_visitedWrapper(makeUnique<PropertyWrapperColor>(property, visitedGetter, visitedSetter))
     {
     }
 
@@ -1677,11 +1662,11 @@ private:
 #endif
 };
 
-class AccentColorPropertyWrapper final : public PropertyWrapperMaybeInvalidColor {
+class AccentColorPropertyWrapper final : public PropertyWrapperColor {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     AccentColorPropertyWrapper()
-        : PropertyWrapperMaybeInvalidColor(CSSPropertyAccentColor, &RenderStyle::accentColor, &RenderStyle::setAccentColor)
+        : PropertyWrapperColor(CSSPropertyAccentColor, &RenderStyle::accentColor, &RenderStyle::setAccentColor)
     {
     }
 
@@ -1689,7 +1674,7 @@ private:
     bool equals(const RenderStyle& a, const RenderStyle& b) const final
     {
         return a.hasAutoAccentColor() == b.hasAutoAccentColor()
-            && PropertyWrapperMaybeInvalidColor::equals(a, b);
+            && PropertyWrapperColor::equals(a, b);
     }
 
     bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
@@ -1700,7 +1685,7 @@ private:
     void blend(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const CSSPropertyBlendingContext& context) const final
     {
         if (canInterpolate(from, to, context.compositeOperation)) {
-            PropertyWrapperMaybeInvalidColor::blend(destination, from, to, context);
+            PropertyWrapperColor::blend(destination, from, to, context);
             return;
         }
 
@@ -1724,7 +1709,7 @@ class CaretColorPropertyWrapper final : public PropertyWrapperVisitedAffectedCol
     WTF_MAKE_FAST_ALLOCATED;
 public:
     CaretColorPropertyWrapper()
-        : PropertyWrapperVisitedAffectedColor(CSSPropertyCaretColor, MaybeInvalidColor, &RenderStyle::caretColor, &RenderStyle::setCaretColor, &RenderStyle::visitedLinkCaretColor, &RenderStyle::setVisitedLinkCaretColor)
+        : PropertyWrapperVisitedAffectedColor(CSSPropertyCaretColor, &RenderStyle::caretColor, &RenderStyle::setCaretColor, &RenderStyle::visitedLinkCaretColor, &RenderStyle::setVisitedLinkCaretColor)
     {
     }
 
@@ -2226,7 +2211,7 @@ private:
 class PropertyWrapperSVGPaint final : public AnimationPropertyWrapperBase {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    PropertyWrapperSVGPaint(CSSPropertyID property, SVGPaintType (RenderStyle::*paintTypeGetter)() const, Color (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const Color&))
+    PropertyWrapperSVGPaint(CSSPropertyID property, SVGPaintType (RenderStyle::*paintTypeGetter)() const, StyleColor (RenderStyle::*getter)() const, void (RenderStyle::*setter)(const StyleColor&))
         : AnimationPropertyWrapperBase(property)
         , m_paintTypeGetter(paintTypeGetter)
         , m_getter(getter)
@@ -2246,20 +2231,9 @@ private:
         // We only support animations between SVGPaints that are pure Color values.
         // For everything else we must return true for this method, otherwise
         // we will try to animate between values forever.
-        if ((a.*m_paintTypeGetter)() == SVGPaintType::RGBColor) {
-            Color fromColor = (a.*m_getter)();
-            Color toColor = (b.*m_getter)();
+        if ((a.*m_paintTypeGetter)() == SVGPaintType::RGBColor)
+            return a.resolvedColor((a.*m_getter)()) == b.resolvedColor((b.*m_getter)());
 
-            if (!fromColor.isValid() && !toColor.isValid())
-                return true;
-
-            if (!fromColor.isValid())
-                fromColor = a.color();
-            if (!toColor.isValid())
-                toColor = b.color();
-
-            return fromColor == toColor;
-        }
         return true;
     }
 
@@ -2272,17 +2246,7 @@ private:
         if (!isValidPaintType((from.*m_paintTypeGetter)()) || !isValidPaintType((to.*m_paintTypeGetter)()))
             return;
 
-        Color fromColor = (from.*m_getter)();
-        Color toColor = (to.*m_getter)();
-
-        if (!fromColor.isValid() && !toColor.isValid())
-            return;
-
-        if (!fromColor.isValid())
-            fromColor = from.color();
-        if (!toColor.isValid())
-            toColor = to.color();
-        (destination.*m_setter)(blendFunc(fromColor, toColor, context));
+        (destination.*m_setter)(blendFunc(from.resolvedColor((from.*m_getter)()), to.resolvedColor((to.*m_getter)()), context));
     }
 
 #if !LOG_DISABLED
@@ -2294,8 +2258,8 @@ private:
 #endif
 
     SVGPaintType (RenderStyle::*m_paintTypeGetter)() const;
-    Color (RenderStyle::*m_getter)() const;
-    void (RenderStyle::*m_setter)(const Color&);
+    StyleColor (RenderStyle::*m_getter)() const;
+    void (RenderStyle::*m_setter)(const StyleColor&);
 };
 
 class PropertyWrapperFontStyle final : public PropertyWrapper<std::optional<FontSelectionValue>> {
@@ -3079,7 +3043,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
 
         new PropertyWrapperVisitedAffectedColor(CSSPropertyColor, &RenderStyle::color, &RenderStyle::setColor, &RenderStyle::visitedLinkColor, &RenderStyle::setVisitedLinkColor),
 
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyBackgroundColor, MaybeInvalidColor, &RenderStyle::backgroundColor, &RenderStyle::setBackgroundColor, &RenderStyle::visitedLinkBackgroundColor, &RenderStyle::setVisitedLinkBackgroundColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyBackgroundColor, &RenderStyle::backgroundColor, &RenderStyle::setBackgroundColor, &RenderStyle::visitedLinkBackgroundColor, &RenderStyle::setVisitedLinkBackgroundColor),
 
         new FillLayersPropertyWrapper(CSSPropertyBackgroundImage, &RenderStyle::backgroundLayers, &RenderStyle::ensureBackgroundLayers),
         new StyleImagePropertyWrapper(CSSPropertyListStyleImage, &RenderStyle::listStyleImage, &RenderStyle::setListStyleImage),
@@ -3163,14 +3127,14 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new LengthPropertyWrapper(CSSPropertyShapeMargin, &RenderStyle::shapeMargin, &RenderStyle::setShapeMargin, { LengthPropertyWrapper::Flags::IsLengthPercentage, LengthPropertyWrapper::Flags::NegativeLengthsAreInvalid }),
         new PropertyWrapper<float>(CSSPropertyShapeImageThreshold, &RenderStyle::shapeImageThreshold, &RenderStyle::setShapeImageThreshold),
 
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyColumnRuleColor, MaybeInvalidColor, &RenderStyle::columnRuleColor, &RenderStyle::setColumnRuleColor, &RenderStyle::visitedLinkColumnRuleColor, &RenderStyle::setVisitedLinkColumnRuleColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyWebkitTextStrokeColor, MaybeInvalidColor, &RenderStyle::textStrokeColor, &RenderStyle::setTextStrokeColor, &RenderStyle::visitedLinkTextStrokeColor, &RenderStyle::setVisitedLinkTextStrokeColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyWebkitTextFillColor, MaybeInvalidColor, &RenderStyle::textFillColor, &RenderStyle::setTextFillColor, &RenderStyle::visitedLinkTextFillColor, &RenderStyle::setVisitedLinkTextFillColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderLeftColor, MaybeInvalidColor, &RenderStyle::borderLeftColor, &RenderStyle::setBorderLeftColor, &RenderStyle::visitedLinkBorderLeftColor, &RenderStyle::setVisitedLinkBorderLeftColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderRightColor, MaybeInvalidColor, &RenderStyle::borderRightColor, &RenderStyle::setBorderRightColor, &RenderStyle::visitedLinkBorderRightColor, &RenderStyle::setVisitedLinkBorderRightColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderTopColor, MaybeInvalidColor, &RenderStyle::borderTopColor, &RenderStyle::setBorderTopColor, &RenderStyle::visitedLinkBorderTopColor, &RenderStyle::setVisitedLinkBorderTopColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderBottomColor, MaybeInvalidColor, &RenderStyle::borderBottomColor, &RenderStyle::setBorderBottomColor, &RenderStyle::visitedLinkBorderBottomColor, &RenderStyle::setVisitedLinkBorderBottomColor),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyOutlineColor, MaybeInvalidColor, &RenderStyle::outlineColor, &RenderStyle::setOutlineColor, &RenderStyle::visitedLinkOutlineColor, &RenderStyle::setVisitedLinkOutlineColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyColumnRuleColor, &RenderStyle::columnRuleColor, &RenderStyle::setColumnRuleColor, &RenderStyle::visitedLinkColumnRuleColor, &RenderStyle::setVisitedLinkColumnRuleColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyWebkitTextStrokeColor, &RenderStyle::textStrokeColor, &RenderStyle::setTextStrokeColor, &RenderStyle::visitedLinkTextStrokeColor, &RenderStyle::setVisitedLinkTextStrokeColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyWebkitTextFillColor, &RenderStyle::textFillColor, &RenderStyle::setTextFillColor, &RenderStyle::visitedLinkTextFillColor, &RenderStyle::setVisitedLinkTextFillColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderLeftColor, &RenderStyle::borderLeftColor, &RenderStyle::setBorderLeftColor, &RenderStyle::visitedLinkBorderLeftColor, &RenderStyle::setVisitedLinkBorderLeftColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderRightColor, &RenderStyle::borderRightColor, &RenderStyle::setBorderRightColor, &RenderStyle::visitedLinkBorderRightColor, &RenderStyle::setVisitedLinkBorderRightColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderTopColor, &RenderStyle::borderTopColor, &RenderStyle::setBorderTopColor, &RenderStyle::visitedLinkBorderTopColor, &RenderStyle::setVisitedLinkBorderTopColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyBorderBottomColor, &RenderStyle::borderBottomColor, &RenderStyle::setBorderBottomColor, &RenderStyle::visitedLinkBorderBottomColor, &RenderStyle::setVisitedLinkBorderBottomColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyOutlineColor, &RenderStyle::outlineColor, &RenderStyle::setOutlineColor, &RenderStyle::visitedLinkOutlineColor, &RenderStyle::setVisitedLinkOutlineColor),
 
         new PropertyWrapperShadow(CSSPropertyBoxShadow, &RenderStyle::boxShadow, &RenderStyle::setBoxShadow),
         new PropertyWrapperShadow(CSSPropertyWebkitBoxShadow, &RenderStyle::boxShadow, &RenderStyle::setBoxShadow),
@@ -3195,12 +3159,12 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new LengthPropertyWrapper(CSSPropertyY, &RenderStyle::y, &RenderStyle::setY),
 
         new PropertyWrapper<float>(CSSPropertyFloodOpacity, &RenderStyle::floodOpacity, &RenderStyle::setFloodOpacity),
-        new PropertyWrapperMaybeInvalidColor(CSSPropertyFloodColor, &RenderStyle::floodColor, &RenderStyle::setFloodColor),
+        new PropertyWrapperColor(CSSPropertyFloodColor, &RenderStyle::floodColor, &RenderStyle::setFloodColor),
 
         new PropertyWrapper<float>(CSSPropertyStopOpacity, &RenderStyle::stopOpacity, &RenderStyle::setStopOpacity),
-        new PropertyWrapperMaybeInvalidColor(CSSPropertyStopColor, &RenderStyle::stopColor, &RenderStyle::setStopColor),
+        new PropertyWrapperColor(CSSPropertyStopColor, &RenderStyle::stopColor, &RenderStyle::setStopColor),
 
-        new PropertyWrapperMaybeInvalidColor(CSSPropertyLightingColor, &RenderStyle::lightingColor, &RenderStyle::setLightingColor),
+        new PropertyWrapperColor(CSSPropertyLightingColor, &RenderStyle::lightingColor, &RenderStyle::setLightingColor),
 
         new PropertyWrapper<SVGLengthValue>(CSSPropertyBaselineShift, &RenderStyle::baselineShiftValue, &RenderStyle::setBaselineShiftValue),
         new PropertyWrapper<SVGLengthValue>(CSSPropertyKerning, &RenderStyle::kerning, &RenderStyle::setKerning),
@@ -3212,7 +3176,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new PropertyWrapperFontStyle(),
         new PropertyWrapper<TextDecorationThickness>(CSSPropertyTextDecorationThickness, &RenderStyle::textDecorationThickness, &RenderStyle::setTextDecorationThickness),
         new PropertyWrapper<TextUnderlineOffset>(CSSPropertyTextUnderlineOffset, &RenderStyle::textUnderlineOffset, &RenderStyle::setTextUnderlineOffset),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyTextDecorationColor, MaybeInvalidColor, &RenderStyle::textDecorationColor, &RenderStyle::setTextDecorationColor, &RenderStyle::visitedLinkTextDecorationColor, &RenderStyle::setVisitedLinkTextDecorationColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyTextDecorationColor, &RenderStyle::textDecorationColor, &RenderStyle::setTextDecorationColor, &RenderStyle::visitedLinkTextDecorationColor, &RenderStyle::setVisitedLinkTextDecorationColor),
 
         new LengthPropertyWrapper(CSSPropertyFlexBasis, &RenderStyle::flexBasis, &RenderStyle::setFlexBasis, { LengthPropertyWrapper::Flags::IsLengthPercentage, LengthPropertyWrapper::Flags::NegativeLengthsAreInvalid }),
         new FloatPropertyWrapper(CSSPropertyFlexGrow, &RenderStyle::flexGrow, &RenderStyle::setFlexGrow, FloatPropertyWrapper::ValueRange::NonNegative),
@@ -3293,7 +3257,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new DiscretePropertyWrapper<TextAlignLast>(CSSPropertyTextAlignLast, &RenderStyle::textAlignLast, &RenderStyle::setTextAlignLast),
         new DiscretePropertyWrapper<OptionSet<TextDecorationLine>>(CSSPropertyTextDecorationLine, &RenderStyle::textDecorationLine, &RenderStyle::setTextDecorationLine),
         new DiscretePropertyWrapper<TextDecorationStyle>(CSSPropertyTextDecorationStyle, &RenderStyle::textDecorationStyle, &RenderStyle::setTextDecorationStyle),
-        new PropertyWrapperVisitedAffectedColor(CSSPropertyTextEmphasisColor, MaybeInvalidColor, &RenderStyle::textEmphasisColor, &RenderStyle::setTextEmphasisColor, &RenderStyle::visitedLinkTextEmphasisColor, &RenderStyle::setVisitedLinkTextEmphasisColor),
+        new PropertyWrapperVisitedAffectedColor(CSSPropertyTextEmphasisColor, &RenderStyle::textEmphasisColor, &RenderStyle::setTextEmphasisColor, &RenderStyle::visitedLinkTextEmphasisColor, &RenderStyle::setVisitedLinkTextEmphasisColor),
         new DiscretePropertyWrapper<OptionSet<TextEmphasisPosition>>(CSSPropertyTextEmphasisPosition, &RenderStyle::textEmphasisPosition, &RenderStyle::setTextEmphasisPosition),
         new TextEmphasisStyleWrapper,
         new DiscretePropertyWrapper<TextJustify>(CSSPropertyTextJustify, &RenderStyle::textJustify, &RenderStyle::setTextJustify),

@@ -1188,6 +1188,64 @@ inline static bool changedCustomPaintWatchedProperty(const RenderStyle& a, const
 }
 #endif
 
+static bool areEquivalentForPainting(const Color& a, const Color& b)
+{
+    return a == b || (!a.isVisible() && !b.isVisible());
+}
+
+static bool areEquivalentForPainting(const RenderStyle& styleA, const StyleColor& a, const RenderStyle& styleB, const StyleColor& b)
+{
+    return areEquivalentForPainting(styleA.resolvedColor(a), styleB.resolvedColor(b));
+}
+
+static bool areEquivalentForPainting(const RenderStyle& styleA, const BorderValue& a, const RenderStyle& styleB, const BorderValue& b)
+{
+    if (&a == &b)
+        return true;
+    if (!a.isVisible(styleA) && !b.isVisible(styleB))
+        return true;
+    return areEquivalentForPainting(styleA, a.color(), styleB, b.color())
+        && a.width() == b.width()
+        && a.style() == b.style();
+}
+
+static bool areEquivalentForPainting(const RenderStyle& styleA, const BorderData& a, const RenderStyle& styleB, const BorderData& b)
+{
+    if (&a == &b)
+        return true;
+
+    // FIXME: Consider optimizing the case where the radii are different but the relevant borders are not visible.
+    return areEquivalentForPainting(styleA, a.left(), styleB, b.left())
+        && areEquivalentForPainting(styleA, a.right(), styleB, b.right())
+        && areEquivalentForPainting(styleA, a.top(), styleB, b.top())
+        && areEquivalentForPainting(styleA, a.bottom(), styleB, b.bottom())
+        && a.image() == b.image()
+        && a.topLeftRadius() == b.topLeftRadius()
+        && a.topRightRadius() == b.topRightRadius()
+        && a.bottomLeftRadius() == b.bottomLeftRadius()
+        && a.bottomRightRadius() == b.bottomRightRadius();
+}
+
+static bool areEquivalentForPainting(const RenderStyle& styleA, const OutlineValue& a, const RenderStyle& styleB, const OutlineValue& b)
+{
+    if (&a == &b)
+        return true;
+    if (!a.isVisible(styleA) && !b.isVisible(styleB))
+        return true;
+    return areEquivalentForPainting(styleA, a.color(), styleB, b.color())
+        && a.width() == b.width()
+        && a.style() == b.style()
+        && a.offset() == b.offset()
+        && a.isAuto() == b.isAuto();
+}
+
+static bool areEquivalentForPainting(const RenderStyle& styleA, const StyleBackgroundData& a, const RenderStyle& styleB, const StyleBackgroundData& b)
+{
+    return a.background == b.background
+        && areEquivalentForPainting(styleA, a.color, styleB, b.color)
+        && areEquivalentForPainting(styleA, a.outline, styleB, b.outline);
+}
+
 bool RenderStyle::changeRequiresRepaint(const RenderStyle& other, OptionSet<StyleDifferenceContextSensitiveProperty>& changedContextSensitiveProperties) const
 {
     if (!requiresPainting(*this) && !requiresPainting(other))
@@ -1199,17 +1257,11 @@ bool RenderStyle::changeRequiresRepaint(const RenderStyle& other, OptionSet<Styl
         || m_inheritedFlags.insideDefaultButton != other.m_inheritedFlags.insideDefaultButton)
         return true;
 
+    if (!areEquivalentForPainting(*this, *m_backgroundData, other, *other.m_backgroundData))
+        return true;
 
-    bool currentColorDiffers = m_inheritedData->color != other.m_inheritedData->color;
-    if (m_backgroundData.ptr() != other.m_backgroundData.ptr()) {
-        if (!m_backgroundData->isEquivalentForPainting(*other.m_backgroundData, currentColorDiffers))
-            return true;
-    }
-
-    if (m_surroundData.ptr() != other.m_surroundData.ptr()) {
-        if (!m_surroundData->border.isEquivalentForPainting(other.m_surroundData->border, currentColorDiffers))
-            return true;
-    }
+    if (!areEquivalentForPainting(*this, m_surroundData->border, other, other.m_surroundData->border))
+        return true;
 
     if (m_rareNonInheritedData.ptr() != other.m_rareNonInheritedData.ptr()
         && rareNonInheritedDataChangeRequiresRepaint(*m_rareNonInheritedData, *other.m_rareNonInheritedData, changedContextSensitiveProperties))
@@ -1692,22 +1744,22 @@ void RenderStyle::setListStyleImage(RefPtr<StyleImage>&& v)
         m_rareInheritedData.access().listStyleImage = WTFMove(v);
 }
 
-const Color& RenderStyle::color() const
+const StyleColor& RenderStyle::color() const
 {
     return m_inheritedData->color;
 }
 
-const Color& RenderStyle::visitedLinkColor() const
+const StyleColor& RenderStyle::visitedLinkColor() const
 {
     return m_inheritedData->visitedLinkColor;
 }
 
-void RenderStyle::setColor(const Color& v)
+void RenderStyle::setColor(const StyleColor& v)
 {
     SET_VAR(m_inheritedData, color, v);
 }
 
-void RenderStyle::setVisitedLinkColor(const Color& v)
+void RenderStyle::setVisitedLinkColor(const StyleColor& v)
 {
     SET_VAR(m_inheritedData, visitedLinkColor, v);
 }
@@ -2196,7 +2248,7 @@ void RenderStyle::getShadowVerticalExtent(const ShadowData* shadow, LayoutUnit &
     }
 }
 
-Color RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, bool visitedLink) const
+StyleColor RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, bool visitedLink) const
 {
     switch (colorProperty) {
     case CSSPropertyAccentColor:
@@ -2252,7 +2304,7 @@ Color RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, bool 
     return { };
 }
 
-Color RenderStyle::colorResolvingCurrentColor(CSSPropertyID colorProperty, bool visitedLink) const
+Color RenderStyle::resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const
 {
     auto computeBorderStyle = [&] {
         switch (colorProperty) {
@@ -2275,35 +2327,35 @@ Color RenderStyle::colorResolvingCurrentColor(CSSPropertyID colorProperty, bool 
         if (colorProperty == CSSPropertyTextDecorationColor) {
             if (hasPositiveStrokeWidth()) {
                 // Prefer stroke color if possible but not if it's fully transparent.
-                auto strokeColor = colorResolvingCurrentColor(effectiveStrokeColorProperty(), visitedLink);
+                auto strokeColor = resolvedColor(effectiveStrokeColorProperty(), visitedLink);
                 if (strokeColor.isVisible())
                     return strokeColor;
             }
 
-            return colorResolvingCurrentColor(CSSPropertyWebkitTextFillColor, visitedLink);
+            return resolvedColor(CSSPropertyWebkitTextFillColor, visitedLink);
         }
 
         auto borderStyle = computeBorderStyle();
         if (!visitedLink && (borderStyle == BorderStyle::Inset || borderStyle == BorderStyle::Outset || borderStyle == BorderStyle::Ridge || borderStyle == BorderStyle::Groove))
             return SRGBA<uint8_t> { 238, 238, 238 };
 
-        return visitedLink ? visitedLinkColor() : color();
+        return resolvedColor(visitedLink ? visitedLinkColor() : color());
     }
 
-    return result;
+    return result.alreadyResolvedColor();
 }
 
-Color RenderStyle::colorResolvingCurrentColor(const Color& color) const
+Color RenderStyle::resolvedColor(const StyleColor& color) const
 {
     if (isCurrentColor(color))
-        return this->color();
+        return this->color().alreadyResolvedColor();
 
-    return color;
+    return color.alreadyResolvedColor();
 }
 
 Color RenderStyle::visitedDependentColor(CSSPropertyID colorProperty) const
 {
-    Color unvisitedColor = colorResolvingCurrentColor(colorProperty, false);
+    Color unvisitedColor = resolvedColor(colorProperty, false);
     if (insideLink() != InsideLink::InsideVisited)
         return unvisitedColor;
 
@@ -2312,7 +2364,7 @@ Color RenderStyle::visitedDependentColor(CSSPropertyID colorProperty) const
         return unvisitedColor;
 #endif
     
-    Color visitedColor = colorResolvingCurrentColor(colorProperty, true);
+    Color visitedColor = resolvedColor(colorProperty, true);
 
     // FIXME: Technically someone could explicitly specify the color transparent, but for now we'll just
     // assume that if the background color is transparent that it wasn't set. Note that it's weird that
@@ -2341,15 +2393,20 @@ Color RenderStyle::colorByApplyingColorFilter(const Color& color) const
     return transformedColor;
 }
 
+Color RenderStyle::resolvedColorApplyingColorFilter(const StyleColor& color) const
+{
+    return colorByApplyingColorFilter(resolvedColor(color));
+}
+
 Color RenderStyle::effectiveAccentColor() const
 {
     if (hasAutoAccentColor())
         return { };
 
     if (hasAppleColorFilter())
-        return colorByApplyingColorFilter(colorResolvingCurrentColor(accentColor()));
+        return resolvedColorApplyingColorFilter(accentColor());
 
-    return colorResolvingCurrentColor(accentColor());
+    return resolvedColor(accentColor());
 }
 
 const BorderValue& RenderStyle::borderBefore() const

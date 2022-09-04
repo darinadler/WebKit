@@ -49,7 +49,7 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
         break;
     case MarkedText::Highlight:
         if (auto renderStyle = renderer.parent()->getUncachedPseudoStyle({ PseudoId::Highlight, markedText.highlightName }, &renderer.style())) {
-            style.backgroundColor = renderStyle->backgroundColor();
+            style.backgroundColor = renderStyle->resolvedColor(renderStyle->backgroundColor());
             style.textStyles.fillColor = renderStyle->computedStrokeColor();
             style.textStyles.strokeColor = renderStyle->computedStrokeColor();
 
@@ -115,7 +115,7 @@ StyledMarkedText::Style StyledMarkedText::computeStyleForUnmarkedMarkedText(cons
     StyledMarkedText::Style style;
     style.textDecorationStyles = TextDecorationPainter::stylesForRenderer(renderer, lineStyle.textDecorationsInEffect(), isFirstLine);
     style.textStyles = computeTextPaintStyle(renderer.frame(), lineStyle, paintInfo);
-    style.textShadow = ShadowData::clone(paintInfo.forceTextColor() ? nullptr : lineStyle.textShadow());
+    style.textShadow = resolvedTextShadowForPainting(lineStyle, paintInfo);
     return style;
 }
 

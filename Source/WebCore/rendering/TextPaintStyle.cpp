@@ -120,7 +120,7 @@ TextPaintStyle computeTextPaintStyle(const Frame& frame, const RenderStyle& line
     if (forceBackgroundToWhite)
         paintStyle.fillColor = adjustColorForVisibilityOnBackground(paintStyle.fillColor, Color::white);
 
-    paintStyle.strokeColor = lineStyle.colorByApplyingColorFilter(lineStyle.computedStrokeColor());
+    paintStyle.strokeColor = lineStyle.resolvedColorApplyingColorFilter(lineStyle.computedStrokeColor());
 
     // Make the text stroke color legible against a white background
     if (forceBackgroundToWhite)
@@ -133,6 +133,15 @@ TextPaintStyle computeTextPaintStyle(const Frame& frame, const RenderStyle& line
         paintStyle.emphasisMarkColor = adjustColorForVisibilityOnBackground(paintStyle.emphasisMarkColor, Color::white);
 
     return paintStyle;
+}
+
+std::optional<ShadowData> resolvedTextShadowForPainting(const RenderStyle& style, const PaintInfo& paintInfo)
+{
+    auto result = ShadowData::clone(paintInfo.forceTextColor() ? nullptr : style.textShadow());
+    // FIXME: Resolve colors.
+    if (result) {
+    }
+    return result;
 }
 
 TextPaintStyle computeTextSelectionPaintStyle(const TextPaintStyle& textPaintStyle, const RenderText& renderer, const RenderStyle& lineStyle, const PaintInfo& paintInfo, std::optional<ShadowData>& selectionShadow)
@@ -149,7 +158,7 @@ TextPaintStyle computeTextSelectionPaintStyle(const TextPaintStyle& textPaintSty
         selectionPaintStyle.emphasisMarkColor = emphasisMarkForeground;
 
     if (auto pseudoStyle = renderer.selectionPseudoStyle()) {
-        selectionShadow = ShadowData::clone(paintInfo.forceTextColor() ? nullptr : pseudoStyle->textShadow());
+        selectionShadow = resolvedTextShadowForPainting(*pseudoStyle, paintInfo);
         auto viewportSize = renderer.frame().view() ? renderer.frame().view()->size() : IntSize();
         float strokeWidth = pseudoStyle->computedStrokeWidth(viewportSize);
         if (strokeWidth != selectionPaintStyle.strokeWidth)
@@ -159,13 +168,14 @@ TextPaintStyle computeTextSelectionPaintStyle(const TextPaintStyle& textPaintSty
         if (stroke != selectionPaintStyle.strokeColor)
             selectionPaintStyle.strokeColor = stroke;
     } else
-        selectionShadow = ShadowData::clone(paintInfo.forceTextColor() ? nullptr : lineStyle.textShadow());
+        selectionShadow = resolvedTextShadowForPainting(lineStyle, paintInfo);
 #else
     UNUSED_PARAM(renderer);
     UNUSED_PARAM(lineStyle);
     UNUSED_PARAM(paintInfo);
-    selectionShadow = ShadowData::clone(paintInfo.forceTextColor() ? nullptr : lineStyle.textShadow());
+    selectionShadow = resolvedTextShadowForPainting(lineStyle, paintInfo);
 #endif
+
     return selectionPaintStyle;
 }
 

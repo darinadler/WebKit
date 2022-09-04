@@ -6263,7 +6263,7 @@ String Internals::highlightPseudoElementColor(const AtomString& highlightName, E
     if (!style)
         return { };
 
-    return serializationForCSS(style->color());
+    return serializationForCSS(style->resolvedColor(style->color()));
 }
     
 Internals::TextIndicatorInfo::TextIndicatorInfo()

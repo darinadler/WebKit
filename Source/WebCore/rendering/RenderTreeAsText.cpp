@@ -370,9 +370,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
             else {
                 ts << " (" << borderTop << "px ";
                 printBorderStyle(ts, o.style().borderTopStyle());
-                auto color = o.style().borderTopColor();
-                if (!color.isValid())
-                    color = o.style().color();
+                auto color = o.style().resolvedColor(o.style().borderTopColor());
                 ts << serializationForRenderTreeAsText(color) << ")";
             }
 
@@ -383,9 +381,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 else {
                     ts << " (" << borderRight << "px ";
                     printBorderStyle(ts, o.style().borderRightStyle());
-                    auto color = o.style().borderRightColor();
-                    if (!color.isValid())
-                        color = o.style().color();
+                    auto color = o.style().resolvedColor(o.style().borderRightColor());
                     ts << serializationForRenderTreeAsText(color) << ")";
                 }
             }
@@ -397,9 +393,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 else {
                     ts << " (" << borderBottom << "px ";
                     printBorderStyle(ts, o.style().borderBottomStyle());
-                    auto color = o.style().borderBottomColor();
-                    if (!color.isValid())
-                        color = o.style().color();
+                    auto color = o.style().resolvedColor(o.style().borderBottomColor());
                     ts << serializationForRenderTreeAsText(color) << ")";
                 }
             }
@@ -411,9 +405,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 else {
                     ts << " (" << borderLeft << "px ";
                     printBorderStyle(ts, o.style().borderLeftStyle());
-                    auto color = o.style().borderLeftColor();
-                    if (!color.isValid())
-                        color = o.style().color();
+                    auto color = o.style().resolvedColor(o.style().borderLeftColor());
                     ts << serializationForRenderTreeAsText(color) << ")";
                 }
             }

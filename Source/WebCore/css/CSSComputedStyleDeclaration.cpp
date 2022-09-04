@@ -465,12 +465,10 @@ static RefPtr<CSSValue> positionOffsetValue(const RenderStyle& style, CSSPropert
     return CSSValuePool::singleton().createIdentifierValue(CSSValueAuto);
 }
 
-Ref<CSSPrimitiveValue> ComputedStyleExtractor::currentColorOrValidColor(const RenderStyle* style, const Color& color) const
+Ref<CSSPrimitiveValue> ComputedStyleExtractor::currentColorOrValidColor(const RenderStyle* style, const StyleColor& color) const
 {
     // This function does NOT look at visited information, so that computed style doesn't expose that.
-    if (!color.isValid())
-        return CSSValuePool::singleton().createColorValue(style->color());
-    return CSSValuePool::singleton().createColorValue(color);
+    return CSSValuePool::singleton().createColorValue(style->resolvedColor(color));
 }
 
 static Ref<CSSPrimitiveValue> percentageOrZoomAdjustedValue(Length length, const RenderStyle& style)
@@ -718,9 +716,9 @@ Ref<CSSValue> ComputedStyleExtractor::valueForShadow(const ShadowData* shadow, C
         auto y = adjustLengthForZoom(currShadowData->y(), style, adjust);
         auto blur = adjustLengthForZoom(currShadowData->radius(), style, adjust);
         auto spread = propertyID == CSSPropertyTextShadow ? RefPtr<CSSPrimitiveValue>() : adjustLengthForZoom(currShadowData->spread(), style, adjust);
-        auto style = propertyID == CSSPropertyTextShadow || currShadowData->style() == ShadowStyle::Normal ? RefPtr<CSSPrimitiveValue>() : cssValuePool.createIdentifierValue(CSSValueInset);
-        auto color = cssValuePool.createColorValue(currShadowData->color());
-        list->prepend(CSSShadowValue::create(WTFMove(x), WTFMove(y), WTFMove(blur), WTFMove(spread), WTFMove(style), WTFMove(color)));
+        auto shadowStyle = propertyID == CSSPropertyTextShadow || currShadowData->style() == ShadowStyle::Normal ? RefPtr<CSSPrimitiveValue>() : cssValuePool.createIdentifierValue(CSSValueInset);
+        auto color = cssValuePool.createColorValue(style.resolvedColor(currShadowData->color()));
+        list->prepend(CSSShadowValue::create(WTFMove(x), WTFMove(y), WTFMove(blur), WTFMove(spread), WTFMove(shadowStyle), WTFMove(color)));
     }
     return list;
 }
@@ -2986,7 +2984,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         case CSSPropertyClear:
             return cssValuePool.createValue(style.clear());
         case CSSPropertyColor:
-            return cssValuePool.createColorValue(m_allowVisitedStyle ? style.visitedDependentColor(CSSPropertyColor) : style.color());
+            return cssValuePool.createColorValue(m_allowVisitedStyle ? style.visitedDependentColor(CSSPropertyColor) : style.resolvedColor(style.color()));
         case CSSPropertyPrintColorAdjust:
             return cssValuePool.createValue(style.printColorAdjust());
         case CSSPropertyWebkitColumnAxis:

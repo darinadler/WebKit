@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "BorderValue.h"
 #include "Color.h"
 #include "FontCascade.h"
 #include "NinePieceImage.h"

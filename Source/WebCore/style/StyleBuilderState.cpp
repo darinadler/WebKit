@@ -263,9 +263,9 @@ bool BuilderState::createFilterOperations(const CSSValue& inValue, FilterOperati
             int y = item.y->computeLength<int>(cssToLengthConversionData());
             IntPoint location(x, y);
             int blur = item.blur ? item.blur->computeLength<int>(cssToLengthConversionData()) : 0;
-            auto color = item.color ? colorFromPrimitiveValueWithResolvedCurrentColor(*item.color) : m_style.color();
+            auto color = item.color ? colorFromPrimitiveValueWithResolvedCurrentColor(*item.color) : m_style.resolvedColor(m_style.color());
 
-            operations.operations().append(DropShadowFilterOperation::create(location, blur, color.isValid() ? color : Color::transparentBlack));
+            operations.operations().append(DropShadowFilterOperation::create(location, blur, color));
             break;
         }
         default:
@@ -291,7 +291,7 @@ bool BuilderState::isColorFromPrimitiveValueDerivedFromElement(const CSSPrimitiv
     }
 }
 
-Color BuilderState::colorFromPrimitiveValue(const CSSPrimitiveValue& value, ForVisitedLink forVisitedLink) const
+StyleColor BuilderState::colorFromPrimitiveValue(const CSSPrimitiveValue& value, ForVisitedLink forVisitedLink) const
 {
     if (value.isRGBColor())
         return value.color();
@@ -320,10 +320,10 @@ Color BuilderState::colorFromPrimitiveValueWithResolvedCurrentColor(const CSSPri
         // Color is an inherited property so depending on it effectively makes the property inherited.
         m_style.setHasExplicitlyInheritedProperties();
         m_style.setDisallowsFastPathInheritance();
-        return m_style.color();
+        return m_style.resolvedColor(m_style.color());
     }
 
-    return colorFromPrimitiveValue(value);
+    return m_style.resolvedColor(colorFromPrimitiveValue(value));
 }
 
 void BuilderState::registerContentAttribute(const AtomString& attributeLocalName)

@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003, 2005, 2006, 2007, 2008 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -24,10 +24,12 @@
 
 #pragma once
 
-#include "Color.h"
 #include "RenderStyleConstants.h"
+#include "StyleColor.h"
 
 namespace WebCore {
+
+class RenderStyle;
 
 class BorderValue {
 friend class RenderStyle;
@@ -43,14 +45,11 @@ public:
         return width() && style() != BorderStyle::None;
     }
 
-    bool isTransparent() const
-    {
-        return m_color.isValid() && !m_color.isVisible();
-    }
+    bool isTransparent(const RenderStyle&) const;
 
-    bool isVisible() const
+    bool isVisible(const RenderStyle& style) const
     {
-        return nonZero() && !isTransparent() && style() != BorderStyle::Hidden;
+        return nonZero() && !isTransparent(style) && this->style() != BorderStyle::Hidden;
     }
 
     bool operator==(const BorderValue& o) const
@@ -63,21 +62,19 @@ public:
         return !(*this == o);
     }
 
-    void setColor(const Color& color)
+    void setColor(const StyleColor& color)
     {
         m_color = color;
     }
 
-    const Color& color() const { return m_color; }
+    const StyleColor& color() const { return m_color; }
 
     float width() const { return m_width; }
     BorderStyle style() const { return static_cast<BorderStyle>(m_style); }
 
 protected:
-    Color m_color;
-
+    StyleColor m_color;
     float m_width { 3 };
-
     unsigned m_style : 4; // BorderStyle
 
     // This is only used by OutlineValue but moved here to keep the bits packed.

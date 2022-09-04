@@ -47,8 +47,9 @@ static inline bool inheritColorFromParentStyleIfNeeded(RenderElement& object, bo
         return true;
     if (!object.parent())
         return false;
-    const SVGRenderStyle& parentSVGStyle = object.parent()->style().svgStyle();
-    color = applyToFill ? parentSVGStyle.fillPaintColor() : parentSVGStyle.strokePaintColor();
+    auto& parentStyle = object.parent()->style();
+    auto& parentSVGStyle = parentStyle.svgStyle();
+    color = parentStyle.resolvedColor(applyToFill ? parentSVGStyle.fillPaintColor() : parentSVGStyle.strokePaintColor());
     return true;
 }
 
@@ -85,7 +86,7 @@ static inline RenderSVGResource* requestPaintingResource(RenderSVGResourceMode m
     case SVGPaintType::RGBColor:
     case SVGPaintType::URICurrentColor:
     case SVGPaintType::URIRGBColor:
-        color = applyToFill ? svgStyle.fillPaintColor() : svgStyle.strokePaintColor();
+        color = style.resolvedColor(applyToFill ? svgStyle.fillPaintColor() : svgStyle.strokePaintColor());
         break;
     default:
         break;
@@ -96,11 +97,8 @@ static inline RenderSVGResource* requestPaintingResource(RenderSVGResourceMode m
         SVGPaintType visitedPaintType = applyToFill ? svgStyle.visitedLinkFillPaintType() : svgStyle.visitedLinkStrokePaintType();
 
         // For SVGPaintType::CurrentColor, 'color' already contains the 'visitedColor'.
-        if (visitedPaintType < SVGPaintType::URINone && visitedPaintType != SVGPaintType::CurrentColor) {
-            const Color& visitedColor = applyToFill ? svgStyle.visitedLinkFillPaintColor() : svgStyle.visitedLinkStrokePaintColor();
-            if (visitedColor.isValid())
-                color = visitedColor.colorWithAlpha(color.alphaAsFloat());
-        }
+        if (visitedPaintType < SVGPaintType::URINone && visitedPaintType != SVGPaintType::CurrentColor)
+            color = style.resolvedColor(applyToFill ? svgStyle.visitedLinkFillPaintColor() : svgStyle.visitedLinkStrokePaintColor()).colorWithAlpha(color.alphaAsFloat());
     }
 
     // If the primary resource is just a color, return immediately.

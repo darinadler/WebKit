@@ -128,7 +128,7 @@ bool SVGFEDropShadowElement::setFilterEffectAttribute(FilterEffect& effect, cons
     const RenderStyle& style = renderer->style();
 
     if (attrName == SVGNames::flood_colorAttr)
-        return feDropShadow.setShadowColor(style.svgStyle().floodColor());
+        return feDropShadow.setShadowColor(style.resolvedColor(style.svgStyle().floodColor()));
     if (attrName == SVGNames::flood_opacityAttr)
         return feDropShadow.setShadowOpacity(style.svgStyle().floodOpacity());
 
@@ -159,7 +159,7 @@ RefPtr<FilterEffect> SVGFEDropShadowElement::createFilterEffect(const FilterEffe
 
     const SVGRenderStyle& svgStyle = renderer->style().svgStyle();
     
-    Color color = renderer->style().colorByApplyingColorFilter(svgStyle.floodColor());
+    Color color = renderer->style().resolvedColorApplyingColorFilter(svgStyle.floodColor());
     float opacity = svgStyle.floodOpacity();
 
     return FEDropShadow::create(stdDeviationX(), stdDeviationY(), dx(), dy(), color, opacity);

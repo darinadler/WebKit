@@ -198,8 +198,10 @@ static HashSet<Color> estimatedTextColorsForRange(const SimpleRange& range)
         if (!node)
             continue;
         auto renderer = node->renderer();
-        if (is<RenderText>(renderer))
-            colors.add(renderer->style().color());
+        if (is<RenderText>(renderer)) {
+            auto& style = downcast<RenderText>(*renderer).style();
+            colors.add(style.resolvedColor(style.color()));
+        }
     }
     return colors;
 }

@@ -48,9 +48,9 @@ public:
         return m_left.nonZero() || m_right.nonZero() || m_top.nonZero() || m_bottom.nonZero();
     }
 
-    bool hasVisibleBorder() const
+    bool hasVisibleBorder(const RenderStyle& style) const
     {
-        return m_left.isVisible() || m_right.isVisible() || m_top.isVisible() || m_bottom.isVisible();
+        return m_left.isVisible(style) || m_right.isVisible(style) || m_top.isVisible(style) || m_bottom.isVisible(style);
     }
 
     bool hasBorderImage() const
@@ -106,8 +106,6 @@ public:
     {
         return FloatBoxExtent(borderTopWidth(), borderRightWidth(), borderBottomWidth(), borderLeftWidth());
     }
-
-    bool isEquivalentForPainting(const BorderData& other, bool currentColorDiffers) const;
 
     bool operator==(const BorderData& o) const
     {

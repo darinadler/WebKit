@@ -110,7 +110,7 @@ Color Color::darkened() const
     return convertColor<SRGBA<uint8_t>>(SRGBA<float> { multiplier * r, multiplier * g, multiplier * b, a });
 }
 
-double Color::lightness() const
+double Color::deprecatedLightness() const
 {
     // FIXME: Replace remaining uses with luminance.
     auto [r, g, b, a] = toColorTypeLossy<SRGBA<float>>().resolved();

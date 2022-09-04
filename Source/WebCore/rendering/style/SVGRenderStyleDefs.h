@@ -155,8 +155,8 @@ public:
     }
 
     float opacity;
-    Color paintColor;
-    Color visitedLinkPaintColor;
+    StyleColor paintColor;
+    StyleColor visitedLinkPaintColor;
     String paintUri;
     String visitedLinkPaintUri;
     SVGPaintType paintType;
@@ -180,8 +180,8 @@ public:
 
     float opacity;
 
-    Color paintColor;
-    Color visitedLinkPaintColor;
+    StyleColor paintColor;
+    StyleColor visitedLinkPaintColor;
 
     String paintUri;
     String visitedLinkPaintUri;
@@ -209,7 +209,7 @@ public:
     }
 
     float opacity;
-    Color color;
+    StyleColor color;
 
 private:
     StyleStopData();
@@ -247,8 +247,8 @@ public:
     }
 
     float floodOpacity;
-    Color floodColor;
-    Color lightingColor;
+    StyleColor floodColor;
+    StyleColor lightingColor;
 
     // non-inherited text stuff lives here not in StyleTextData.
     SVGLengthValue baselineShiftValue;

@@ -1292,7 +1292,7 @@ void BoxDecorationPainter::paintBoxShadow(PaintingContext& paintingContext, Shad
         auto shadowRectOrigin = fillRect.rect().location() + shadowOffset;
         auto adjustedShadowOffset = shadowRectOrigin - adjustedFillRect.rect().location();
 
-        paintingContext.context.setShadow(adjustedShadowOffset, shadowRadius.value(), shadow.color(), shadow.isWebkitBoxShadow() ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default);
+        paintingContext.context.setShadow(adjustedShadowOffset, shadowRadius.value(), shadow.color().alreadyResolvedColor(), shadow.isWebkitBoxShadow() ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default);
 
         if (hasBorderRadius) {
             // If the box is opaque, it is unnecessary to clip it out. However, doing so saves time
@@ -1367,11 +1367,13 @@ void BoxDecorationPainter::paintBoxShadow(PaintingContext& paintingContext, Shad
             roundedHoleRect.setRadii(roundedRectCorrectingForSpread.radii());
         }
 
+        auto& shadowColor = shadow.color().alreadyResolvedColor();
+
         if (roundedHoleRect.isEmpty()) {
             if (hasBorderRadius)
-                paintingContext.context.fillRoundedRect(borderRect, shadow.color());
+                paintingContext.context.fillRoundedRect(borderRect, shadowColor);
             else
-                paintingContext.context.fillRect(borderRect.rect(), shadow.color());
+                paintingContext.context.fillRect(borderRect.rect(), shadowColor);
             return;
         }
 
@@ -1388,7 +1390,7 @@ void BoxDecorationPainter::paintBoxShadow(PaintingContext& paintingContext, Shad
             return unionRect(bounds, offsetBounds);
         };
 
-        Color fillColor = shadow.color().opaqueColor();
+        Color fillColor = shadowColor.opaqueColor();
         auto shadowCastingRect = areaCastingShadowInHole(borderRect.rect(), shadowPaintingExtent, shadowSpread, shadowOffset);
 
         GraphicsContextStateSaver stateSaver(paintingContext.context);
@@ -1403,7 +1405,7 @@ void BoxDecorationPainter::paintBoxShadow(PaintingContext& paintingContext, Shad
         paintingContext.context.translate(extraOffset);
         shadowOffset -= extraOffset;
 
-        paintingContext.context.setShadow(shadowOffset, shadowRadius.value(), shadow.color(), shadow.isWebkitBoxShadow() ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default);
+        paintingContext.context.setShadow(shadowOffset, shadowRadius.value(), shadowColor, shadow.isWebkitBoxShadow() ? ShadowRadiusMode::Legacy : ShadowRadiusMode::Default);
         paintingContext.context.fillRectWithRoundedHole(shadowCastingRect, roundedHoleRect, fillColor);
     };
 

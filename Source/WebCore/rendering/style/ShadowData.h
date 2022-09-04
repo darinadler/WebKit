@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003, 2005, 2006, 2007, 2008, 2009 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *
  * This library is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "Color.h"
 #include "FloatRect.h"
 #include "LayoutRect.h"
 #include "Length.h"
 #include "LengthPoint.h"
+#include "StyleColor.h"
 
 namespace WebCore {
 
@@ -41,7 +41,7 @@ class ShadowData {
 public:
     ShadowData() = default;
 
-    ShadowData(const LengthPoint& location, Length radius, Length spread, ShadowStyle style, bool isWebkitBoxShadow, const Color& color)
+    ShadowData(const LengthPoint& location, Length radius, Length spread, ShadowStyle style, bool isWebkitBoxShadow, const StyleColor& color)
         : m_location(location.x(), location.y())
         , m_spread(spread)
         , m_radius(radius)
@@ -79,8 +79,8 @@ public:
     const Length& spread() const { return m_spread; }
     ShadowStyle style() const { return m_style; }
 
-    void setColor(const Color& color) { m_color = color; }
-    const Color& color() const { return m_color; }
+    void setColor(const StyleColor& color) { m_color = color; }
+    const StyleColor& color() const { return m_color; }
 
     bool isWebkitBoxShadow() const { return m_isWebkitBoxShadow; }
 
@@ -96,7 +96,7 @@ private:
     LengthPoint m_location;
     Length m_spread;
     Length m_radius; // This is the "blur radius", or twice the standard deviation of the Gaussian blur.
-    Color m_color;
+    StyleColor m_color;
     ShadowStyle m_style { ShadowStyle::Normal };
     bool m_isWebkitBoxShadow { false };
     std::unique_ptr<ShadowData> m_next;

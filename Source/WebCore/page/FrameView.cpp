@@ -381,7 +381,7 @@ void FrameView::recalculateScrollbarOverlayStyle()
         }
         auto background = documentBackgroundColor();
         if (background.isVisible()) {
-            if (background.lightness() <= .5f)
+            if (background.deprecatedLightness() <= .5f)
                 return ScrollbarOverlayStyleLight;
         } else {
             if (useDarkAppearance())

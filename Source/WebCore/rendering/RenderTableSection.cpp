@@ -1540,7 +1540,7 @@ CollapsedBorderValue RenderTableSection::cachedCollapsedBorder(const RenderTable
     auto it = m_cellsCollapsedBorders.find(std::make_pair(&cell, side));
     // Only non-empty collapsed borders are in the hashmap.
     if (it == m_cellsCollapsedBorders.end())
-        return CollapsedBorderValue(BorderValue(), Color(), BorderPrecedence::Cell);
+        return CollapsedBorderValue(BorderPrecedence::Cell);
     return it->value;
 }
 

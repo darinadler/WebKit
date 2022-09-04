@@ -579,7 +579,7 @@ static bool fragmentNeedsColorTransformed(ReplacementFragment& fragment, const P
         if (!color || !color.value().isVisible() || color.value().isSemantic())
             return { };
 
-        return color.value().lightness();
+        return color.value().deprecatedLightness();
     };
 
     const double lightnessDarkEnoughForText = 0.4;
