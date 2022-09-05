@@ -1585,7 +1585,8 @@ public:
     bool lastChildState() const { return m_nonInheritedFlags.lastChildState; }
     void setLastChildState() { setUnique(); m_nonInheritedFlags.lastChildState = true; }
 
-    StyleColor unresolvedColorForProperty(CSSPropertyID colorProperty, bool visitedLink = false) const;
+    StyleColor unresolvedColor(CSSPropertyID colorProperty, bool visitedLink = false) const;
+    Color resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const;
     WEBCORE_EXPORT Color resolvedColor(const StyleColor&) const;
     void resolvedColor(const Color&) const = delete;
 
@@ -1903,8 +1904,7 @@ public:
     void getShadowInlineDirectionExtent(const ShadowData*, LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
     void getShadowBlockDirectionExtent(const ShadowData*, LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
 
-    static StyleColor currentColor() { return StyleColor::currentColor(); }
-    static bool isCurrentColor(const StyleColor& color) { return color.isCurrentColor(); }
+    static StyleColor currentColor() { return StyleColor { CSSValueCurrentcolor }; }
 
     const StyleColor& borderLeftColor() const { return m_surroundData->border.left().color(); }
     const StyleColor& borderRightColor() const { return m_surroundData->border.right().color(); }
@@ -2035,7 +2035,9 @@ private:
 #endif
         unsigned direction : 1; // TextDirection
         unsigned whiteSpace : 3; // WhiteSpace
-        // 35 bits
+
+        // 34 bits
+
         unsigned borderCollapse : 1; // BorderCollapse
         unsigned boxDirection : 1; // BoxDirection
 
@@ -2045,16 +2047,26 @@ private:
         unsigned pointerEvents : 4; // PointerEvents
         unsigned insideLink : 2; // InsideLink
         unsigned insideDefaultButton : 1;
-        // 46 bits
+
+        // 45 bits
 
         // CSS Text Layout Module Level 3: Vertical writing support
         unsigned writingMode : 2; // WritingMode
-        // 48 bits
+
+        // 47 bits
 
 #if ENABLE(TEXT_AUTOSIZING)
         unsigned autosizeStatus : 5;
 #endif
-        // 53 bits
+
+        // 52 bits
+
+        // color options from document
+        unsigned useSystemAppearance : 1;
+        unsigned useDarkAppearance : 1;
+        unsigned useElevatedUserInterfaceLevel : 1;
+
+        // 55 bits
     };
 
     // This constructor is used to implement the replace operation.
@@ -2077,8 +2089,6 @@ private:
     static LayoutBoxExtent shadowInsetExtent(const ShadowData*);
     static void getShadowHorizontalExtent(const ShadowData*, LayoutUnit& left, LayoutUnit& right);
     static void getShadowVerticalExtent(const ShadowData*, LayoutUnit& top, LayoutUnit& bottom);
-
-    Color resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const;
 
     bool changeAffectsVisualOverflow(const RenderStyle&) const;
     bool changeRequiresLayout(const RenderStyle&, OptionSet<StyleDifferenceContextSensitiveProperty>& changedContextSensitiveProperties) const;

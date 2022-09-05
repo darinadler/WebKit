@@ -36,6 +36,8 @@
 
 namespace WebCore {
 
+class StyleKeywordColorResolver;
+
 enum class StyleColorOptions : uint8_t {
     ForVisitedLink = 1 << 0,
     UseSystemAppearance = 1 << 1,
@@ -45,19 +47,23 @@ enum class StyleColorOptions : uint8_t {
 
 class StyleColor {
 public:
-    static Color colorFromKeyword(CSSValueID, OptionSet<StyleColorOptions>);
-    static bool isAbsoluteColorKeyword(CSSValueID);
-    WEBCORE_EXPORT static bool isSystemColorKeyword(CSSValueID);
-
+    // https://drafts.csswg.org/css-color-4/#typedef-color
     enum class CSSColorType : uint8_t {
         Absolute = 1 << 0,
         Current = 1 << 1,
         System = 1 << 2,
     };
-    // https://drafts.csswg.org/css-color-4/#typedef-color
     static bool isColorKeyword(CSSValueID, OptionSet<CSSColorType> = { CSSColorType::Absolute, CSSColorType::Current, CSSColorType::System });
+    static bool isAbsoluteColorKeyword(CSSValueID);
+    WEBCORE_EXPORT static bool isSystemColorKeyword(CSSValueID);
 
-    StyleColor();
+    static Color colorFromKeyword(CSSValueID, OptionSet<StyleColorOptions>);
+
+    StyleColor(CSSValueID = CSSValueCurrentcolor);
+    StyleColor(const Color&);
+    StyleColor(SRGBA<uint8_t>);
+    StyleColor(Function<Color(const Color&)>&&, StyleColor&&);
+    StyleColor(Function<Color(const Color&, const Color&)>&&, StyleColor&&, StyleColor&&);
     StyleColor(const StyleColor&);
     StyleColor(StyleColor&&);
     StyleColor& operator=(const StyleColor&);
@@ -65,25 +71,25 @@ public:
     ~StyleColor();
 
     bool operator==(const StyleColor&) const;
-    bool operator!=(const StyleColor&) const;
-
-    StyleColor(const Color&);
-    StyleColor(SRGBA<uint8_t>);
+    bool operator!=(const StyleColor& other) const { return !(*this == other); }
 
     static StyleColor currentColor();
-    bool isCurrentColor() const { return type() == Type::CurrentColor; }
+    bool isCurrentColor() const { return m_color.m_colorAndFlags == (encode(Type::Keyword) | encode(CSSValueCurrentcolor)); }
 
+    bool isAlreadyResolved() const;
     const Color& alreadyResolvedColor() const;
+
+    Color resolvedColor(StyleKeywordColorResolver&) const;
 
 private:
     class OutOfLineStyleColor;
-    enum class Type : uint8_t { Normal, CurrentColor, OutOfLine };
+    enum class Type : uint8_t { Normal, Keyword, OutOfLine };
 
     friend WTF::TextStream& operator<<(WTF::TextStream&, const StyleColor&);
     friend void swap(StyleColor&, StyleColor&);
 
-    static constexpr auto styleColorFlagsShift = Color::flagsShift + 6;
-    Type type() const;
+    Type type() const { return decodeType(m_color.m_colorAndFlags); }
+    CSSValueID keyword() const;
 
     bool isOutOfLineStyleColor() const { return type() == Type::OutOfLine; }
     OutOfLineStyleColor& outOfLineStyleColor() const;
@@ -91,10 +97,28 @@ private:
     void destroyOutOfLineStyleColor();
     bool isEqualOutOfLineStyleColor(const StyleColor&) const;
 
+    static constexpr auto styleColorTypeShift = Color::flagsShift + 6;
+
+    static constexpr uint64_t encode(Type type) { return static_cast<uint64_t>(type) << styleColorTypeShift; }
+    static constexpr Type decodeType(uint64_t colorAndFlags) { return static_cast<Type>((colorAndFlags >> styleColorTypeShift) & 0x3); }
+
+    static constexpr uint64_t encode(CSSValueID keyword) { return keyword; }
+    static constexpr CSSValueID decodeKeyword(uint64_t colorAndFlags) { return static_cast<CSSValueID>(colorAndFlags & 0xFFFF); }
+
     Color m_color;
 };
 
+inline StyleColor::StyleColor(CSSValueID value)
+{
+    m_color.m_colorAndFlags = encode(Type::Keyword) | encode(value);
+}
+
 inline StyleColor::StyleColor(const Color& color)
+    : m_color { color }
+{
+}
+
+inline StyleColor::StyleColor(SRGBA<uint8_t> color)
     : m_color { color }
 {
 }
@@ -146,25 +170,10 @@ inline auto StyleColor::outOfLineStyleColor() const -> OutOfLineStyleColor&
     return *static_cast<OutOfLineStyleColor*>(Color::decodedOutOfLinePointer(m_color.m_colorAndFlags));
 }
 
-inline auto StyleColor::type() const -> Type
+inline CSSValueID StyleColor::keyword() const
 {
-    return static_cast<Type>((m_color.m_colorAndFlags >> styleColorFlagsShift) & 0x3);
-}
-
-inline StyleColor::StyleColor()
-{
-    m_color = Color::transparentBlack;
-    m_color.m_colorAndFlags |= static_cast<uint64_t>(Type::CurrentColor) << styleColorFlagsShift;
-}
-
-inline StyleColor StyleColor::currentColor()
-{
-    return StyleColor { };
-}
-
-inline StyleColor::StyleColor(SRGBA<uint8_t> color)
-    : m_color { color }
-{
+    ASSERT(type() == Type::Keyword);
+    return decodeKeyword(m_color.m_colorAndFlags);
 }
 
 inline const Color& StyleColor::alreadyResolvedColor() const
@@ -181,17 +190,12 @@ inline bool StyleColor::operator==(const StyleColor& other) const
 
     switch (type) {
     case Type::Normal:
-        return m_color == other.m_color;
-    case Type::CurrentColor:
-        return true;
+        return alreadyResolvedColor() == other.alreadyResolvedColor();
+    case Type::Keyword:
+        return keyword() == other.keyword();
     case Type::OutOfLine:
         return isEqualOutOfLineStyleColor(other);
     }
-}
-
-inline bool StyleColor::operator!=(const StyleColor& other) const
-{
-    return *this == other;
 }
 
 } // namespace WebCore

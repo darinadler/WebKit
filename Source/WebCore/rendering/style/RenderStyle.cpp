@@ -46,6 +46,7 @@
 #include "StyleBuilderConverter.h"
 #include "StyleImage.h"
 #include "StyleInheritedData.h"
+#include "StyleKeywordColorResolver.h"
 #include "StyleResolver.h"
 #include "StyleScrollSnapPoints.h"
 #include "StyleSelfAlignmentData.h"
@@ -179,6 +180,9 @@ RenderStyle::RenderStyle(CreateDefaultStyleTag)
 #if ENABLE(TEXT_AUTOSIZING)
     m_inheritedFlags.autosizeStatus = 0;
 #endif
+    m_inheritedFlags.useSystemAppearance = 0;
+    m_inheritedFlags.useDarkAppearance = 0;
+    m_inheritedFlags.useElevatedUserInterfaceLevel = 0;
 
     m_nonInheritedFlags.effectiveDisplay = static_cast<unsigned>(initialDisplay());
     m_nonInheritedFlags.originalDisplay = static_cast<unsigned>(initialDisplay());
@@ -1254,7 +1258,10 @@ bool RenderStyle::changeRequiresRepaint(const RenderStyle& other, OptionSet<Styl
     if (m_inheritedFlags.visibility != other.m_inheritedFlags.visibility
         || m_inheritedFlags.printColorAdjust != other.m_inheritedFlags.printColorAdjust
         || m_inheritedFlags.insideLink != other.m_inheritedFlags.insideLink
-        || m_inheritedFlags.insideDefaultButton != other.m_inheritedFlags.insideDefaultButton)
+        || m_inheritedFlags.insideDefaultButton != other.m_inheritedFlags.insideDefaultButton
+        || m_inheritedFlags.useSystemAppearance != other.m_inheritedFlags.useSystemAppearance
+        || m_inheritedFlags.useDarkAppearance != other.m_inheritedFlags.useDarkAppearance
+        || m_inheritedFlags.useElevatedUserInterfaceLevel != other.m_inheritedFlags.useElevatedUserInterfaceLevel)
         return true;
 
     if (!areEquivalentForPainting(*this, *m_backgroundData, other, *other.m_backgroundData))
@@ -2248,7 +2255,7 @@ void RenderStyle::getShadowVerticalExtent(const ShadowData* shadow, LayoutUnit &
     }
 }
 
-StyleColor RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, bool visitedLink) const
+StyleColor RenderStyle::unresolvedColor(CSSPropertyID colorProperty, bool visitedLink) const
 {
     switch (colorProperty) {
     case CSSPropertyAccentColor:
@@ -2283,7 +2290,7 @@ StyleColor RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, 
     case CSSPropertyBorderBlockStartColor:
     case CSSPropertyBorderInlineEndColor:
     case CSSPropertyBorderInlineStartColor:
-        return unresolvedColorForProperty(CSSProperty::resolveDirectionAwareProperty(colorProperty, direction(), writingMode()));
+        return unresolvedColor(CSSProperty::resolveDirectionAwareProperty(colorProperty, direction(), writingMode()));
     case CSSPropertyColumnRuleColor:
         return visitedLink ? visitedLinkColumnRuleColor() : columnRuleColor();
     case CSSPropertyTextEmphasisColor:
@@ -2304,50 +2311,61 @@ StyleColor RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, 
     return { };
 }
 
-Color RenderStyle::resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const
+StyleKeywordColorResolver::StyleKeywordColorResolver(const RenderStyle& style, CSSPropertyID property, bool inVisitedLink)
+    : m_style { style }
+    , m_property { property }
+    , m_inVisitedLink { inVisitedLink }
 {
-    auto computeBorderStyle = [&] {
-        switch (colorProperty) {
-        case CSSPropertyBorderLeftColor:
-            return borderLeftStyle();
-        case CSSPropertyBorderRightColor:
-            return borderRightStyle();
-        case CSSPropertyBorderTopColor:
-            return borderTopStyle();
-        case CSSPropertyBorderBottomColor:
-            return borderBottomStyle();
-        default:
-            return BorderStyle::None;
-        }
-    };
+}
 
-    auto result = unresolvedColorForProperty(colorProperty, visitedLink);
-
-    if (isCurrentColor(result)) {
-        if (colorProperty == CSSPropertyTextDecorationColor) {
-            if (hasPositiveStrokeWidth()) {
+Color StyleKeywordColorResolver::resolveKeywordColor(CSSValueID keyword) const
+{
+    if (keyword == CSSValueCurrentcolor) {
+        if (m_property == CSSPropertyTextDecorationColor) {
+            if (m_style.hasPositiveStrokeWidth()) {
                 // Prefer stroke color if possible but not if it's fully transparent.
-                auto strokeColor = resolvedColor(effectiveStrokeColorProperty(), visitedLink);
+                auto strokeColor = m_style.resolvedColor(m_style.effectiveStrokeColorProperty(), m_inVisitedLink);
                 if (strokeColor.isVisible())
                     return strokeColor;
             }
 
-            return resolvedColor(CSSPropertyWebkitTextFillColor, visitedLink);
+            return m_style.resolvedColor(CSSPropertyWebkitTextFillColor, m_inVisitedLink);
         }
 
-        auto borderStyle = computeBorderStyle();
-        if (!visitedLink && (borderStyle == BorderStyle::Inset || borderStyle == BorderStyle::Outset || borderStyle == BorderStyle::Ridge || borderStyle == BorderStyle::Groove))
-            return SRGBA<uint8_t> { 238, 238, 238 };
+        if (!m_inVisitedLink) {
+            auto borderStyle = [&] {
+                switch (m_property) {
+                case CSSPropertyBorderLeftColor:
+                    return m_style.borderLeftStyle();
+                case CSSPropertyBorderRightColor:
+                    return m_style.borderRightStyle();
+                case CSSPropertyBorderTopColor:
+                    return m_style.borderTopStyle();
+                case CSSPropertyBorderBottomColor:
+                    return m_style.borderBottomStyle();
+                default:
+                    return BorderStyle::None;
+                }
+            }();
+            if (borderStyle == BorderStyle::Inset || borderStyle == BorderStyle::Outset || borderStyle == BorderStyle::Ridge || borderStyle == BorderStyle::Groove)
+                return SRGBA<uint8_t> { 238, 238, 238 };
+        }
 
-        return resolvedColor(visitedLink ? visitedLinkColor() : color());
+        return m_style.resolvedColor(m_inVisitedLink ? m_style.visitedLinkColor() : m_style.color());
     }
 
-    return result.alreadyResolvedColor();
+    ASSERT_NOT_REACHED();
+}
+
+Color RenderStyle::resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const
+{
+    StyleKeywordColorResolver resolver { *this, colorProperty, visitedLink };
+    return unresolvedColor(colorProperty, visitedLink).resolvedColor(resolver);
 }
 
 Color RenderStyle::resolvedColor(const StyleColor& color) const
 {
-    if (isCurrentColor(color))
+    if (color.isCurrentColor())
         return this->color().alreadyResolvedColor();
 
     return color.alreadyResolvedColor();

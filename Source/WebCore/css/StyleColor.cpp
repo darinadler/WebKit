@@ -34,6 +34,7 @@
 
 #include "HashTools.h"
 #include "RenderTheme.h"
+#include "StyleKeywordColorResolver.h"
 
 namespace WebCore {
 
@@ -100,8 +101,8 @@ TextStream& operator<<(TextStream& stream, const StyleColor& color)
     switch (color.type()) {
     case StyleColor::Type::Normal:
         return stream << color.m_color;
-    case StyleColor::Type::CurrentColor:
-        return stream << "current color";
+    case StyleColor::Type::Keyword:
+        return stream << getValueName(color.keyword());
     case StyleColor::Type::OutOfLine:
         // FIXME: Implement this.
         return stream << "out of line style color";
@@ -112,6 +113,19 @@ bool StyleColor::isEqualOutOfLineStyleColor(const StyleColor&) const
 {
     // FIXME: Implement this.
     return false;
+}
+
+Color StyleColor::resolvedColor(StyleKeywordColorResolver& resolver) const
+{
+    switch (type()) {
+    case StyleColor::Type::Normal:
+        return alreadyResolvedColor();
+    case StyleColor::Type::Keyword:
+        return resolver.resolveKeywordColor(keyword());
+    case StyleColor::Type::OutOfLine:
+        // FIXME: Implement this.
+        return { };
+    }
 }
 
 } // namespace WebCore

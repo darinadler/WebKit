@@ -70,6 +70,8 @@ RenderStyle resolveForDocument(const Document& document)
         documentStyle.setTextSizeAdjust(TextSizeAdjustment(NoTextSizeAdjustment));
 #endif
 
+    // FIXME: Set useSystemAppearance, useElevatedUserInterfaceLevel, and useDarkAppearance.
+
     Adjuster::adjustEventListenerRegionTypesForRootStyle(documentStyle, document);
 
     Element* docElement = document.documentElement();

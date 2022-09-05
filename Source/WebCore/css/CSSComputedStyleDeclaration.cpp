@@ -2374,7 +2374,7 @@ static bool nonInheritedColorPropertyHasValueCurrentColor(CSSPropertyID property
     if (!style)
         return true;
 
-    return RenderStyle::isCurrentColor(style->unresolvedColorForProperty(propertyID));
+    return style->unresolvedColor(propertyID).isCurrentColor();
 }
 
 // In CSS 2.1 the returned object should actually contain the "used values"

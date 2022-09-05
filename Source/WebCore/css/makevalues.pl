@@ -173,7 +173,7 @@ print HEADER << "EOF";
 
 namespace WebCore {
 
-enum CSSValueID {
+enum CSSValueID : uint16_t {
     CSSValueInvalid = 0,
 EOF
 
