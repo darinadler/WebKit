@@ -70,7 +70,8 @@ RenderStyle resolveForDocument(const Document& document)
         documentStyle.setTextSizeAdjust(TextSizeAdjustment(NoTextSizeAdjustment));
 #endif
 
-    // FIXME: Set useSystemAppearance, useElevatedUserInterfaceLevel, and useDarkAppearance.
+    // FIXME: Need to set the flags for system colors here: useSystemAppearance, useElevatedUserInterfaceLevel, and useDarkAppearance.
+    // FIXME: The useDarkAppearance flag isn't sufficient to express all the combinations of color-scheme; second bit likely is enough.
 
     Adjuster::adjustEventListenerRegionTypesForRootStyle(documentStyle, document);
 

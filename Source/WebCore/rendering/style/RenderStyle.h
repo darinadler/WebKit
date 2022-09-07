@@ -1904,7 +1904,7 @@ public:
     void getShadowInlineDirectionExtent(const ShadowData*, LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
     void getShadowBlockDirectionExtent(const ShadowData*, LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
 
-    static StyleColor currentColor() { return StyleColor { CSSValueCurrentcolor }; }
+    static StyleColor currentColor() { return StyleColor { }; }
 
     const StyleColor& borderLeftColor() const { return m_surroundData->border.left().color(); }
     const StyleColor& borderRightColor() const { return m_surroundData->border.right().color(); }
@@ -1970,6 +1970,8 @@ public:
     static OverflowAnchor initialOverflowAnchor() { return OverflowAnchor::Auto; }
 
 private:
+    friend class StyleKeywordColorResolver;
+
     struct NonInheritedFlags {
         bool operator==(const NonInheritedFlags&) const;
         bool operator!=(const NonInheritedFlags& other) const { return !(*this == other); }

@@ -59,9 +59,10 @@ public:
 
     static Color colorFromKeyword(CSSValueID, OptionSet<StyleColorOptions>);
 
-    StyleColor(CSSValueID = CSSValueCurrentcolor);
+    StyleColor();
     StyleColor(const Color&);
     StyleColor(SRGBA<uint8_t>);
+    StyleColor(CSSValueID);
     StyleColor(Function<Color(const Color&)>&&, StyleColor&&);
     StyleColor(Function<Color(const Color&, const Color&)>&&, StyleColor&&, StyleColor&&);
     StyleColor(const StyleColor&);
@@ -70,13 +71,9 @@ public:
     StyleColor& operator=(StyleColor&&);
     ~StyleColor();
 
-    bool operator==(const StyleColor&) const;
-    bool operator!=(const StyleColor& other) const { return !(*this == other); }
-
-    static StyleColor currentColor();
     bool isCurrentColor() const { return m_color.m_colorAndFlags == (encode(Type::Keyword) | encode(CSSValueCurrentcolor)); }
 
-    bool isAlreadyResolved() const;
+    bool isAlreadyResolved() const { return type() == Type::Normal; }
     const Color& alreadyResolvedColor() const;
 
     Color resolvedColor(StyleKeywordColorResolver&) const;
@@ -85,8 +82,11 @@ private:
     class OutOfLineStyleColor;
     enum class Type : uint8_t { Normal, Keyword, OutOfLine };
 
-    friend WTF::TextStream& operator<<(WTF::TextStream&, const StyleColor&);
     friend void swap(StyleColor&, StyleColor&);
+    friend bool operator==(const StyleColor&, const StyleColor&);
+    friend bool operator==(const OutOfLineStyleColor&, const OutOfLineStyleColor&);
+    friend void add(Hasher&, const StyleColor&);
+    friend WTF::TextStream& operator<<(WTF::TextStream&, const StyleColor&);
 
     Type type() const { return decodeType(m_color.m_colorAndFlags); }
     CSSValueID keyword() const;
@@ -95,7 +95,6 @@ private:
     OutOfLineStyleColor& outOfLineStyleColor() const;
     void setOutOfLineStyleColor(const StyleColor&);
     void destroyOutOfLineStyleColor();
-    bool isEqualOutOfLineStyleColor(const StyleColor&) const;
 
     static constexpr auto styleColorTypeShift = Color::flagsShift + 6;
 
@@ -108,9 +107,12 @@ private:
     Color m_color;
 };
 
-inline StyleColor::StyleColor(CSSValueID value)
+bool operator==(const StyleColor&, const StyleColor&);
+bool operator!=(const StyleColor&, const StyleColor&);
+
+inline StyleColor::StyleColor()
 {
-    m_color.m_colorAndFlags = encode(Type::Keyword) | encode(value);
+    m_color.m_colorAndFlags = encode(Type::Keyword) | encode(CSSValueCurrentcolor);
 }
 
 inline StyleColor::StyleColor(const Color& color)
@@ -178,24 +180,29 @@ inline CSSValueID StyleColor::keyword() const
 
 inline const Color& StyleColor::alreadyResolvedColor() const
 {
-    ASSERT(type() == Type::Normal);
+    ASSERT(isAlreadyResolved());
     return m_color;
 }
 
-inline bool StyleColor::operator==(const StyleColor& other) const
+inline bool operator==(const StyleColor& a, const StyleColor& b)
 {
-    auto type = this->type();
-    if (type != other.type())
+    auto type = a.type();
+    if (type != b.type())
         return false;
 
     switch (type) {
-    case Type::Normal:
-        return alreadyResolvedColor() == other.alreadyResolvedColor();
-    case Type::Keyword:
-        return keyword() == other.keyword();
-    case Type::OutOfLine:
-        return isEqualOutOfLineStyleColor(other);
+    case StyleColor::Type::Normal:
+        return a.alreadyResolvedColor() == b.alreadyResolvedColor();
+    case StyleColor::Type::Keyword:
+        return a.keyword() == b.keyword();
+    case StyleColor::Type::OutOfLine:
+        return a.outOfLineStyleColor() == b.outOfLineStyleColor();
     }
+}
+
+inline bool operator!=(const StyleColor& a, const StyleColor& b)
+{
+    return !(a == b);
 }
 
 } // namespace WebCore

@@ -2354,7 +2354,18 @@ Color StyleKeywordColorResolver::resolveKeywordColor(CSSValueID keyword) const
         return m_style.resolvedColor(m_inVisitedLink ? m_style.visitedLinkColor() : m_style.color());
     }
 
-    ASSERT_NOT_REACHED();
+    OptionSet<StyleColorOptions> options;
+    if (m_inVisitedLink)
+        options.add(StyleColorOptions::ForVisitedLink);
+    if (m_style.m_inheritedFlags.useSystemAppearance)
+        options.add(StyleColorOptions::UseSystemAppearance);
+    if (m_style.m_inheritedFlags.useDarkAppearance) {
+        // FIXME: This is not yet correct because it does not do the right thing when the CSS color-scheme property is involved.
+        options.add(StyleColorOptions::UseDarkAppearance);
+    }
+    if (m_style.m_inheritedFlags.useElevatedUserInterfaceLevel)
+        options.add(StyleColorOptions::UseElevatedUserInterfaceLevel);
+    return StyleColor::colorFromKeyword(keyword, options);
 }
 
 Color RenderStyle::resolvedColor(CSSPropertyID colorProperty, bool visitedLink) const
@@ -2365,10 +2376,8 @@ Color RenderStyle::resolvedColor(CSSPropertyID colorProperty, bool visitedLink) 
 
 Color RenderStyle::resolvedColor(const StyleColor& color) const
 {
-    if (color.isCurrentColor())
-        return this->color().alreadyResolvedColor();
-
-    return color.alreadyResolvedColor();
+    StyleKeywordColorResolver resolver { *this, CSSPropertyInvalid, false };
+    return color.resolvedColor(resolver);
 }
 
 Color RenderStyle::visitedDependentColor(CSSPropertyID colorProperty) const

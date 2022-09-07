@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 Google Inc. All rights reserved.
- * Copyright (C) 2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -41,14 +41,23 @@ namespace WebCore {
 class StyleColor::OutOfLineStyleColor : public RefCounted<StyleColor::OutOfLineStyleColor> {
 };
 
+static Color absoluteColor(CSSValueID keyword)
+{
+    // FIXME: If this is hot we could build an array with the color values at compile time.
+    if (StyleColor::isAbsoluteColorKeyword(keyword)) {
+        if (auto valueName = getValueName(keyword)) {
+            if (auto* namedColor = findColor(valueName, valueName.length()))
+                return asSRGBA(PackedColor::ARGB { namedColor->ARGBValue });
+        }
+        ASSERT_NOT_REACHED();
+    }
+    return { };
+}
+
 Color StyleColor::colorFromKeyword(CSSValueID keyword, OptionSet<StyleColorOptions> options)
 {
-    if (const char* valueName = getValueName(keyword)) {
-        if (const NamedColor* namedColor = findColor(valueName, strlen(valueName)))
-            return asSRGBA(PackedColor::ARGB { namedColor->ARGBValue });
-    }
-
-    ASSERT(!isAbsoluteColorKeyword(keyword));
+    if (auto color = absoluteColor(keyword); color.isValid())
+        return color;
     return RenderTheme::singleton().systemColor(keyword, options);
 }
 
@@ -85,6 +94,13 @@ bool StyleColor::isColorKeyword(CSSValueID id, OptionSet<CSSColorType> allowedCo
         || (allowedColorTypes.contains(CSSColorType::System) && isSystemColorKeyword(id));
 }
 
+StyleColor::StyleColor(CSSValueID value)
+    : m_color { absoluteColor(value) }
+{
+    if (!m_color.isValid())
+        m_color.m_colorAndFlags = encode(Type::Keyword) | encode(value);
+}
+
 void StyleColor::setOutOfLineStyleColor(const StyleColor& color)
 {
     m_color.m_colorAndFlags = color.m_color.m_colorAndFlags;
@@ -109,12 +125,6 @@ TextStream& operator<<(TextStream& stream, const StyleColor& color)
     }
 }
 
-bool StyleColor::isEqualOutOfLineStyleColor(const StyleColor&) const
-{
-    // FIXME: Implement this.
-    return false;
-}
-
 Color StyleColor::resolvedColor(StyleKeywordColorResolver& resolver) const
 {
     switch (type()) {
@@ -126,6 +136,12 @@ Color StyleColor::resolvedColor(StyleKeywordColorResolver& resolver) const
         // FIXME: Implement this.
         return { };
     }
+}
+
+bool operator==(const StyleColor::OutOfLineStyleColor&, const StyleColor::OutOfLineStyleColor&)
+{
+    // FIXME: Implement this.
+    return false;
 }
 
 } // namespace WebCore

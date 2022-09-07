@@ -1690,25 +1690,24 @@ RefPtr<CSSPrimitiveValue> consumeUrl(CSSParserTokenRange& range)
     return CSSValuePool::singleton().createValue(url.toString(), CSSUnitType::CSS_URI);
 }
 
-static Color consumeOriginColor(CSSParserTokenRange& args, const CSSParserContext& context)
+static StyleColor consumeOriginColor(CSSParserTokenRange& args, const CSSParserContext& context)
 {
     auto value = consumeColor(args, context);
     if (!value)
-        return { };
-
+        return Color { };
     if (value->isRGBColor())
         return value->color();
-
     ASSERT(value->isValueID());
-    auto keyword = value->valueID();
+    return value->valueID();
+}
 
-    // FIXME: We don't have enough context in the parser to resolving a system keyword
-    // correctly. We should package up the relative color parameters and resolve the
-    // whole thing at the appropriate time when the origin color is a system keyword.
-    if (StyleColor::isSystemColorKeyword(keyword))
+static Color consumeAlreadyResolvedOriginColor(CSSParserTokenRange& args, const CSSParserContext& context)
+{
+    // FIXME: We don't have enough context in the parser to resolve a system keyword correctly.
+    auto color = consumeOriginColor(args, context);
+    if (!color.isAlreadyResolved())
         return { };
-
-    return StyleColor::colorFromKeyword(keyword, { });
+    return color.alreadyResolvedColor();
 }
 
 static std::optional<double> consumeOptionalAlpha(CSSParserTokenRange& range)
@@ -1790,7 +1789,7 @@ static Color parseRelativeRGBParameters(CSSParserTokenRange& args, const CSSPars
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2007,7 +2006,7 @@ static Color parseRelativeHSLParameters(CSSParserTokenRange& args, const CSSPars
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2141,7 +2140,7 @@ static Color parseRelativeHWBParameters(CSSParserTokenRange& args, const CSSPars
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2228,7 +2227,7 @@ static Color parseRelativeLabParameters(CSSParserTokenRange& args, const CSSPars
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2318,7 +2317,7 @@ static Color parseRelativeLCHParameters(CSSParserTokenRange& args, const CSSPars
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2501,7 +2500,7 @@ static Color parseRelativeColorFunctionParameters(CSSParserTokenRange& args, con
     ASSERT(args.peek().id() == CSSValueFrom);
     consumeIdentRaw(args);
 
-    auto originColor = consumeOriginColor(args, context);
+    auto originColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originColor.isValid())
         return { };
 
@@ -2616,7 +2615,7 @@ static Color parseColorContrastFunctionParameters(CSSParserTokenRange& range, co
 
     auto args = consumeFunction(range);
 
-    auto originBackgroundColor = consumeOriginColor(args, context);
+    auto originBackgroundColor = consumeAlreadyResolvedOriginColor(args, context);
     if (!originBackgroundColor.isValid())
         return { };
 
@@ -2626,7 +2625,7 @@ static Color parseColorContrastFunctionParameters(CSSParserTokenRange& range, co
     Vector<Color> colorsToCompareAgainst;
     bool consumedTo = false;
     do {
-        auto colorToCompareAgainst = consumeOriginColor(args, context);
+        auto colorToCompareAgainst = consumeAlreadyResolvedOriginColor(args, context);
         if (!colorToCompareAgainst.isValid())
             return { };
 
@@ -2769,7 +2768,7 @@ static std::optional<ColorMixComponent> consumeColorMixComponent(CSSParserTokenR
         result.percentage = percentage->value;
     }
 
-    result.color = consumeOriginColor(args, context);
+    result.color = consumeAlreadyResolvedOriginColor(args, context);
     if (!result.color.isValid())
         return std::nullopt;
 
