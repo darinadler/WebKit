@@ -62,7 +62,7 @@ public:
     bool hasValue(CSSValue*) const;
     Ref<CSSValueList> copy();
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSValueList&) const;
     bool equals(const CSSValue&) const;
 

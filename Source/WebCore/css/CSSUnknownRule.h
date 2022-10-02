@@ -32,12 +32,10 @@ public:
     {
     }
 
-    virtual ~CSSUnknownRule() = default;
-
-    String cssText() const final { return String(); }
+private:
+    void serialize(CSSSerializer&) const final { }
     void reattach(StyleRuleBase&) final { }
 
-private:
     StyleRuleType styleRuleType() const final { return StyleRuleType::Unknown; }
 };
 

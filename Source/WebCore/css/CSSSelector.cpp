@@ -722,11 +722,9 @@ String CSSSelector::selectorText(const String& rightSide) const
                 break;
             case CSSSelector::PseudoElementPart: {
                 builder.append("::part(");
-                bool isFirst = true;
+                SeparatorCharacter separator { ' ' };
                 for (auto& partName : *cs->argumentList()) {
-                    if (!isFirst)
-                        builder.append(' ');
-                    isFirst = false;
+                    builder.append(separator);
                     serializeIdentifier(partName, builder);
                 }
                 builder.append(')');

@@ -50,7 +50,7 @@ public:
         return adoptRef(*new CSSGridIntegerRepeatValue(repetitions));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSGridIntegerRepeatValue&) const;
 
     size_t repetitions() const { return m_repetitions; }

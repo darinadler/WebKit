@@ -32,6 +32,7 @@
 #include "CSSCalcPrimitiveValueNode.h"
 #include "CSSCalcValue.h"
 #include "CSSPrimitiveValue.h"
+#include "CSSSerializer.h"
 #include "CSSUnits.h"
 #include "CalcExpressionOperation.h"
 #include "Logging.h"
@@ -1082,7 +1083,7 @@ bool CSSCalcOperationNode::convertingToLengthRequiresNonNullStyle(int lengthConv
     });
 }
 
-void CSSCalcOperationNode::buildCSSText(const CSSCalcExpressionNode& node, StringBuilder& builder)
+void CSSCalcOperationNode::serialize(const CSSCalcExpressionNode& node, CSSSerializer& serializer)
 {
     auto shouldOutputEnclosingCalc = [](const CSSCalcExpressionNode& rootNode) {
         if (is<CSSCalcOperationNode>(rootNode)) {
@@ -1094,12 +1095,12 @@ void CSSCalcOperationNode::buildCSSText(const CSSCalcExpressionNode& node, Strin
     
     bool outputCalc = shouldOutputEnclosingCalc(node);
     if (outputCalc)
-        builder.append("calc(");
+        serializer.append("calc(");
 
-    buildCSSTextRecursive(node, builder, GroupingParens::Omit);
+    serialize(node, serializer, GroupingParens::Omit);
 
     if (outputCalc)
-        builder.append(')');
+        serializer.append(')');
 }
 
 static const char* functionPrefixForOperator(CalcOperator op)

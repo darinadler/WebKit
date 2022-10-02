@@ -35,14 +35,13 @@
 #include "CSSGridAutoRepeatValue.h"
 #include "CSSGridIntegerRepeatValue.h"
 #include "CSSGridLineNamesValue.h"
+#include "CSSSerializer.h"
 #include "CSSStyleDeclaration.h"
 #include "DOMCSSNamespace.h"
 #include "DOMTokenList.h"
 #include "ElementInlines.h"
 #include "FloatLine.h"
-#include "FloatPoint.h"
 #include "FloatRoundedRect.h"
-#include "FloatSize.h"
 #include "FontCascade.h"
 #include "FontCascadeDescription.h"
 #include "Frame.h"
@@ -53,9 +52,7 @@
 #include "InspectorClient.h"
 #include "InspectorController.h"
 #include "InspectorDOMAgent.h"
-#include "IntPoint.h"
 #include "IntRect.h"
-#include "IntSize.h"
 #include "LocalizedStrings.h"
 #include "Node.h"
 #include "NodeList.h"
@@ -68,13 +65,11 @@
 #include "RenderFlexibleBox.h"
 #include "RenderGrid.h"
 #include "RenderInline.h"
-#include "RenderObject.h"
 #include "Settings.h"
 #include "StyleGridData.h"
 #include "StyleResolver.h"
 #include "TextDirection.h"
 #include <wtf/MathExtras.h>
-#include <wtf/text/StringBuilder.h>
 
 namespace WebCore {
 
@@ -1317,8 +1312,11 @@ static Vector<String> authoredGridTrackSizes(Node* node, GridTrackSizingDirectio
     Vector<String> trackSizes;
     
     auto handleValueIgnoringLineNames = [&](const CSSValue& currentValue) {
-        if (!is<CSSGridLineNamesValue>(currentValue))
-            trackSizes.append(currentValue.cssText());
+        if (!is<CSSGridLineNamesValue>(currentValue)) {
+            CSSSerializer serializer;
+            currentValue.serialize(serializer);
+            trackSizes.append(serializer.builder().toString());
+        }
     };
 
     for (auto& currentValue : downcast<CSSValueList>(*cssValue)) {

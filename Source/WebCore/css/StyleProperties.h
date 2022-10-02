@@ -69,7 +69,7 @@ public:
         bool isImplicit() const { return m_metadata.m_implicit; }
 
         String cssName() const;
-        String cssText() const;
+        void serialize(CSSSerializer&) const;
 
         const CSSValue* value() const { return m_value; }
         // FIXME: We should try to remove this mutable overload.

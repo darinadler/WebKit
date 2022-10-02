@@ -158,7 +158,7 @@ public:
 
     void setAngle(Ref<CSSPrimitiveValue>&& value) { m_angle = WTFMove(value); }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     // Create the gradient for a given size.
     Ref<Gradient> createGradient(RenderElement&, const FloatSize&);
@@ -197,7 +197,7 @@ public:
         return adoptRef(*new CSSRadialGradientValue(*this));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     void setFirstRadius(RefPtr<CSSPrimitiveValue>&& value) { m_firstRadius = WTFMove(value); }
     void setSecondRadius(RefPtr<CSSPrimitiveValue>&& value) { m_secondRadius = WTFMove(value); }
@@ -257,7 +257,7 @@ public:
         return adoptRef(*new CSSConicGradientValue(*this));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     void setAngle(RefPtr<CSSPrimitiveValue>&& value) { m_angle = WTFMove(value); }
 

@@ -45,7 +45,7 @@ public:
 
     ~CSSGridTemplateAreasValue() = default;
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     const NamedGridAreaMap& gridAreaMap() const { return m_gridAreaMap; }
     size_t rowCount() const { return m_rowCount; }

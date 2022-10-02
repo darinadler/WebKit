@@ -82,7 +82,7 @@ Ref<CSSValueList> CSSValueList::copy()
     return newList.releaseNonNull();
 }
 
-String CSSValueList::customCSSText() const
+void CSSValueList::serialize(CSSSerializer& serializer) const
 {
     auto prefix = ""_s;
     auto separator = separatorCSSText();

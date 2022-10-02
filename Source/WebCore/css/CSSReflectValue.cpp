@@ -30,11 +30,15 @@
 
 namespace WebCore {
 
-String CSSReflectValue::customCSSText() const
+void CSSReflectValue::serialize(CSSSerializer& serializer) const
 {
-    if (m_mask)
-        return m_direction->cssText() + ' ' + m_offset->cssText() + ' ' + m_mask->cssText();
-    return m_direction->cssText() + ' ' + m_offset->cssText();
+    m_direction->serialize(serializer);
+    serializer.builder().append(' ');
+    m_offset->serialize(serializer);
+    if (m_mask) {
+        serializer.builder().append(' ');
+        m_mask->serialize(serializer);
+    }
 }
 
 bool CSSReflectValue::equals(const CSSReflectValue& other) const

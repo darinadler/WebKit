@@ -42,7 +42,7 @@ private:
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Media; }
     void reattach(StyleRuleBase&) final;
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     String conditionText() const final;
 
     MediaQuerySet& mediaQueries() const;

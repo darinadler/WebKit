@@ -55,7 +55,7 @@ CSSCursorImageValue::~CSSCursorImageValue()
         element.removeClient(*this);
 }
 
-String CSSCursorImageValue::customCSSText() const
+void CSSCursorImageValue::serialize(CSSSerializer& serializer) const
 {
     String text = m_imageValue.get().cssText();
     if (!m_hotSpot)

@@ -269,15 +269,12 @@ void DOMTokenList::updateAssociatedAttributeFromTokens()
 
     // https://dom.spec.whatwg.org/#concept-ordered-set-serializer
     StringBuilder builder;
-    for (auto& token : tokens()) {
-        if (!builder.isEmpty())
-            builder.append(' ');
-        builder.append(token);
-    }
-    AtomString serializedValue = builder.toAtomString();
+    SeparatorCharacter separator { ' ' };
+    for (auto& token : tokens())
+        builder.append(separator, token);
 
     SetForScope inAttributeUpdate(m_inUpdateAssociatedAttributeFromTokens, true);
-    m_element.setAttribute(m_attributeName, serializedValue);
+    m_element.setAttribute(m_attributeName, builder.toAtomString());
 }
 
 Vector<AtomString>& DOMTokenList::tokens()

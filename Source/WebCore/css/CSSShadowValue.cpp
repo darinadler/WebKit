@@ -21,7 +21,7 @@
 #include "CSSShadowValue.h"
 
 #include "CSSPrimitiveValue.h"
-#include <wtf/text/StringBuilder.h>
+#include "CSSSerializer.h"
 
 namespace WebCore {
 
@@ -37,39 +37,33 @@ CSSShadowValue::CSSShadowValue(RefPtr<CSSPrimitiveValue>&& x, RefPtr<CSSPrimitiv
 {
 }
 
-String CSSShadowValue::customCSSText() const
+void CSSShadowValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder text;
-
-    if (color)
-        text.append(color->cssText());
+    SeparatorCharacter separator { ' ' };
+    if (color) {
+        serializer.builder().append(separator);
+        color->serialize(serializer);
+    }
     if (x) {
-        if (!text.isEmpty())
-            text.append(' ');
-        text.append(x->cssText());
+        serializer.builder().append(separator);
+        x->serialize(serializer);
     }
     if (y) {
-        if (!text.isEmpty())
-            text.append(' ');
-        text.append(y->cssText());
+        serializer.builder().append(separator);
+        y->serialize(serializer);
     }
     if (blur) {
-        if (!text.isEmpty())
-            text.append(' ');
-        text.append(blur->cssText());
+        serializer.builder().append(separator);
+        blur->serialize(serializer);
     }
     if (spread) {
-        if (!text.isEmpty())
-            text.append(' ');
-        text.append(spread->cssText());
+        serializer.builder().append(separator);
+        spread->serialize(serializer);
     }
     if (style) {
-        if (!text.isEmpty())
-            text.append(' ');
-        text.append(style->cssText());
+        serializer.builder().append(separator);
+        style->serialize(serializer);
     }
-
-    return text.toString();
 }
 
 bool CSSShadowValue::equals(const CSSShadowValue& other) const

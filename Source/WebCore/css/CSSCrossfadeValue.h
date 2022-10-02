@@ -49,7 +49,7 @@ public:
 
     ~CSSCrossfadeValue();
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     Image* image(RenderElement&, const FloatSize&);
     bool isFixedSize() const { return true; }

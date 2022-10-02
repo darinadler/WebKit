@@ -37,7 +37,7 @@ public:
         return adoptRef(*new CSSNamedImageValue(name));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool isFixedSize() const { return false; }
     bool isPending() const { return false; }

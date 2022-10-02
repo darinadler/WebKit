@@ -28,7 +28,7 @@
 
 namespace WebCore {
 
-String CSSFontPaletteValuesOverrideColorsValue::customCSSText() const
+void CSSFontPaletteValuesOverrideColorsValue::serialize(CSSSerializer& serializer) const
 {
     return makeString(m_key->cssText(), " ", m_color->cssText());
 }

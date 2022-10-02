@@ -37,7 +37,7 @@ public:
         return adoptRef(*new CSSCubicBezierTimingFunctionValue(x1, y1, x2, y2));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     double x1() const { return m_x1; }
     double y1() const { return m_y1; }
@@ -72,7 +72,7 @@ public:
     int numberOfSteps() const { return m_steps; }
     std::optional<StepsTimingFunction::StepPosition> stepPosition() const { return m_stepPosition; }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSStepsTimingFunctionValue&) const;
 
@@ -100,7 +100,7 @@ public:
     double damping() const { return m_damping; }
     double initialVelocity() const { return m_initialVelocity; }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSSpringTimingFunctionValue&) const;
 

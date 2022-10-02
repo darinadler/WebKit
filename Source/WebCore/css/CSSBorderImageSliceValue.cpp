@@ -38,7 +38,7 @@ CSSBorderImageSliceValue::CSSBorderImageSliceValue(RefPtr<CSSPrimitiveValue>&& s
 {
 }
 
-String CSSBorderImageSliceValue::customCSSText() const
+void CSSBorderImageSliceValue::serialize(CSSSerializer& serializer) const
 {
     // Dump the slices first.
     String text = m_slices->cssText();

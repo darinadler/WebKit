@@ -575,26 +575,27 @@ String StyleProperties::fontValue() const
         return getValueNameAtomString(shorthand.value());
 
     String commonValue = fontSizeProperty.value()->cssText();
-    StringBuilder result;
-    appendFontLonghandValueIfExplicit(CSSPropertyFontStyle, result, commonValue);
-    appendFontLonghandValueIfExplicit(CSSPropertyFontVariantCaps, result, commonValue);
-    appendFontLonghandValueIfExplicit(CSSPropertyFontWeight, result, commonValue);
-    appendFontLonghandValueIfExplicit(CSSPropertyFontStretch, result, commonValue);
-    if (!result.isEmpty())
-        result.append(' ');
-    result.append(fontSizeProperty.value()->cssText());
+    CSSSerializer serializer;
+    appendFontLonghandValueIfExplicit(CSSPropertyFontStyle, serializer.builder(), commonValue);
+    appendFontLonghandValueIfExplicit(CSSPropertyFontVariantCaps, serializer.builder(), commonValue);
+    appendFontLonghandValueIfExplicit(CSSPropertyFontWeight, serializer.builder(), commonValue);
+    appendFontLonghandValueIfExplicit(CSSPropertyFontStretch, serializer.builder(), commonValue);
+    if (!serializer.builder().isEmpty())
+        serializer.append(' ');
+    serializer.append(fontSizeProperty.value());
     appendFontLonghandValueIfExplicit(CSSPropertyLineHeight, result, commonValue);
-    if (!result.isEmpty())
-        result.append(' ');
-    result.append(fontFamilyProperty.value()->cssText());
     if (isCSSWideValueKeyword(commonValue))
         return commonValue;
-    return result.toString();
+    if (!serializer.builder().isEmpty())
+        serializer.append(' ');
+    serializer.append(fontFamilyProperty.value());
+    return serializer.builder().toString();
 }
 
 String StyleProperties::offsetValue() const
 {
-    StringBuilder result;
+    CSSSerializer serializer;
+    SeparatorCharacter separator { ' ' };
 
     auto offsetPositionIndex = findPropertyIndex(CSSPropertyOffsetPosition);
     auto offsetPathIndex = findPropertyIndex(CSSPropertyOffsetPath);
@@ -609,7 +610,8 @@ String StyleProperties::offsetValue() const
             if (!offsetPosition.value())
                 return String();
 
-            result.append(offsetPosition.value()->cssText());
+            serializer.builder().append(separator);
+            offsetPosition.value()->serialize(serializer);
         }
     }
 
@@ -619,9 +621,8 @@ String StyleProperties::offsetValue() const
             if (!offsetPath.value())
                 return String();
 
-            if (!result.isEmpty())
-                result.append(' ');
-            result.append(offsetPath.value()->cssText());
+            serializer.builder().append(separator);
+            offsetPath.value()->seriaize(serializer));
         }
     }
 
@@ -639,8 +640,8 @@ String StyleProperties::offsetValue() const
             // isZero() returns std::nullopt if offsetDistanceValue is a calculated value, in which case
             // we use value_or() to override to false.
             if (!(downcast<CSSPrimitiveValue>(offsetDistanceValue)->isZero().value_or(false))) {
-                result.append(' ');
-                result.append(downcast<CSSPrimitiveValue>(offsetDistanceValue)->cssText());
+                serializer.builder().append(' ');
+                downcast<CSSPrimitiveValue>(offsetDistanceValue)->serialize(serializer);
             }
         }
     }
@@ -654,8 +655,8 @@ String StyleProperties::offsetValue() const
                 return String();
 
             if (!(downcast<CSSOffsetRotateValue>(offsetRotateValue)->isInitialValue())) {
-                result.append(' ');
-                result.append(downcast<CSSOffsetRotateValue>(offsetRotateValue)->cssText());
+                serializer.builder().append(' ');
+                downcast<CSSOffsetRotateValue>(offsetRotateValue)->serialize(serializer);
             }
         }
     }
@@ -670,13 +671,13 @@ String StyleProperties::offsetValue() const
 
             if (!is<CSSPrimitiveValue>(offsetAnchorValue) || !downcast<CSSPrimitiveValue>(offsetAnchorValue)->isValueID()
                 || downcast<CSSPrimitiveValue>(offsetAnchorValue)->valueID() != CSSValueAuto) {
-                result.append(" / ");
-                result.append(offsetAnchorValue->cssText());
+                serializer.builder().append(" / "_s);
+                offsetAnchorValue->serialize(serializer);
             }
         }
     }
 
-    return result.toString();
+    return serializer.builder().toString();
 }
 
 String StyleProperties::textDecorationSkipValue() const
@@ -734,12 +735,10 @@ String StyleProperties::get2Values(const StylePropertyShorthand& shorthand) cons
         return { };
     }
 
-    StringBuilder result;
-    result.append(start.value()->cssText());
-    if (!start.value()->equals(*end.value())) {
-        result.append(' ');
-        result.append(end.value()->cssText());
-    }
+    CSSSerializer serializer;
+    serializer.append(*start.value());
+    if (!start.value()->equals(*end.value()))
+        serializer.append(' ', *end.value());
     return result.toString();
 }
 
@@ -782,21 +781,15 @@ String StyleProperties::get4Values(const StylePropertyShorthand& shorthand) cons
     bool showBottom = !top.value()->equals(*bottom.value()) || showLeft;
     bool showRight = !top.value()->equals(*right.value()) || showBottom;
 
-    StringBuilder result;
-    result.append(top.value()->cssText());
-    if (showRight) {
-        result.append(' ');
-        result.append(right.value()->cssText());
-    }
-    if (showBottom) {
-        result.append(' ');
-        result.append(bottom.value()->cssText());
-    }
-    if (showLeft) {
-        result.append(' ');
-        result.append(left.value()->cssText());
-    }
-    return result.toString();
+    CSSSerializer serializer;
+    serializer.append(*top.value());
+    if (showRight)
+        serializer.append(' ', *right.value());
+    if (showBottom)
+        serializer.append(' ', *bottom.value());
+    if (showLeft)
+        serializer.append(' ', *left.value());
+    return serializer.builder().toString();
 }
 
 String StyleProperties::getLayeredShorthandValue(const StylePropertyShorthand& shorthand) const
@@ -827,6 +820,7 @@ String StyleProperties::getLayeredShorthandValue(const StylePropertyShorthand& s
     // Implicit initial values are flagged as such and can safely be omitted.
     for (size_t i = 0; i < numLayers; i++) {
         StringBuilder layerResult;
+        SeparatorCharacter separator ( ' ' };
         bool useRepeatXShorthand = false;
         bool useRepeatYShorthand = false;
         bool useSingleWordShorthand = false;
@@ -884,8 +878,7 @@ String StyleProperties::getLayeredShorthandValue(const StylePropertyShorthand& s
             if (!value && shorthand.id() == CSSPropertyMask)
                 value = CSSValuePool::singleton().createImplicitInitialValue();
             if (value && !canOmitValue()) {
-                if (!layerResult.isEmpty())
-                    layerResult.append(' ');
+                layerResult.append(separator);
 
                 if (property == CSSPropertyBackgroundSize || property == CSSPropertyMaskSize) {
                     if (!foundPositionYCSSProperty)
@@ -1274,6 +1267,7 @@ String StyleProperties::borderPropertyValue(const StylePropertyShorthand& width,
     const StylePropertyShorthand properties[3] = { width, style, color };
     String commonValue;
     StringBuilder result;
+    SeparatorCharacter separator { ' ' };
     for (size_t i = 0; i < WTF_ARRAY_LENGTH(properties); ++i) {
         String value = getCommonValue(properties[i]);
         if (value.isNull())
@@ -1284,9 +1278,7 @@ String StyleProperties::borderPropertyValue(const StylePropertyShorthand& width,
             commonValue = String();
         if (value == "initial"_s)
             continue;
-        if (!result.isEmpty())
-            result.append(' ');
-        result.append(value);
+        result.append(separator, value);
     }
     if (isCSSWideValueKeyword(commonValue))
         return commonValue;
@@ -1610,6 +1602,7 @@ StringBuilder StyleProperties::asTextInternal() const
 
     unsigned size = propertyCount();
     unsigned numDecls = 0;
+    SeparatorCharacter separator { ' ' };
     for (unsigned n = 0; n < size; ++n) {
         PropertyReference property = propertyAt(n);
         CSSPropertyID propertyID = property.id();
@@ -1894,14 +1887,13 @@ StringBuilder StyleProperties::asTextInternal() const
         if (propertyID != CSSPropertyCustom && value == "initial"_s && !CSSProperty::isInheritedProperty(propertyID))
             continue;
 
-        if (numDecls++)
-            result.append(' ');
+        ++numDecls;
 
+        result.append(separator);
         if (propertyID == CSSPropertyCustom)
             result.append(downcast<CSSCustomPropertyValue>(*property.value()).name());
         else
             result.append(getPropertyName(propertyID));
-
         result.append(": ", value, property.isImportant() ? " !important" : "", ';');
     }
 
@@ -1923,27 +1915,18 @@ StringBuilder StyleProperties::asTextInternal() const
                 else
                     value = makeString(x, ' ', y);
             }
-            if (value != "initial"_s) {
-                result.append(numDecls ? " " : "", name, ": ", value, xProperty.isImportant() ? " !important" : "", ';');
-                ++numDecls;
-            }
+            if (value != "initial"_s)
+                result.append(separator, name, ": ", value, xProperty.isImportant() ? " !important" : "", ';');
         } else {
-            if (xIndex != -1) {
-                if (numDecls++)
-                    result.append(' ');
-                result.append(propertyAt(xIndex).cssText());
-            }
-            if (yIndex != -1) {
-                if (numDecls++)
-                    result.append(' ');
-                result.append(propertyAt(yIndex).cssText());
-            }
+            if (xIndex != -1)
+                result.append(separator, propertyAt(xIndex).cssText());
+            if (yIndex != -1)
+                result.append(separator, propertyAt(yIndex).cssText());
         }
     };
 
     appendPositionOrProperty(positionXPropertyIndex, positionYPropertyIndex, "background-position", backgroundPositionShorthand());
 
-    ASSERT(!numDecls ^ !result.isEmpty());
     return result;
 }
 

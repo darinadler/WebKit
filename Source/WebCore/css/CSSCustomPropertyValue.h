@@ -76,7 +76,7 @@ public:
         return adoptRef(*new CSSCustomPropertyValue(other));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     const AtomString& name() const { return m_name; }
     bool isResolved() const { return !std::holds_alternative<Ref<CSSVariableReferenceValue>>(m_value); }

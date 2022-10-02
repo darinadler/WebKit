@@ -47,7 +47,7 @@ public:
     static Ref<CSSVariableReferenceValue> create(Ref<CSSVariableData>&&, const CSSParserContext& = strictCSSParserContext());
 
     bool equals(const CSSVariableReferenceValue&) const;
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     RefPtr<CSSVariableData> resolveVariableReferences(Style::BuilderState&) const;
     const CSSParserContext& context() const { return m_context; }

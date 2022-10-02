@@ -66,7 +66,7 @@ public:
     void collectDirectComputationalDependencies(HashSet<CSSPropertyID>&) const;
     void collectDirectRootComputationalDependencies(HashSet<CSSPropertyID>&) const;
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSCalcValue&) const;
     
     static bool isCalcFunction(CSSValueID);

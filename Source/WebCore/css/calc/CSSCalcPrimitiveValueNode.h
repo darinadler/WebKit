@@ -40,7 +40,7 @@ public:
     static Ref<CSSCalcPrimitiveValueNode> create(Ref<CSSPrimitiveValue>&&);
     static RefPtr<CSSCalcPrimitiveValueNode> create(double value, CSSUnitType);
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     CSSUnitType primitiveType() const final;
 

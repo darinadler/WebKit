@@ -69,14 +69,9 @@ bool SVGPointList::parse(StringView value)
 String SVGPointList::valueAsString() const
 {
     StringBuilder builder;
-
-    for (const auto& point : m_items) {
-        if (builder.length())
-            builder.append(' ');
-
-        builder.append(point->x(), ' ', point->y());
-    }
-
+    SeparatorCharacter separator { ' ' };
+    for (auto& point : m_items)
+        builder.append(separator, point->x(), ' ', point->y());
     return builder.toString();
 }
 

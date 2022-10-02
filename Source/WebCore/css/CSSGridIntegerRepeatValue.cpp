@@ -35,9 +35,11 @@
 
 namespace WebCore {
 
-String CSSGridIntegerRepeatValue::customCSSText() const
+void CSSGridIntegerRepeatValue::serialize(CSSSerializer& serializer) const
 {
-    return makeString("repeat("_s, repetitions(), ", "_s, CSSValueList::customCSSText(), ')');
+    serializer.builder.append("repeat("_s, repetitions(), ", "_s);
+    CSSValueList::serializer(serialize);
+    serializer.builder.append(')');
 }
 
 bool CSSGridIntegerRepeatValue::equals(const CSSGridIntegerRepeatValue& other) const

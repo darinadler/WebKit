@@ -36,7 +36,7 @@ CSSLineBoxContainValue::CSSLineBoxContainValue(OptionSet<LineBoxContain> value)
 {
 }
 
-String CSSLineBoxContainValue::customCSSText() const
+void CSSLineBoxContainValue::serialize(CSSSerializer& serializer) const
 {
     StringBuilder text;
     if (m_value.contains(LineBoxContain::Block))

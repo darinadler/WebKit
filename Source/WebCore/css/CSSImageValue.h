@@ -60,7 +60,7 @@ public:
 
     URL reresolvedURL(const Document&) const;
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     Ref<DeprecatedCSSOMValue> createDeprecatedCSSOMWrapper(CSSStyleDeclaration&) const;
 

@@ -234,10 +234,11 @@ bool CSSValue::isCSSLocalURL(StringView relativeURL)
     return relativeURL.isEmpty() || relativeURL.startsWith('#');
 }
 
-String CSSValue::cssText() const
+void CSSValue::serialize(CSSSerializer& serializer) const
 {
-    return visitDerived([](auto& value) {
-        return value.customCSSText();
+    visitDerived([&](auto& value) {
+        static_assert(!std::is_same_v<decltype(&std::decay_t<decltype(value)>::serialize), decltype(&CSSValue::serialize)>);
+        value.serialize(serializer);
     });
 }
 

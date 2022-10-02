@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-String CSSNamedImageValue::customCSSText() const
+void CSSNamedImageValue::serialize(CSSSerializer& serializer) const
 {
     return makeString("-webkit-named-image(", m_name, ')');
 }

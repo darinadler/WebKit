@@ -39,7 +39,7 @@ public:
 
     const FontTag& tag() const { return m_tag; }
     int value() const { return m_value; }
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSFontFeatureValue&) const;
 

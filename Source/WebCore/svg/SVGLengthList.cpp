@@ -63,14 +63,9 @@ bool SVGLengthList::parse(StringView value)
 String SVGLengthList::valueAsString() const
 {
     StringBuilder builder;
-
-    for (const auto& length : m_items) {
-        if (builder.length())
-            builder.append(' ');
-
-        builder.append(length->value().valueAsString());
-    }
-
+    SeparatorCharacter separator { ' ' };
+    for (auto& length : m_items)
+        builder.append(separator, length->value().valueAsString());
     return builder.toString();
 }
 

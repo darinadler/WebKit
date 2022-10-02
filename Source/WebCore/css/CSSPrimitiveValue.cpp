@@ -52,8 +52,6 @@
 
 namespace WebCore {
 
-bool CSSPrimitiveValue::s_useLegacyPrecision;
-
 static inline bool isValidCSSUnitTypeForDoubleConversion(CSSUnitType unitType)
 {
     switch (unitType) {
@@ -1516,22 +1514,18 @@ ALWAYS_INLINE String CSSPrimitiveValue::formatNumberForCustomCSSText() const
     return String();
 }
 
-String CSSPrimitiveValue::customCSSText() const
+void CSSPrimitiveValue::serialize(CSSSerializer& serializer) const
 {
-    // FIXME: return the original value instead of a generated one (e.g. color
-    // name if it was specified) - check what spec says about this
-
     CSSTextCache& cssTextCache = WebCore::cssTextCache();
 
-    if (m_hasCachedCSSText && m_cachedCSSTextUsesLegacyPrecision == s_useLegacyPrecision) {
+    if (m_hasCachedCSSText && m_cachedCSSTextUsesLegacyPrecision == serializer.shouldUseLegacyPrecision()) {
         ASSERT(cssTextCache.contains(this));
         return cssTextCache.get(this);
     }
-    m_cachedCSSTextUsesLegacyPrecision = s_useLegacyPrecision;
+    m_cachedCSSTextUsesLegacyPrecision = serializer.shouldUseLegacyPrecision();
 
     String text = formatNumberForCustomCSSText();
 
-    ASSERT(!cssTextCache.contains(this));
     m_hasCachedCSSText = true;
     cssTextCache.set(this, text);
     return text;

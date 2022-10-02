@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-String CSSValuePair::customCSSText() const
+void CSSValuePair::serialize(CSSSerializer& serializer) const
 {
     String first = this->first()->cssText();
     String second = this->second()->cssText();

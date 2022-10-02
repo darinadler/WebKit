@@ -46,7 +46,7 @@ public:
 
     const URL& imageURL() const { return m_originalURL; }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     ImageWithScale selectBestFitImage(const Document&);
 

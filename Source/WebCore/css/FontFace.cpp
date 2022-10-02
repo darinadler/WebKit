@@ -279,12 +279,12 @@ String FontFace::family() const
     const auto& families = m_backing->families();
     if (!families)
         return "normal"_s;
-    auto familiesUnrwapped = families.value();
+    auto familiesUnwrapped = families.value();
     // FIXME: https://bugs.webkit.org/show_bug.cgi?id=196381 This is only here because CSSFontFace erroneously uses a list of values instead of a single value.
     // See consumeFontFamilyDescriptor() in CSSPropertyParser.cpp.
-    if (familiesUnrwapped->length() == 1) {
-        if (familiesUnrwapped->item(0)) {
-            auto& item = *familiesUnrwapped->item(0);
+    if (familiesUnwrapped->length() == 1) {
+        if (familiesUnwrapped->item(0)) {
+            auto& item = *familiesUnwrapped->item(0);
             if (item.isPrimitiveValue()) {
                 auto& primitiveValue = downcast<CSSPrimitiveValue>(item);
                 if (primitiveValue.isFontFamily()) {
@@ -294,22 +294,28 @@ String FontFace::family() const
             }
         }
     }
-    return familiesUnrwapped->cssText();
+    CSSSerializer serializer;
+    familiesUnwrapped->serialize(serializer);
+    return serializer.builder().toString();
 }
 
 String FontFace::style() const
 {
     m_backing->updateStyleIfNeeded();
-    const auto& styleWrapped = m_backing->italic();
-    
+
+    auto styleWrapped = m_backing->italic();
     if (!styleWrapped)
         return "normal"_s;
+
     auto style = styleWrapped.value();
     auto minimum = ComputedStyleExtractor::fontStyleFromStyleValue(style.minimum, FontStyleAxis::ital);
     auto maximum = ComputedStyleExtractor::fontStyleFromStyleValue(style.maximum, FontStyleAxis::ital);
 
-    if (minimum.get().equals(maximum.get()))
-        return minimum->cssText();
+    CSSSerializer serializer;
+    if (minimum.get().equals(maximum.get())) {
+        minimum->serialize(serializer);
+        return serializer.builder().toString();
+    }
 
     auto minimumNonKeyword = ComputedStyleExtractor::fontNonKeywordStyleFromStyleValue(style.minimum);
     auto maximumNonKeyword = ComputedStyleExtractor::fontNonKeywordStyleFromStyleValue(style.maximum);
@@ -317,41 +323,42 @@ String FontFace::style() const
     ASSERT(minimumNonKeyword->fontStyleValue->valueID() == CSSValueOblique);
     ASSERT(maximumNonKeyword->fontStyleValue->valueID() == CSSValueOblique);
 
-    StringBuilder builder;
-    builder.append(minimumNonKeyword->fontStyleValue->cssText());
-    builder.append(' ');
+    minimumNonKeyword->fontStyleValue->serialize(serializer);
+    serializer.builder().append(' ');
     if (minimum->obliqueValue.get() == maximum->obliqueValue.get())
-        builder.append(minimumNonKeyword->obliqueValue->cssText());
+        minimumNonKeyword->obliqueValue->serialize(serializer);
     else {
-        builder.append(minimumNonKeyword->obliqueValue->cssText());
-        builder.append(' ');
-        builder.append(maximumNonKeyword->obliqueValue->cssText());
+        minimumNonKeyword->obliqueValue->serialize(serializer);
+        serializer.builder().append(' ');
+        maximumNonKeyword->obliqueValue->serialize(serializer);
     }
-    return builder.toString();
-    
+    return serializer.builder().toString();
 }
 
 String FontFace::weight() const
 {
     m_backing->updateStyleIfNeeded();
-    const auto& weightWrapped = m_backing->weight();
+
+    auto weightWrapped = m_backing->weight();
     if (!weightWrapped)
         return "normal"_s;
+
     auto weight = weightWrapped.value();
     auto minimum = ComputedStyleExtractor::fontWeightFromStyleValue(weight.minimum);
     auto maximum = ComputedStyleExtractor::fontWeightFromStyleValue(weight.maximum);
 
-    if (minimum.get().equals(maximum.get()))
-        return minimum->cssText();
+    if (minimum.get().equals(maximum.get())) {
+        minimum->serialize(serializer);
+        return serializer.builder().toString();
+    }
 
     auto minimumNonKeyword = ComputedStyleExtractor::fontNonKeywordWeightFromStyleValue(weight.minimum);
     auto maximumNonKeyword = ComputedStyleExtractor::fontNonKeywordWeightFromStyleValue(weight.maximum);
 
-    StringBuilder builder;
-    builder.append(minimumNonKeyword->cssText());
-    builder.append(' ');
-    builder.append(maximumNonKeyword->cssText());
-    return builder.toString();
+    minimumNonKeyword->serialize(serializer);
+    serializer.builder().append(' ');
+    maximumNonKeyword->serialize(serializer);
+    return serializer.builder().toString();
 }
 
 String FontFace::stretch() const
@@ -370,11 +377,10 @@ String FontFace::stretch() const
     auto minimumNonKeyword = ComputedStyleExtractor::fontNonKeywordStretchFromStyleValue(stretch.minimum);
     auto maximumNonKeyword = ComputedStyleExtractor::fontNonKeywordStretchFromStyleValue(stretch.maximum);
 
-    StringBuilder builder;
-    builder.append(minimumNonKeyword->cssText());
-    builder.append(' ');
-    builder.append(maximumNonKeyword->cssText());
-    return builder.toString();
+    minimumNonKeyword->serialize(serializer);
+    serializer.builder().append(' ');
+    maximumNonKeyword->serialize(serializer);
+    return serializer.builder().toString();
 }
 
 String FontFace::unicodeRange() const

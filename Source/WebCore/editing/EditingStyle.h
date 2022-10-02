@@ -181,6 +181,7 @@ private:
     void init(Node*, PropertiesToInclude);
     void removeTextFillAndStrokeColorsIfNeeded(const RenderStyle*);
     void setProperty(CSSPropertyID, const String& value, bool important = false);
+    void setProperty(CSSPropertyID, const CSSValue&, bool important = false);
     void extractFontSizeDelta();
     template<typename T> TriState triStateOfStyle(T& styleToCompare, ShouldIgnoreTextOnlyProperties) const;
     bool conflictsWithInlineStyleOfElement(StyledElement&, RefPtr<MutableStyleProperties>* newInlineStyle, EditingStyle* extractedStyle) const;

@@ -29,7 +29,7 @@
 
 namespace WebCore {
 
-String CSSCubicBezierTimingFunctionValue::customCSSText() const
+void CSSCubicBezierTimingFunctionValue::serialize(CSSSerializer& serializer) const
 {
     return makeString("cubic-bezier(", m_x1, ", ", m_y1, ", ", m_x2, ", ", m_y2, ')');
 }
@@ -39,7 +39,7 @@ bool CSSCubicBezierTimingFunctionValue::equals(const CSSCubicBezierTimingFunctio
     return m_x1 == other.m_x1 && m_x2 == other.m_x2 && m_y1 == other.m_y1 && m_y2 == other.m_y2;
 }
 
-String CSSStepsTimingFunctionValue::customCSSText() const
+void CSSStepsTimingFunctionValue::serialize(CSSSerializer& serializer) const
 {
     const char* position = "";
     if (m_stepPosition) {
@@ -69,7 +69,7 @@ bool CSSStepsTimingFunctionValue::equals(const CSSStepsTimingFunctionValue& othe
     return m_steps == other.m_steps && m_stepPosition == other.m_stepPosition;
 }
 
-String CSSSpringTimingFunctionValue::customCSSText() const
+void CSSSpringTimingFunctionValue::serialize(CSSSerializer& serializer) const
 {
     return makeString("spring(", FormattedNumber::fixedPrecision(m_mass), ' ', FormattedNumber::fixedPrecision(m_stiffness), ' ', FormattedNumber::fixedPrecision(m_damping), ' ', FormattedNumber::fixedPrecision(m_initialVelocity), ')');
 }

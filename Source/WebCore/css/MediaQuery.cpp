@@ -35,7 +35,7 @@
 namespace WebCore {
 
 // http://dev.w3.org/csswg/cssom/#serialize-a-media-query
-String MediaQuery::serialize() const
+void MediaQuery::serialize() const
 {
     if (m_ignored) {
         // If query is invalid, serialized text should turn into "not all".

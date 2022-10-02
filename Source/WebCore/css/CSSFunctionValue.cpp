@@ -29,9 +29,11 @@
 
 namespace WebCore {
     
-String CSSFunctionValue::customCSSText() const
+void CSSFunctionValue::serialize(CSSSerializer& serializer) const
 {
-    return makeString(getValueName(m_name), '(', CSSValueList::customCSSText(), ')');
+    serializer.builder().append(getValueName(m_name), '(');
+    CSSValueList::serialize(serializer);
+    serializer.builder().append(')');
 }
 
 }

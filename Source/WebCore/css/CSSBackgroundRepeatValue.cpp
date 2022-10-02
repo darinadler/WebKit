@@ -38,7 +38,7 @@ CSSBackgroundRepeatValue::CSSBackgroundRepeatValue(Ref<CSSPrimitiveValue>&& repe
 {
 }
 
-String CSSBackgroundRepeatValue::customCSSText() const
+void CSSBackgroundRepeatValue::serialize(CSSSerializer& serializer) const
 {
     // background-repeat/mask-repeat behave a little like a shorthand, but `repeat no-repeat` is transformed to `repeat-x`.
     if (!compareCSSValue(m_xValue, m_yValue)) {

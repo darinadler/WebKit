@@ -30,6 +30,7 @@
 #include "AnimationEffectPhase.h"
 #include "CSSAnimation.h"
 #include "CSSPropertyNames.h"
+#include "CSSSerializer.h"
 #include "CSSTransition.h"
 #include "CSSValue.h"
 #include "ComputedStyleExtractor.h"
@@ -145,24 +146,21 @@ static Ref<JSON::ArrayOf<Protocol::Animation::Keyframe>> buildObjectForKeyframes
             if (timingFunction)
                 keyframePayload->setEasing(timingFunction->cssText());
 
-            StringBuilder stylePayloadBuilder;
+            CSSSerializer serializer;
+            SeparatorCharacter separator { ' ' };
             auto& cssPropertyIds = blendingKeyframe.properties();
-            size_t count = cssPropertyIds.size();
             for (auto cssPropertyId : cssPropertyIds) {
                 --count;
                 if (cssPropertyId == CSSPropertyCustom)
                     continue;
 
-                stylePayloadBuilder.append(getPropertyNameString(cssPropertyId));
-                stylePayloadBuilder.append(": ");
+                serializer.append(separator, getPropertyNameString(cssPropertyId), ": "_s);
                 if (auto value = computedStyleExtractor.valueForPropertyInStyle(style, cssPropertyId, renderer))
-                    stylePayloadBuilder.append(value->cssText());
-                stylePayloadBuilder.append(';');
-                if (count > 0)
-                    stylePayloadBuilder.append(' ');
+                    serializer.append(*value);
+                serializer.append(';');
             }
-            if (!stylePayloadBuilder.isEmpty())
-                keyframePayload->setStyle(stylePayloadBuilder.toString());
+            if (!serializer.builder().isEmpty())
+                keyframePayload->setStyle(serializer.builder().toString());
 
             keyframesPayload->addItem(WTFMove(keyframePayload));
         }

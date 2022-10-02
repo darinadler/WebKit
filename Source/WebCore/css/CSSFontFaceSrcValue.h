@@ -66,7 +66,7 @@ public:
     SVGFontFaceElement* svgFontFaceElement() const;
     void setSVGFontFaceElement(SVGFontFaceElement*);
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool customTraverseSubresources(const Function<bool(const CachedResource&)>&) const;
 

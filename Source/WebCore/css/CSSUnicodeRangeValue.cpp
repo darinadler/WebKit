@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-String CSSUnicodeRangeValue::customCSSText() const
+void CSSUnicodeRangeValue::serialize(CSSSerializer& serializer) const
 {
     if (m_from == m_to)
         return makeString("U+", hex(m_from, Lowercase));

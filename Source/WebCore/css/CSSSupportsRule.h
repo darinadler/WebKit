@@ -41,7 +41,7 @@ class CSSSupportsRule final : public CSSConditionRule {
 public:
     static Ref<CSSSupportsRule> create(StyleRuleSupports&, CSSStyleSheet* parent);
 
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     String conditionText() const final;
 
 private:

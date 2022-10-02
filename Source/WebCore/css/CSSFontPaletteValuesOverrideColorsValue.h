@@ -56,7 +56,7 @@ public:
         return m_color.get();
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSFontPaletteValuesOverrideColorsValue&) const;
 

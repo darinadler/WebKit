@@ -45,7 +45,7 @@ CSSFilterImageValue::~CSSFilterImageValue()
         m_cachedImage->removeClient(m_filterSubimageObserver);
 }
 
-String CSSFilterImageValue::customCSSText() const
+void CSSFilterImageValue::serialize(CSSSerializer& serializer) const
 {
     return makeString("filter(", m_imageValue->cssText(), ", ", m_filterValue->cssText(), ')');
 }

@@ -53,7 +53,7 @@ public:
         return adoptRef(*new CSSGridAutoRepeatValue(id));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSGridAutoRepeatValue&) const;
 
     CSSValueID autoRepeatID() const { return m_autoRepeatID; }

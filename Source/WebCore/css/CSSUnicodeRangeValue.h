@@ -40,7 +40,7 @@ public:
     UChar32 from() const { return m_from; }
     UChar32 to() const { return m_to; }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSUnicodeRangeValue&) const;
 

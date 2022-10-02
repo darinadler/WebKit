@@ -51,7 +51,7 @@ public:
     Ref<CSSValue> first() const { return m_first; }
     Ref<CSSValue> second() const { return m_second; }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSValuePair& other) const;
 
 private:

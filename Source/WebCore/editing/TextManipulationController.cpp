@@ -763,12 +763,11 @@ auto TextManipulationController::replace(const ManipulationItemData& item, const
             return ManipulationFailureType::InvalidToken;
         auto expectedTokenIdentifier = item.tokens[0].identifier;
         StringBuilder newValue;
-        for (size_t i = 0; i < replacementTokens.size(); ++i) {
-            if (replacementTokens[i].identifier != expectedTokenIdentifier)
+        SeparatorCharacter separator { ' ' };
+        for (auto& token : replacementTokens) {
+            if (token.identifier != expectedTokenIdentifier)
                 return ManipulationFailureType::InvalidToken;
-            if (i)
-                newValue.append(' ');
-            newValue.append(replacementTokens[i].content);
+            newValue.append(separator, token.content);
         }
         if (item.attributeName == nullQName())
             element->setTextContent(newValue.toString());

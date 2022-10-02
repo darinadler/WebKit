@@ -39,7 +39,7 @@ public:
         return adoptRef(*new CSSBorderImageWidthValue(WTFMove(widths), overridesBorderWidths));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     Quad* widths() const { return m_widths ? m_widths->quadValue() : nullptr; }
 

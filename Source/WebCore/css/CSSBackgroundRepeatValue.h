@@ -39,7 +39,7 @@ public:
         return adoptRef(*new CSSBackgroundRepeatValue(WTFMove(repeatXValue), WTFMove(repeatYValue)));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSBackgroundRepeatValue&) const;
 

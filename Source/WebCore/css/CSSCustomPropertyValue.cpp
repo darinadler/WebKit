@@ -61,7 +61,7 @@ bool CSSCustomPropertyValue::equals(const CSSCustomPropertyValue& other) const
     });
 }
 
-String CSSCustomPropertyValue::customCSSText() const
+void CSSCustomPropertyValue::serialize(CSSSerializer& serializer) const
 {
     if (m_stringValue.isNull()) {
         WTF::switchOn(m_value, [&](const std::monostate&) {

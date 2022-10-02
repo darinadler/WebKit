@@ -33,6 +33,7 @@
 #include "CSSPropertyNames.h"
 #include "CSSPropertyParser.h"
 #include "CSSSelector.h"
+#include "CSSSerializer.h"
 #include "CSSStyleDeclaration.h"
 #include "CSSTimingFunctionValue.h"
 #include "CSSTransition.h"
@@ -706,8 +707,11 @@ auto KeyframeEffect::getKeyframes(Document& document) -> Vector<ComputedKeyframe
                 }
             }
             if (styleString.isEmpty()) {
-                if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(style, cssPropertyId, nullptr))
-                    styleString = cssValue->cssText();
+                if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(style, cssPropertyId, nullptr)) {
+                    CSSSerializer serializer;
+                    serializer.append(*cssValue);
+                    styleString = serializer.builder().toString();
+                }
             }
             computedKeyframe.styleStrings.set(cssPropertyId, styleString);
         };
@@ -734,8 +738,11 @@ auto KeyframeEffect::getKeyframes(Document& document) -> Vector<ComputedKeyframe
                     }
                 }
                 if (styleString.isEmpty()) {
-                    if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty))
-                        styleString = cssValue->cssText();
+                    if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty)) {
+                        CSSSerializer serializer;
+                        serializer.append(*cssValue);
+                        styleString = serializer.builder().toString();
+                    }
                 }
                 computedKeyframe.customStyleStrings.set(customProperty, styleString);
             };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,38 +25,34 @@
 
 #pragma once
 
-#include "CSSRule.h"
-
-#include "StyleRule.h"
+#include <wtf/text/StringBuilder.h>
 
 namespace WebCore {
 
-class CSSStyleDeclaration;
-class DOMMapAdapter;
-class StyleRuleFontFace;
-class StyleRuleCSSStyleDeclaration;
-
-class CSSFontPaletteValuesRule final : public CSSRule {
+class CSSSerializer {
 public:
-    static Ref<CSSFontPaletteValuesRule> create(StyleRuleFontPaletteValues& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSFontPaletteValuesRule(rule, sheet)); }
-
-    virtual ~CSSFontPaletteValuesRule();
-
-    String name() const;
-    String fontFamily() const;
-    String basePalette() const;
-    String overrideColors() const;
-
+    StringBuilder& builder() { return m_builder; }
+    
+    template<typename FirstArgumentType, typename... OtherArgumentTypes> void append(FirstArgumentType, OtherArgumentTypes ...);
+    
+    void setUseLegacyPrecision() { m_shouldUseLegacyPrecision = true; }
+    bool shouldUseLegacyPrecision() const { return m_shouldUseLegacyPrecision; }
+    
 private:
-    CSSFontPaletteValuesRule(StyleRuleFontPaletteValues&, CSSStyleSheet* parent);
-
-    StyleRuleType styleRuleType() const final { return StyleRuleType::FontPaletteValues; }
-    void serialize(CSSSerializer&) const final;
-    void reattach(StyleRuleBase&) final;
-
-    Ref<StyleRuleFontPaletteValues> m_fontPaletteValuesRule;
+    StringBuilder m_builder;
+    bool m_shouldUseLegacyPrecision { false };
 };
 
-} // namespace WebCore
+template<typename, typename = void> inline constexpr bool HasSerializeMember = false;
+template<typename T> inline constexpr bool HasSerializeMember<T, std::void_t<decltype(&T::serialize)>> = true;
 
-SPECIALIZE_TYPE_TRAITS_CSS_RULE(CSSFontPaletteValuesRule, StyleRuleType::FontPaletteValues)
+template<typename FirstArgumentType, typename... OtherArgumentTypes> void CSSSerializer::append(FirstArgumentType firstArgument, OtherArgumentTypes ...otherArguments)
+{
+    if constexpr (HasSerializeMember<FirstArgumentType>)
+        firstArgument.serialize(*this);
+    else
+        m_builder.append(firstArgument);
+    append(otherArguments...);
+}
+
+} // namespace WebCore

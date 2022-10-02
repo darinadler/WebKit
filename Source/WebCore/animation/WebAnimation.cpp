@@ -29,6 +29,7 @@
 #include "AnimationEffect.h"
 #include "AnimationPlaybackEvent.h"
 #include "AnimationTimeline.h"
+#include "CSSSerializer.h"
 #include "CSSStyleDeclaration.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
@@ -1512,12 +1513,18 @@ ExceptionOr<void> WebAnimation::commitStyles()
             effect->animation()->resolve(*animatedStyle, { nullptr });
         WTF::switchOn(property,
             [&] (CSSPropertyID propertyId) {
-                if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(*animatedStyle, propertyId, nullptr))
-                    inlineStyle->setPropertyInternal(propertyId, cssValue->cssText(), false);
+                if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(*animatedStyle, propertyId, nullptr)) {
+                    CSSSerializer serializer;
+                    serializer.append(*cssValue);
+                    inlineStyle->setPropertyInternal(propertyId, serializer.builder().toString(), false);
+                }
             },
-            [&] (AtomString customProperty) {
-                if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty))
-                    inlineStyle->setProperty(customProperty, cssValue->cssText(), emptyString());
+            [&] (const AtomString& customProperty) {
+                if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty)) {
+                    CSSSerializer serializer;
+                    serializer.append(*cssValue);
+                    inlineStyle->setProperty(customProperty, serializer.builder().toString(), emptyString());
+                }
             }
         );
     };
@@ -1533,7 +1540,9 @@ ExceptionOr<void> WebAnimation::commitStyles()
     for (auto customProperty : customProperties)
         commitProperty(customProperty);
 
-    styledElement.setAttribute(HTMLNames::styleAttr, AtomString { inlineStyle->cssText() });
+    CSSSerializer serializer;
+    serializer.append(*inlineStyle);
+    styledElement.setAttribute(HTMLNames::styleAttr, serializer.builder().toAtomString());
 
     return { };
 }

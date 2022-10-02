@@ -66,14 +66,9 @@ bool SVGStringList::parse(StringView data, UChar delimiter)
 String SVGStringList::valueAsString() const
 {
     StringBuilder builder;
-
-    for (const auto& string : m_items) {
-        if (builder.length())
-            builder.append(' ');
-
-        builder.append(string);
-    }
-
+    SeparatorCharacter separator { ' ' };
+    for (auto& string : m_items)
+        builder.append(separator, string);
     return builder.toString();
 }
 

@@ -58,7 +58,7 @@ private:
     bool isPropertyImplicit(const String& propertyName) final;
     ExceptionOr<void> setProperty(const String& propertyName, const String& value, const String& priority) final;
     ExceptionOr<String> removeProperty(const String& propertyName) final;
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     ExceptionOr<void> setCssText(const String&) final;
     RefPtr<CSSValue> getPropertyCSSValueInternal(CSSPropertyID) final;
     String getPropertyValueInternal(CSSPropertyID) final;

@@ -144,7 +144,7 @@ bool CSSImageValue::equals(const CSSImageValue& other) const
     return m_location == other.m_location;
 }
 
-String CSSImageValue::customCSSText() const
+void CSSImageValue::serialize(CSSSerializer& serializer) const
 {
     return serializeURL(m_location.specifiedURLString);
 }

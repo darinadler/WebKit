@@ -28,6 +28,7 @@
 
 namespace WebCore {
 
+class CSSSerializer;
 class CSSStyleSheet;
 class StyleRuleBase;
 
@@ -40,7 +41,7 @@ public:
     unsigned short type() const { return static_cast<unsigned short>(styleRuleType()); }
 
     virtual StyleRuleType styleRuleType() const = 0;
-    virtual String cssText() const = 0;
+    virtual void serialize(CSSSerializer&) const = 0;
     virtual void reattach(StyleRuleBase&) = 0;
 
     void setParentStyleSheet(CSSStyleSheet*);

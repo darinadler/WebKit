@@ -55,7 +55,7 @@ public:
     ImageWithScale selectBestFitImage(const Document&);
     CachedImage* cachedImage() const;
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool customTraverseSubresources(const Function<bool(const CachedResource&)>&) const;
 

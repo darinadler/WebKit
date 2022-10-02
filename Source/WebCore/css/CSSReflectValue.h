@@ -45,7 +45,7 @@ public:
     const CSSPrimitiveValue& offset() const { return m_offset.get(); }
     CSSValue* mask() const { return m_mask.get(); }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSReflectValue&) const;
 

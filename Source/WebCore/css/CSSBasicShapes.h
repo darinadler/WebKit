@@ -38,6 +38,7 @@
 namespace WebCore {
 
 class CSSPrimitiveValue;
+class CSSSerializer;
 class SVGPathByteStream;
 
 class CSSBasicShape : public RefCounted<CSSBasicShape> {
@@ -51,7 +52,7 @@ public:
     };
 
     virtual Type type() const = 0;
-    virtual String cssText() const = 0;
+    virtual void serialize(CSSSerializer&) const = 0;
     virtual bool equals(const CSSBasicShape&) const = 0;
 
 public:
@@ -113,7 +114,7 @@ private:
     CSSBasicShapeInset() = default;
 
     Type type() const final { return CSSBasicShapeInsetType; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     bool equals(const CSSBasicShape&) const final;
 
     RefPtr<CSSPrimitiveValue> m_top;
@@ -143,7 +144,7 @@ private:
     CSSBasicShapeCircle() = default;
 
     Type type() const final { return CSSBasicShapeCircleType; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     bool equals(const CSSBasicShape&) const final;
 
     RefPtr<CSSPrimitiveValue> m_centerX;
@@ -169,7 +170,7 @@ private:
     CSSBasicShapeEllipse() = default;
 
     Type type() const final { return CSSBasicShapeEllipseType; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     bool equals(const CSSBasicShape&) const final;
 
     RefPtr<CSSPrimitiveValue> m_centerX;
@@ -200,7 +201,7 @@ private:
     }
 
     Type type() const final { return CSSBasicShapePolygonType; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     bool equals(const CSSBasicShape&) const final;
 
     Vector<Ref<CSSPrimitiveValue>> m_values;
@@ -226,7 +227,7 @@ private:
     CSSBasicShapePath(std::unique_ptr<SVGPathByteStream>&&);
 
     Type type() const final { return CSSBasicShapePathType; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     bool equals(const CSSBasicShape&) const final;
 
     std::unique_ptr<SVGPathByteStream> m_byteStream;

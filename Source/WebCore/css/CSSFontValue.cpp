@@ -25,7 +25,7 @@
 
 namespace WebCore {
 
-String CSSFontValue::customCSSText() const
+void CSSFontValue::serialize(CSSSerializer& serializer) const
 {
     // font variant weight size / line-height family
 

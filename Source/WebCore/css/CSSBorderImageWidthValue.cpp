@@ -38,7 +38,7 @@ CSSBorderImageWidthValue::CSSBorderImageWidthValue(RefPtr<CSSPrimitiveValue>&& w
 {
 }
 
-String CSSBorderImageWidthValue::customCSSText() const
+void CSSBorderImageWidthValue::serialize(CSSSerializer& serializer) const
 {
     // border-image-width can't set m_overridesBorderWidths to true by itself, so serialize as empty string.
     // It can only be true via the -webkit-border-image shorthand, whose serialization will unwrap widths() if needed.

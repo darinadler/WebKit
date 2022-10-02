@@ -43,7 +43,7 @@ public:
     Ref<CSSPrimitiveValue> position() const { return CSSValuePool::singleton().createIdentifierValue(m_position); }
     Ref<CSSPrimitiveValue> overflow() const { return CSSValuePool::singleton().createIdentifierValue(m_overflow); }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSContentDistributionValue&) const;
 

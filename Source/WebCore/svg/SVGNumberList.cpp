@@ -54,14 +54,9 @@ bool SVGNumberList::parse(StringView value)
 String SVGNumberList::valueAsString() const
 {
     StringBuilder builder;
-
-    for (const auto& number : m_items) {
-        if (builder.length())
-            builder.append(' ');
-
-        builder.append(number->value());
-    }
-
+    SeparatorCharacter separator { ' ' };
+    for (auto& number : m_items)
+        builder.append(separator, number->value());
     return builder.toString();
 }
 

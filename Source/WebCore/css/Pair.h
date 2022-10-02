@@ -25,6 +25,7 @@
 namespace WebCore {
 
 class CSSPrimitiveValue;
+class CSSSerializer;
 
 // A primitive value representing a pair.  This is useful for properties like border-radius, background-size/position,
 // and border-spacing (all of which are space-separated sets of two values).  At the moment we are only using it for
@@ -48,6 +49,9 @@ public:
     CSSPrimitiveValue* first() const { return m_first.get(); }
     CSSPrimitiveValue* second() const { return m_second.get(); }
 
+    void serialize(CSSSerializer&) const;
+
+#if 0
     String cssText() const
     {
         String first = this->first()->cssText();
@@ -56,6 +60,7 @@ public:
             return first;
         return first + ' ' + second;
     }
+#endif
 
     bool equals(const Pair& other) const { return compareCSSValuePtr(m_first, other.m_first) && compareCSSValuePtr(m_second, other.m_second); }
 

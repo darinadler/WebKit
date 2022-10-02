@@ -41,7 +41,7 @@ public:
         return adoptRef(*new CSSSubgridValue);
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
 private:
     CSSSubgridValue();

@@ -26,6 +26,7 @@
 #pragma once
 
 #include "CSSPropertyParser.h"
+#include "CSSSerializer.h"
 #include "ComputedStyleExtractor.h"
 #include "SVGAttributeAnimator.h"
 #include "SVGElement.h"
@@ -84,17 +85,18 @@ protected:
         targetElement.setUseOverrideComputedStyle(true);
         RefPtr<CSSValue> value = ComputedStyleExtractor(&targetElement).propertyValue(id);
         targetElement.setUseOverrideComputedStyle(false);
-        return value ? value->cssText() : String();
+        CSSSerializer serializer;
+        if (value)
+            value->serialize(serializer);
+        return serializer.builder().toString();
     }
 
     String computeInheritedCSSPropertyValue(SVGElement& targetElement) const
     {
-        RefPtr<Element> parent = targetElement.parentElement();
-        if (!parent || !parent->isSVGElement())
+        RefPtr parent = dynamicDowncast<SVGElement>(targetElement.parentElement());
+        if (!parent)
             return emptyString();
-        
-        SVGElement& svgParent = downcast<SVGElement>(*parent);
-        return computeCSSPropertyValue(svgParent, cssPropertyID(m_attributeName.localName()));
+        return computeCSSPropertyValue(*parent, cssPropertyID(m_attributeName.localName()));
     }
 
     AnimationFunction m_function;

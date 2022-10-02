@@ -53,13 +53,6 @@ template<unsigned charactersCount> ALWAYS_INLINE bool equalLiteral(const StringB
     return equal(s, reinterpret_cast<const LChar*>(characters), charactersCount - 1);
 }
 
-static void addNewClass(StringBuilder& classes, const StringBuilder& newClass)
-{
-    if (!classes.isEmpty())
-        classes.append(' ');
-    classes.append(newClass);
-}
-
 inline bool emitToken(WebVTTToken& resultToken, const WebVTTToken& token)
 {
     resultToken = token;
@@ -96,6 +89,7 @@ bool WebVTTTokenizer::nextToken(WebVTTToken& token)
     StringBuilder buffer;
     StringBuilder result;
     StringBuilder classes;
+    SeparatorCharacter classSeparator { ' ' };
 
 // 4.8.10.13.4 WebVTT cue text tokenizer
 DataState:
@@ -192,15 +186,16 @@ StartTagState:
 
 StartTagClassState:
     if (isTokenizerWhitespace(character)) {
-        addNewClass(classes, buffer);
+        classes.append(classSeparator, buffer);
+        classes.append(classSeparator, buffer);
         buffer.clear();
         WEBVTT_ADVANCE_TO(StartTagAnnotationState);
     } else if (character == '.') {
-        addNewClass(classes, buffer);
+        classes.append(classSeparator, buffer);
         buffer.clear();
         WEBVTT_ADVANCE_TO(StartTagClassState);
     } else if (character == '>' || character == kEndOfFileMarker) {
-        addNewClass(classes, buffer);
+        classes.append(classSeparator, buffer);
         buffer.clear();
         return advanceAndEmitToken(m_input, token, WebVTTToken::StartTag(result.toString(), classes.toAtomString()));
     } else {

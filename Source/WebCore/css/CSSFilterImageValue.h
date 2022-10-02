@@ -53,7 +53,7 @@ public:
 
     ~CSSFilterImageValue();
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     RefPtr<Image> image(RenderElement&, const FloatSize&);
     bool isFixedSize() const { return true; }

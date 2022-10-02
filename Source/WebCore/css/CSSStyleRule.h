@@ -47,7 +47,7 @@ private:
     CSSStyleRule(StyleRule&, CSSStyleSheet*);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Style; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     void reattach(StyleRuleBase&) final;
 
     String generateSelectorText() const;

@@ -84,15 +84,15 @@ CSSStyleValue::CSSStyleValue(RefPtr<CSSValue>&& cssValue, String&& property)
 
 String CSSStyleValue::toString() const
 {
-    StringBuilder builder;
-    serialize(builder);
-    return builder.toString();
+    CSSSerializer serializer;
+    serialize(serializer);
+    return serializer.builder().toString();
 }
 
-void CSSStyleValue::serialize(StringBuilder& builder, OptionSet<SerializationArguments>) const
+void CSSStyleValue::serialize(CSSSerializer& serializer, OptionSet<SerializationArguments>) const
 {
     if (m_propertyValue)
-        builder.append(m_propertyValue->cssText());
+        m_propertyValue->serialize(serializer);
 }
 
 } // namespace WebCore

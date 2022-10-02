@@ -38,7 +38,7 @@ class CSSLayerStatementRule final : public CSSRule {
 public:
     static Ref<CSSLayerStatementRule> create(StyleRuleLayer&, CSSStyleSheet* parent);
 
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     Vector<String> nameList() const;
 
 private:

@@ -34,9 +34,11 @@
 
 namespace WebCore {
 
-String CSSGridLineNamesValue::customCSSText() const
+void CSSGridLineNamesValue::serialize(CSSSerializer& serializer) const
 {
-    return makeString('[', CSSValueList::customCSSText(), ']');
+    serializer.builder.append('[');
+    CSSValueList::serialize(serializer);
+    serializer.builder.append(']');
 }
 
 CSSGridLineNamesValue::CSSGridLineNamesValue()

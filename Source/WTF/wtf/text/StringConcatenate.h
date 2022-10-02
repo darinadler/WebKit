@@ -405,6 +405,32 @@ private:
     const ASCIICaseConverter& m_converter;
 };
 
+struct SeparatorCharacter {
+    char character;
+    bool active { false };
+};
+
+template<> class StringTypeAdapter<SeparatorCharacter, void> {
+public:
+    StringTypeAdapter(const SeparatorCharacter& separator)
+        : m_character { std::exchange(const_cast<SeparatorCharacter&>(separator).active, true) ? separator.character : '\0' }
+    {
+        ASSERT(separator.character);
+        ASSERT(isASCII(separator.character));
+    }
+
+    constexpr unsigned length() const { return m_character ? 1 : 0; }
+    static constexpr bool is8Bit() { return true; }
+    template<typename CharacterType> void writeTo(CharacterType* destination) const
+    {
+        if (m_character)
+            *destination = m_character;
+    }
+
+private:
+    char m_character;
+};
+
 template<typename Adapter>
 inline bool are8Bit(Adapter adapter)
 {
@@ -540,6 +566,7 @@ inline String WARN_UNUSED_RETURN makeStringByInserting(StringView originalString
 
 using WTF::Indentation;
 using WTF::IndentationScope;
+using WTF::SeparatorCharacter;
 using WTF::makeAtomString;
 using WTF::makeString;
 using WTF::makeStringByInserting;

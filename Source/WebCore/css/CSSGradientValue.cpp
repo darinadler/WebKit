@@ -756,9 +756,8 @@ static void writeColorStop(StringBuilder& builder, const CSSGradientColorStop& s
     appendSpaceSeparatedOptionalCSSPtrText(builder, stop.color, stop.position);
 }
 
-String CSSLinearGradientValue::customCSSText() const
+void CSSLinearGradientValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder result;
     if (gradientType() == CSSDeprecatedLinearGradient) {
         result.append("-webkit-gradient(linear, ", firstX()->cssText(), ' ', firstY()->cssText(), ", ", secondX()->cssText(), ' ', secondY()->cssText());
         appendGradientStops(result, stops());
@@ -794,7 +793,7 @@ String CSSLinearGradientValue::customCSSText() const
             wroteSomething = true;
         }
 
-        if (appendColorInterpolationMethod(result, colorInterpolationMethod(), wroteSomething))
+        if (appendColorInterpolationMethod(result, colorInterpolationMethod(), separator))
             wroteSomething = true;
 
         for (auto& stop : stops()) {
@@ -948,37 +947,50 @@ bool CSSLinearGradientValue::equals(const CSSLinearGradientValue& other) const
     return CSSGradientValue::equals(other) && compareCSSValuePtr(m_angle, other.m_angle);
 }
 
-String CSSRadialGradientValue::customCSSText() const
+void CSSRadialGradientValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder result;
-
     if (gradientType() == CSSDeprecatedRadialGradient) {
-        result.append("-webkit-gradient(radial, ", firstX()->cssText(), ' ', firstY()->cssText(), ", ", m_firstRadius->cssText(),
-            ", ", secondX()->cssText(), ' ', secondY()->cssText(), ", ", m_secondRadius->cssText());
-        appendGradientStops(result, stops());
+        serializer.builder().append("-webkit-gradient(radial, ");
+        firstX()->serialize(serializer);
+        serializer.builder().append(' ');
+        firstY()->serialize(serializer);
+        serializer.builder().append(", ");
+        m_firstRadius->serialize(serializer),
+        serializer.builder().append(", ");
+        secondX()->serialize(serializer);
+        serializer.builder().append(' ');
+        secondY()->serialize(serializer);
+        serializer.builder().append(", ");
+        m_secondRadius->serialize(serializer);
+        appendGradientStops(serializer.builder(), stops());
     } else if (gradientType() == CSSPrefixedRadialGradient) {
         if (isRepeating())
-            result.append("-webkit-repeating-radial-gradient(");
+            serializer.builder().append("-webkit-repeating-radial-gradient(");
         else
-            result.append("-webkit-radial-gradient(");
+            serializer.builder().append("-webkit-radial-gradient(");
 
         if (firstX() || firstY())
-            appendSpaceSeparatedOptionalCSSPtrText(result, firstX(), firstY());
+            appendSpaceSeparatedOptionalCSSPtrText(serializer.builder(), firstX(), firstY());
         else
-            result.append("center");
+            serializer.builder().append("center");
 
         if (m_shape || m_sizingBehavior) {
-            result.append(", ");
-            if (m_shape)
-                result.append(m_shape->cssText(), ' ');
-            else
-                result.append("ellipse ");
+            serializer.builder().append(", ");
+            if (m_shape) {
+                m_shape->serialize(serializer);
+                serializer.builder().append(' ');
+            } else
+                serializer.builder().append("ellipse ");
             if (m_sizingBehavior)
-                result.append(m_sizingBehavior->cssText());
+                m_sizingBehavior->serialize(serializer);
             else
-                result.append("cover");
-        } else if (m_endHorizontalSize && m_endVerticalSize)
-            result.append(", ", m_endHorizontalSize->cssText(), ' ', m_endVerticalSize->cssText());
+                serializer.builder().append("cover");
+        } else if (m_endHorizontalSize && m_endVerticalSize) {
+            serializer.builder().append(", ");
+            m_endHorizontalSize->serialize(serializer);
+            serializer.builder().append(", ");
+            m_endVerticalSize->serialize(serializer));
+        }
 
         for (auto& stop : stops()) {
             result.append(", ");
@@ -990,35 +1002,26 @@ String CSSRadialGradientValue::customCSSText() const
         else
             result.append("radial-gradient(");
 
-        bool wroteSomething = false;
-
         // The only ambiguous case that needs an explicit shape to be provided
         // is when a sizing keyword is used (or all sizing is omitted).
         if (m_shape && m_shape->valueID() != CSSValueEllipse && (m_sizingBehavior || (!m_sizingBehavior && !m_endHorizontalSize))) {
-            result.append("circle");
-            wroteSomething = true;
-        }
+            result.append(separator, "circle");
 
         if (m_sizingBehavior && m_sizingBehavior->valueID() != CSSValueFarthestCorner) {
-            if (wroteSomething)
-                result.append(' ');
-            result.append(m_sizingBehavior->cssText());
-            wroteSomething = true;
+            serializer.builder().append(separator);
+            m_sizingBehavior->serialize(serializer));
         } else if (m_endHorizontalSize) {
-            if (wroteSomething)
-                result.append(' ');
-            result.append(m_endHorizontalSize->cssText());
-            if (m_endVerticalSize)
-                result.append(' ', m_endVerticalSize->cssText());
-            wroteSomething = true;
+            serializer.builder().append(separator);
+            m_endHorizontalSize->serialize(serializer);
+            if (m_endVerticalSize) {
+                serializer.builder().append(' ');
+                m_endVerticalSize->serialize(serializer);
+            }
         }
 
         if ((firstX() && !firstX()->isCenterPosition()) || (firstY() && !firstY()->isCenterPosition())) {
-            if (wroteSomething)
-                result.append(' ');
-            result.append("at ");
-            appendSpaceSeparatedOptionalCSSPtrText(result, firstX(), firstY());
-            wroteSomething = true;
+            serializer.builder().append(separator, "at ");
+            appendSpaceSeparatedOptionalCSSPtrText(serializer.builder(), firstX(), firstY());
         }
 
         if (appendColorInterpolationMethod(result, colorInterpolationMethod(), wroteSomething))
@@ -1027,7 +1030,7 @@ String CSSRadialGradientValue::customCSSText() const
         if (wroteSomething)
             result.append(", ");
 
-        bool wroteFirstStop = false;
+        SeparatorCharacter stopSeparator { ", " };
         for (auto& stop : stops()) {
             if (wroteFirstStop)
                 result.append(", ");
@@ -1287,17 +1290,15 @@ bool CSSRadialGradientValue::equals(const CSSRadialGradientValue& other) const
         && compareCSSValuePtr(m_endVerticalSize, other.m_endVerticalSize);
 }
 
-String CSSConicGradientValue::customCSSText() const
+void CSSConicGradientValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder result;
+    SeparatorCharacter separator { ' ' };
 
-    result.append(isRepeating() ? "repeating-conic-gradient(" : "conic-gradient(");
-
-    bool wroteSomething = false;
+    serializer.builder().append(isRepeating() ? "repeating-conic-gradient(" : "conic-gradient(");
 
     if (m_angle && m_angle->computeDegrees()) {
-        result.append("from ", m_angle->cssText());
-        wroteSomething = true;
+        serializer.builder().append(separator, "from ");
+        m_angle->serialize(serializer);
     }
 
     if ((firstX() && !firstX()->isCenterPosition()) || (firstY() && !firstY()->isCenterPosition())) {
@@ -1305,7 +1306,6 @@ String CSSConicGradientValue::customCSSText() const
             result.append(' ');
         result.append("at ");
         appendSpaceSeparatedOptionalCSSPtrText(result, firstX(), firstY());
-        wroteSomething = true;
     }
 
     if (appendColorInterpolationMethod(result, colorInterpolationMethod(), wroteSomething))

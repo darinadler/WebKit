@@ -375,10 +375,7 @@ private:
                 if (!rightString)
                     break;
 
-                StringBuilder builder;
-                builder.append(leftString);
-                builder.append(rightString);
-                convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, builder.toString()));
+                convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, leftString + rightString));
                 m_changed = true;
                 break;
             }
@@ -404,13 +401,7 @@ private:
                     break;
             }
 
-            StringBuilder builder;
-            builder.append(leftString);
-            builder.append(rightString);
-            if (!!extraString)
-                builder.append(extraString);
-
-            convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, builder.toString()));
+            convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, makeString(leftString, rightString, extraString)));
             m_changed = true;
             break;
         }

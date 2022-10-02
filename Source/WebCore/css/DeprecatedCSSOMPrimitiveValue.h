@@ -73,8 +73,8 @@ public:
     }
 
     bool equals(const DeprecatedCSSOMPrimitiveValue& other) const { return m_value->equals(other.m_value); }
-    String cssText() const { return m_value->cssText(); }
-    
+    void serialize(CSSSerializer& serializer) const { return m_value->serialize(serializer); }
+
     WEBCORE_EXPORT unsigned short primitiveType() const;
     WEBCORE_EXPORT ExceptionOr<float> getFloatValue(unsigned short unitType) const;
     WEBCORE_EXPORT ExceptionOr<String> getStringValue() const;

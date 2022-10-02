@@ -76,7 +76,7 @@ void CSSFontFaceSrcValue::setSVGFontFaceElement(SVGFontFaceElement* element)
     m_svgFontFaceElement = element;
 }
 
-String CSSFontFaceSrcValue::customCSSText() const
+void CSSFontFaceSrcValue::serialize(CSSSerializer& serializer) const
 {
     // FIXME: URLs should not be absolutized, but instead should be serialized exactly as they were specified.
     const char* prefix = isLocal() ? "local(" : "url(";

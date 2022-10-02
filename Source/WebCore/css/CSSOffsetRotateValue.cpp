@@ -26,25 +26,19 @@
 #include "config.h"
 #include "CSSOffsetRotateValue.h"
 
+#include "CSSSerializer.h"
 #include "CSSValuePool.h"
 
 namespace WebCore {
 
-String CSSOffsetRotateValue::customCSSText() const
+void CSSOffsetRotateValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder builder;
-
     if (m_modifier)
-        builder.append(m_modifier->cssText());
-
-    if (m_angle) {
-        if (!builder.isEmpty())
-            builder.append(' ');
-
-        builder.append(m_angle->cssText());
-    }
-
-    return builder.toString();
+        m_modifier->serialize(serializer);
+    if (m_angle && m_modifier)
+        serializer.builder().append(' ');
+    if (m_angle)
+        m_angle->serialize(serializer);
 }
 
 Ref<CSSOffsetRotateValue> CSSOffsetRotateValue::initialValue()

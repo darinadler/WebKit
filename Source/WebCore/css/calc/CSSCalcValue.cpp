@@ -311,7 +311,7 @@ void CSSCalcValue::collectDirectRootComputationalDependencies(HashSet<CSSPropert
     m_expression->collectDirectRootComputationalDependencies(values);
 }
 
-String CSSCalcValue::customCSSText() const
+void CSSCalcValue::serialize(CSSSerializer& serializer) const
 {
     StringBuilder builder;
     CSSCalcOperationNode::buildCSSText(m_expression.get(), builder);

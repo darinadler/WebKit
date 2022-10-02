@@ -293,7 +293,7 @@ bool MediaQueryExpression::isViewportDependent() const
         || m_mediaFeature == MediaFeatureNames::maxAspectRatio;
 }
 
-String MediaQueryExpression::serialize() const
+void MediaQueryExpression::serialize() const
 {
     if (m_serializationCache.isNull())
         m_serializationCache = makeString('(', asASCIILowercase(m_mediaFeature), m_value ? ": " : "", m_value ? m_value->cssText() : emptyString(), ')');

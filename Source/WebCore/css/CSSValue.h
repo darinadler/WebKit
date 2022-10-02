@@ -27,6 +27,7 @@
 
 namespace WebCore {
 
+class CSSSerializer;
 class CSSStyleDeclaration;
 class CachedResource;
 class DeprecatedCSSOMValue;
@@ -46,7 +47,7 @@ public:
     unsigned refCount() const { return m_refCount / refCountIncrement; }
     bool hasAtLeastOneRef() const { return m_refCount; }
 
-    String cssText() const;
+    void serialize(CSSSerializer&) const;
 
     bool isPrimitiveValue() const { return m_classType == PrimitiveClass; }
     bool isValueList() const { return m_classType >= ValueListClass; }

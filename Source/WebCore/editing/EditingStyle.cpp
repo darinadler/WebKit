@@ -34,6 +34,7 @@
 #include "CSSParser.h"
 #include "CSSPropertyParserHelpers.h"
 #include "CSSRuleList.h"
+#include "CSSSerializer.h"
 #include "CSSStyleRule.h"
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
@@ -215,7 +216,7 @@ bool HTMLElementEquivalent::valueIsPresentInStyle(Element& element, const Editin
 
 void HTMLElementEquivalent::addToStyle(Element*, EditingStyle* style) const
 {
-    style->setProperty(m_propertyID, m_primitiveValue->cssText());
+    style->setProperty(m_propertyID, m_primitiveValue);
 }
 
 class HTMLTextDecorationEquivalent : public HTMLElementEquivalent {
@@ -341,8 +342,8 @@ bool HTMLAttributeEquivalent::valueIsPresentInStyle(Element& element, const Edit
 
 void HTMLAttributeEquivalent::addToStyle(Element* element, EditingStyle* style) const
 {
-    if (RefPtr<CSSValue> value = attributeValueAsCSSValue(element))
-        style->setProperty(m_propertyID, value->cssText());
+    if (auto value = attributeValueAsCSSValue(element))
+        style->setProperty(m_propertyID, *value);
 }
 
 RefPtr<CSSValue> HTMLAttributeEquivalent::attributeValueAsCSSValue(Element* element) const
@@ -440,12 +441,14 @@ static Color cssValueToColor(CSSValue* colorValue)
 {
     if (!is<CSSPrimitiveValue>(colorValue))
         return Color::transparentBlack;
-    
+
     CSSPrimitiveValue& primitiveColor = downcast<CSSPrimitiveValue>(*colorValue);
     if (primitiveColor.isRGBColor())
         return primitiveColor.color();
-    
-    return CSSParser::parseColorWithoutContext(colorValue->cssText());
+
+    CSSSerializer serializer;
+    colorValue->serialize(serializer);
+    return CSSParser::parseColorWithoutContext(serializer.builder().toString());
 }
 
 template<typename T>
@@ -514,9 +517,9 @@ void EditingStyle::init(Node* node, PropertiesToInclude propertiesToInclude)
 
     if (propertiesToInclude == EditingPropertiesInEffect) {
         if (RefPtr<CSSValue> value = backgroundColorInEffect(node))
-            m_mutableStyle->setProperty(CSSPropertyBackgroundColor, value->cssText());
+            m_mutableStyle->setProperty(CSSPropertyBackgroundColor, WTFMove(value));
         if (RefPtr<CSSValue> value = computedStyleAtPosition.propertyValue(CSSPropertyWebkitTextDecorationsInEffect)) {
-            m_mutableStyle->setProperty(CSSPropertyTextDecorationLine, value->cssText());
+            m_mutableStyle->setProperty(CSSPropertyTextDecorationLine, WTFMove(value));
             m_mutableStyle->removeProperty(CSSPropertyWebkitTextDecorationsInEffect);
         }
     }
@@ -526,7 +529,7 @@ void EditingStyle::init(Node* node, PropertiesToInclude propertiesToInclude)
         removeTextFillAndStrokeColorsIfNeeded(renderStyle);
         if (renderStyle->fontDescription().keywordSize()) {
             if (auto cssValue = computedStyleAtPosition.getFontSizeCSSValuePreferringKeyword())
-                m_mutableStyle->setProperty(CSSPropertyFontSize, cssValue->cssText());
+                m_mutableStyle->setProperty(CSSPropertyFontSize, WTFMove(cssValue));
         }
     }
 
@@ -785,7 +788,7 @@ void EditingStyle::collapseTextDecorationProperties()
         return;
 
     if (textDecorationsInEffect->isValueList())
-        m_mutableStyle->setProperty(CSSPropertyTextDecorationLine, textDecorationsInEffect->cssText(), m_mutableStyle->propertyIsImportant(CSSPropertyTextDecorationLine));
+        m_mutableStyle->setProperty(CSSPropertyTextDecorationLine, *textDecorationsInEffect, m_mutableStyle->propertyIsImportant(CSSPropertyTextDecorationLine));
     else
         m_mutableStyle->removeProperty(CSSPropertyTextDecorationLine);
     m_mutableStyle->removeProperty(CSSPropertyWebkitTextDecorationsInEffect);
@@ -908,7 +911,7 @@ bool EditingStyle::conflictsWithInlineStyleOfElement(StyledElement& element, Ref
 
                 if (extractedStyle) {
                     bool isImportant = inlineStyle->propertyIsImportant(CSSPropertyTextDecorationLine);
-                    extractedStyle->setProperty(CSSPropertyTextDecorationLine, extractedValueList->cssText(), isImportant);
+                    extractedStyle->setProperty(CSSPropertyTextDecorationLine, extractedValueList, isImportant);
                 }
             }
         }
@@ -1564,7 +1567,7 @@ RefPtr<EditingStyle> EditingStyle::styleAtSelectionStart(const VisibleSelection&
     if (shouldUseBackgroundColorInEffect && (selection.isRange() || hasTransparentBackgroundColor(style->m_mutableStyle.get()))) {
         if (auto range = selection.toNormalizedRange()) {
             if (auto value = backgroundColorInEffect(commonInclusiveAncestor<ComposedTree>(*range)))
-                style->setProperty(CSSPropertyBackgroundColor, value->cssText());
+                style->setProperty(CSSPropertyBackgroundColor, *value);
         }
     }
 
@@ -1698,7 +1701,7 @@ static void reconcileTextDecorationProperties(MutableStyleProperties* style)
     // We shouldn't have both text-decoration and -webkit-text-decorations-in-effect because that wouldn't make sense.
     ASSERT(!textDecorationsInEffect || !textDecoration);
     if (textDecorationsInEffect) {
-        style->setProperty(CSSPropertyTextDecorationLine, textDecorationsInEffect->cssText());
+        style->setProperty(CSSPropertyTextDecorationLine, *textDecorationsInEffect);
         style->removeProperty(CSSPropertyWebkitTextDecorationsInEffect);
         textDecoration = textDecorationsInEffect;
     }
@@ -1799,7 +1802,7 @@ bool StyleChange::operator==(const StyleChange& other)
 static void setTextDecorationProperty(MutableStyleProperties& style, const CSSValueList* newTextDecoration, CSSPropertyID propertyID)
 {
     if (newTextDecoration->length())
-        style.setProperty(propertyID, newTextDecoration->cssText(), style.propertyIsImportant(propertyID));
+        style.setProperty(propertyID, *newTextDecoration, style.propertyIsImportant(propertyID));
     else {
         // text-decoration: none is redundant since it does not remove any text decorations.
         style.removeProperty(propertyID);

@@ -42,7 +42,7 @@ public:
         return adoptRef(*new CSSFontStyleValue(WTFMove(fontStyleValue), WTFMove(obliqueValue)));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool equals(const CSSFontStyleValue&) const;
 

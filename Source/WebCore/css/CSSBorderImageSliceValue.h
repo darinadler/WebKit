@@ -39,7 +39,7 @@ public:
         return adoptRef(*new CSSBorderImageSliceValue(WTFMove(slices), fill));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     Quad* slices() const { return m_slices ? m_slices->quadValue() : nullptr; }
 

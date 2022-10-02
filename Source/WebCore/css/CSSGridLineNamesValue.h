@@ -41,7 +41,7 @@ public:
         return adoptRef(*new CSSGridLineNamesValue);
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
 private:
     CSSGridLineNamesValue();

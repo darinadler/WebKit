@@ -38,7 +38,7 @@ class CSSLayerBlockRule final : public CSSGroupingRule {
 public:
     static Ref<CSSLayerBlockRule> create(StyleRuleLayer&, CSSStyleSheet* parent);
 
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     String name() const;
 
 private:

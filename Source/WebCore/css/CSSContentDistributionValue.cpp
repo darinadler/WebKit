@@ -40,7 +40,7 @@ CSSContentDistributionValue::CSSContentDistributionValue(CSSValueID distribution
 
 CSSContentDistributionValue::~CSSContentDistributionValue() = default;
 
-String CSSContentDistributionValue::customCSSText() const
+void CSSContentDistributionValue::serialize(CSSSerializer& serializer) const
 {
     auto& cssValuePool = CSSValuePool::singleton();
     auto list = CSSValueList::createSpaceSeparated();
@@ -57,7 +57,7 @@ String CSSContentDistributionValue::customCSSText() const
             list->append(position());
         }
     }
-    return list->customCSSText();
+    list->serialize(serializer);
 }
 
 bool CSSContentDistributionValue::equals(const CSSContentDistributionValue& other) const

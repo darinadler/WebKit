@@ -51,7 +51,7 @@ public:
         return adoptRef(*new CSSLineBoxContainValue(value));
     }
 
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
     bool equals(const CSSLineBoxContainValue& other) const { return m_value == other.m_value; }
     OptionSet<LineBoxContain> value() const { return m_value; }
 

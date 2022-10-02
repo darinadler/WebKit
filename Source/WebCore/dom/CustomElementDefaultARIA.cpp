@@ -65,14 +65,12 @@ const AtomString& CustomElementDefaultARIA::valueForAttribute(const Element& thi
             result = &elementValue->attributeWithoutSynchronization(HTMLNames::idAttr);
     }, [&](const Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>>& elements) {
         StringBuilder idList;
+        SeparatorCharacter separator { ' ' };
         for (auto& weakElement : elements) {
-            RefPtr element = weakElement.get();
-            if (element && isElementVisible(*element, thisElement)) {
-                if (idList.length())
-                    idList.append(' ');
-                idList.append(element->attributeWithoutSynchronization(HTMLNames::idAttr));
-            }
+            if (RefPtr element = weakElement.get(); element && isElementVisible(*element, thisElement))
+                idList.append(separator, element->attributeWithoutSynchronization(HTMLNames::idAttr));
         }
+        // FIXME: Seems like we need to set result here.
     }), it->value);
 
     return *result;

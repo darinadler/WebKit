@@ -30,6 +30,8 @@
 
 namespace WebCore {
 
+class CSSSerializer;
+
 class CSSCalcOperationNode final : public CSSCalcExpressionNode {
     WTF_MAKE_FAST_ALLOCATED;
 public:
@@ -52,7 +54,7 @@ public:
     static RefPtr<CSSCalcOperationNode> createRoundConstant(CalcOperator);
     static Ref<CSSCalcExpressionNode> simplify(Ref<CSSCalcExpressionNode>&&);
 
-    static void buildCSSText(const CSSCalcExpressionNode&, StringBuilder&);
+    static void serialize(const CSSCalcExpressionNode&, CSSSerializer&);
 
     CalcOperator calcOperator() const { return m_operator; }
     bool isCalcSumNode() const { return m_operator == CalcOperator::Add; }
@@ -149,11 +151,8 @@ private:
     static Ref<CSSCalcExpressionNode> simplifyNode(Ref<CSSCalcExpressionNode>&&, int depth);
     static Ref<CSSCalcExpressionNode> simplifyRecursive(Ref<CSSCalcExpressionNode>&&, int depth);
     
-    enum class GroupingParens {
-        Omit,
-        Include
-    };
-    static void buildCSSTextRecursive(const CSSCalcExpressionNode&, StringBuilder&, GroupingParens = GroupingParens::Include);
+    enum class GroupingParens { Omit, Include };
+    static void serialize(const CSSCalcExpressionNode&, CSSSerializer&, GroupingParens);
 
     CalcOperator m_operator;
     Vector<Ref<CSSCalcExpressionNode>> m_children;

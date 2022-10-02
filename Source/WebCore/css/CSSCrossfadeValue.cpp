@@ -89,7 +89,7 @@ CSSCrossfadeValue::~CSSCrossfadeValue()
         m_cachedToImage->removeClient(m_subimageObserver);
 }
 
-String CSSCrossfadeValue::customCSSText() const
+void CSSCrossfadeValue::serialize(CSSSerializer& serializer) const
 {
     return makeString(m_isPrefixed ? "-webkit-" : "", "cross-fade(", m_fromValue->cssText(), ", ", m_toValue->cssText(), ", ", m_percentageValue->cssText(), ')');
 }

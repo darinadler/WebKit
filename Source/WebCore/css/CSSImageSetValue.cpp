@@ -123,7 +123,7 @@ Ref<CSSImageSetValue> CSSImageSetValue::valueWithStylesResolved(Style::BuilderSt
     return equals(result) ? Ref { *this } : result;
 }
 
-String CSSImageSetValue::customCSSText() const
+void CSSImageSetValue::serialize(CSSSerializer& serializer) const
 {
     StringBuilder result;
     result.append("image-set(");

@@ -2924,12 +2924,9 @@ static void appendAttributes(StringBuilder& builder, const Element& element)
             classNamesToDump = maxNumClassNames;
             addEllipsis = true;
         }
-        
-        for (size_t i = 0; i < classNamesToDump; ++i) {
-            if (i > 0)
-                builder.append(' ');
-            builder.append(element.classNames()[i]);
-        }
+        SeparatorCharacter separator { ' ' };
+        for (size_t i = 0; i < classNamesToDump; ++i)
+            builder.append(separator, element.classNames()[i]);
         if (addEllipsis)
             builder.append(" ...");
         builder.append('\'');

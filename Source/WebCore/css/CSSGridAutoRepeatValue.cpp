@@ -35,9 +35,11 @@
 
 namespace WebCore {
 
-String CSSGridAutoRepeatValue::customCSSText() const
+void CSSGridAutoRepeatValue::serialize(CSSSerializer& serializer) const
 {
-    return makeString("repeat("_s, getValueName(autoRepeatID()), ", "_s, CSSValueList::customCSSText(), ')');
+    serializer.builder().append("repeat("_s, getValueName(autoRepeatID()), ", "_s);
+    CSSValueList::serialize(serializer);
+    serializer.builder.append(')');
 }
 
 bool CSSGridAutoRepeatValue::equals(const CSSGridAutoRepeatValue& other) const

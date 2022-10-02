@@ -48,9 +48,9 @@ RefPtr<CSSCalcPrimitiveValueNode> CSSCalcPrimitiveValueNode::create(double value
     return adoptRef(new CSSCalcPrimitiveValueNode(CSSPrimitiveValue::create(value, type)));
 }
 
-String CSSCalcPrimitiveValueNode::customCSSText() const
+void CSSCalcPrimitiveValueNode::serialize(CSSSerializer& serializer) const
 {
-    return m_value->cssText();
+    m_value->serialize(serializer);
 }
 
 CSSUnitType CSSCalcPrimitiveValueNode::primitiveType() const

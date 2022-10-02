@@ -834,6 +834,7 @@ String InspectorStyle::shorthandValue(const String& shorthandProperty) const
     if (!value.isEmpty())
         return value;
     StringBuilder builder;
+    SeparatorCharacter separator { ' ' };
     for (unsigned i = 0; i < m_style->length(); ++i) {
         String individualProperty = m_style->item(i);
         if (m_style->getPropertyShorthand(individualProperty) != shorthandProperty)
@@ -843,9 +844,7 @@ String InspectorStyle::shorthandValue(const String& shorthandProperty) const
         String individualValue = m_style->getPropertyValue(individualProperty);
         if (individualValue == "initial"_s)
             continue;
-        if (!builder.isEmpty())
-            builder.append(' ');
-        builder.append(individualValue);
+        builder.append(separator, individualValue);
     }
     return builder.toString();
 }

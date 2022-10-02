@@ -29,23 +29,19 @@
 #include "config.h"
 #include "CSSRayValue.h"
 
+#include "CSSSerializer.h"
+
 namespace WebCore {
 
-String CSSRayValue::customCSSText() const
+void CSSRayValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder builder;
-
-    builder.append("ray(");
-    builder.append(m_angle->cssText());
-    builder.append(" ");
-    builder.append(m_size->cssText());
-
+    serializer.builder().append("ray("_s);
+    m_angle->serialize(serializer);
+    serializer.builder().append(' ');
+    m_size->serialize(serializer);
     if (m_isContaining)
-        builder.append(" contain");
-
-    builder.append(")");
-
-    return builder.toString();
+        serializer.builder().append(" contain"_s);
+    serializer.builder().append(')');
 }
 
 bool CSSRayValue::equals(const CSSRayValue& other) const

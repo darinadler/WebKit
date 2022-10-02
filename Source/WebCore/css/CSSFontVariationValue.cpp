@@ -37,7 +37,7 @@ CSSFontVariationValue::CSSFontVariationValue(FontTag tag, float value)
 {
 }
 
-String CSSFontVariationValue::customCSSText() const
+void CSSFontVariationValue::serialize(CSSSerializer& serializer) const
 {
     return makeString('"', m_tag[0], m_tag[1], m_tag[2], m_tag[3], "\" ", m_value);
 }

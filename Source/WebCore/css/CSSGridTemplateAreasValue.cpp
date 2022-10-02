@@ -95,21 +95,19 @@ String CSSGridTemplateAreasValue::stringForRow(size_t row)
     return builder.toString();
 }
 
-String CSSGridTemplateAreasValue::customCSSText() const
+void CSSGridTemplateAreasValue::serialize(CSSSerializer& serializer) const
 {
-    StringBuilder builder;
     for (size_t row = 0; row < m_rowCount; ++row) {
-        builder.append('\"');
+        serializer.builder().append('\"');
         for (size_t column = 0; column < m_columnCount; ++column) {
-            builder.append(stringForPosition(m_gridAreaMap, row, column));
+            serializer.builder().append(stringForPosition(m_gridAreaMap, row, column));
             if (column != m_columnCount - 1)
                 builder.append(' ');
         }
-        builder.append('\"');
+        serializer.builder().append('\"');
         if (row != m_rowCount - 1)
-            builder.append(' ');
+            serializer.builder().append(' ');
     }
-    return builder.toString();
 }
 
 bool CSSGridTemplateAreasValue::equals(const CSSGridTemplateAreasValue& other) const

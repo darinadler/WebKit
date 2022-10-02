@@ -34,11 +34,14 @@
 
 namespace WebCore {
 
-String CSSSubgridValue::customCSSText() const
+void CSSSubgridValue::serialize(CSSSerializer& serializer) const
 {
     if (!length())
-        return "subgrid"_s;
-    return "subgrid " + CSSValueList::customCSSText();
+        serializer.builder.append("subgrid"_s);
+    else {
+        serializer.builder.append("subgrid "_s);
+        CSSValueList::serialize(serializer);
+    }
 }
 
 CSSSubgridValue::CSSSubgridValue()

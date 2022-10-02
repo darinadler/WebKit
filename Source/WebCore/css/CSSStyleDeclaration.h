@@ -28,6 +28,7 @@ namespace WebCore {
 
 class CSSProperty;
 class CSSRule;
+class CSSSerializer;
 class CSSStyleSheet;
 class CSSValue;
 class DeprecatedCSSOMValue;
@@ -46,7 +47,7 @@ public:
 
     virtual StyledElement* parentElement() const { return nullptr; }
     virtual CSSRule* parentRule() const = 0;
-    virtual String cssText() const = 0;
+    virtual void serialize(CSSSerializer&) const = 0;
     virtual ExceptionOr<void> setCssText(const String&) = 0;
     virtual unsigned length() const = 0;
     virtual String item(unsigned index) const = 0;

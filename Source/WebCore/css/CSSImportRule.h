@@ -44,7 +44,7 @@ private:
     CSSImportRule(StyleRuleImport&, CSSStyleSheet*);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Import; }
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     void reattach(StyleRuleBase&) final;
 
     Ref<StyleRuleImport> m_importRule;

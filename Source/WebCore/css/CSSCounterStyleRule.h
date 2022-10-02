@@ -80,7 +80,7 @@ public:
     static Ref<CSSCounterStyleRule> create(StyleRuleCounterStyle&, CSSStyleSheet*);
     virtual ~CSSCounterStyleRule();
 
-    String cssText() const final;
+    void serialize(CSSSerializer&) const final;
     void reattach(StyleRuleBase&) final;
     StyleRuleType styleRuleType() const final { return StyleRuleType::CounterStyle; }
 

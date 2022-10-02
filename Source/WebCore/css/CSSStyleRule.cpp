@@ -109,7 +109,7 @@ void CSSStyleRule::setSelectorText(const String& selectorText)
     }
 }
 
-String CSSStyleRule::cssText() const
+void CSSStyleRule::serialize(CSSSerializer& serializer) const
 {
     String declarations = m_styleRule->properties().asText();
     if (declarations.isEmpty())

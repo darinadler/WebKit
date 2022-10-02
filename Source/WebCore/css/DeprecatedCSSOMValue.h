@@ -84,7 +84,7 @@ public:
         return adoptRef(*new DeprecatedCSSOMComplexValue(value, owner));
     }
 
-    String cssText() const { return m_value->cssText(); }
+    void serialize(CSSSerializer& serializer) const { m_value->serialize(serializer); }
 
     unsigned short cssValueType() const;
 

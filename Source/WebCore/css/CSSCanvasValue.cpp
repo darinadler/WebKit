@@ -36,7 +36,7 @@ CSSCanvasValue::~CSSCanvasValue()
         m_element->removeObserver(m_canvasObserver);
 }
 
-String CSSCanvasValue::customCSSText() const
+void CSSCanvasValue::serialize(CSSSerializer& serializer) const
 {
     return makeString("-webkit-canvas(", m_name, ')');
 }

@@ -460,11 +460,9 @@ String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTr
 {
     // FIXME: JSStringJoiner could be more efficient than StringBuilder here.
     StringBuilder builder;
-    for (unsigned i = 0; i < stackTrace.size(); i++) {
-        builder.append(String(stackTrace[i].toString(vm)));
-        if (i != stackTrace.size() - 1)
-            builder.append('\n');
-    }
+    SeparatorCharacter separator { '\n' };
+    for (auto& frame : stackTrace)
+        builder.append(separator, frame.toString(vm));
     return builder.toString();
 }
 

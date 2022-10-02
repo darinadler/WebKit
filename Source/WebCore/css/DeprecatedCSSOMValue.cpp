@@ -65,18 +65,20 @@ unsigned short DeprecatedCSSOMValue::cssValueType() const
     return CSS_CUSTOM;
 }
 
-String DeprecatedCSSOMValue::cssText() const
+void DeprecatedCSSOMValue::serialize(CSSSerializer& serializer) const
 {
     switch (classType()) {
     case ClassType::Complex:
-        return downcast<DeprecatedCSSOMComplexValue>(*this).cssText();
+        downcast<DeprecatedCSSOMComplexValue>(*this).serialize(serializer);
+        return;
     case ClassType::Primitive:
-        return downcast<DeprecatedCSSOMPrimitiveValue>(*this).cssText();
+        downcast<DeprecatedCSSOMPrimitiveValue>(*this).serialize(serializer);
+        return;
     case ClassType::List:
-        return downcast<DeprecatedCSSOMValueList>(*this).cssText();
+        downcast<DeprecatedCSSOMValueList>(*this).serialize(serializer);
+        return;
     }
     ASSERT_NOT_REACHED();
-    return emptyString();
 }
 
 unsigned short DeprecatedCSSOMComplexValue::cssValueType() const

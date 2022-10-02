@@ -38,7 +38,7 @@ CSSFontFeatureValue::CSSFontFeatureValue(FontTag&& tag, int value)
 {
 }
 
-String CSSFontFeatureValue::customCSSText() const
+void CSSFontFeatureValue::serialize(CSSSerializer& serializer) const
 {
     StringBuilder builder;
     builder.append('"');

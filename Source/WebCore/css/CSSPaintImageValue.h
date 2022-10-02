@@ -45,7 +45,7 @@ public:
     RefPtr<Image> image(RenderElement&, const FloatSize&);
 
     bool equals(const CSSPaintImageValue& other) const { return m_name == other.m_name; }
-    String customCSSText() const;
+    void serialize(CSSSerializer&) const;
 
     bool isFixedSize() const { return false; }
     FloatSize fixedSize(const RenderElement&) const { return FloatSize(); }

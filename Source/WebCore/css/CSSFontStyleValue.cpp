@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-String CSSFontStyleValue::customCSSText() const
+void CSSFontStyleValue::serialize(CSSSerializer& serializer) const
 {
     if (!obliqueValue)
         return fontStyleValue->cssText();

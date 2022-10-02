@@ -271,7 +271,9 @@ ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Ref<CSSValue> c
         }, [&](const CSSValueID&) {
             return ExceptionOr<Ref<CSSStyleValue>> { CSSStyleValue::create(WTFMove(cssValue)) };
         }, [&](auto&) {
-            CSSTokenizer tokenizer(downcast<CSSCustomPropertyValue>(cssValue.get()).customCSSText());
+            CSSSerializer serializer;
+            downcast<CSSCustomPropertyValue>(serializer.get()).serialize(serializer);
+            CSSTokenizer tokenizer(serializer.builder.toString());
             return ExceptionOr<Ref<CSSStyleValue>> { CSSUnparsedValue::create(tokenizer.tokenRange()) };
         });
     } else if (is<CSSValueList>(cssValue)) {

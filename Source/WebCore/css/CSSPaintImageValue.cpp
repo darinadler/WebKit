@@ -37,7 +37,7 @@
 
 namespace WebCore {
 
-String CSSPaintImageValue::customCSSText() const
+void CSSPaintImageValue::serialize(CSSSerializer& serializer) const
 {
     // FIXME: This should include the arguments too.
     return makeString("paint(", m_name, ')');

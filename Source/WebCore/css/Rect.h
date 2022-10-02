@@ -21,8 +21,7 @@
 #pragma once
 
 #include "CSSPrimitiveValue.h"
-#include <wtf/RefPtr.h>
-#include <wtf/text/StringBuilder.h>
+#include "CSSSerializer.h"
 
 namespace WebCore {
 
@@ -61,50 +60,57 @@ class Rect final : public RectBase, public RefCounted<Rect> {
 public:
     static Ref<Rect> create() { return adoptRef(*new Rect); }
 
-    String cssText() const
+    void serialize(CSSSerializer& serializer) const
     {
-        return generateCSSString(top()->cssText(), right()->cssText(), bottom()->cssText(), left()->cssText());
+        serializer.builder().append("rect("_s);
+        top()->serialize(serializer);
+        serializer.builder().append(", "_s);
+        right()->serialize(serializer);
+        serializer.builder().append(", "_s);
+        bottom()->serialize(serializer);
+        serializer.builder().append(", "_s);
+        left()->serialize(serializer);
+        serializer.builder().append(')');
     }
 
 private:
     Rect() = default;
-    static String generateCSSString(const String& top, const String& right, const String& bottom, const String& left)
-    {
-        return "rect(" + top + ", " + right + ", " + bottom + ", " + left + ')';
-    }
 };
 
 class Quad final : public RectBase, public RefCounted<Quad> {
 public:
     static Ref<Quad> create() { return adoptRef(*new Quad); }
 
-    String cssText() const
+    void serialize(CSSSerializer& serializer) const
     {
-        return generateCSSString(top()->cssText(), right()->cssText(), bottom()->cssText(), left()->cssText());
+        auto topStart = serializer.builder().length();
+        top()->serialize(serializer);
+        serializer.builder().append(' ');
+        auto rightStart = serializer.builder().length();
+        right()->serialize(serializer);
+        serializer.builder().append(' ');
+        auto bottomStart = serializer.builder().length();
+        bottom()->serialize(serializer);
+        serializer.builder().append(' ');
+        auto leftStart = serializer.builder().length();
+        left()->serialize(serializer);
+
+        StringView fullString = serializer.builder();
+        auto top = fullString.substring(topStart, rightStart - topStart - 1);
+        auto right = fullString.substring(rightStart, bottomStart - rightStart - 1);
+        auto bottom = fullString.substring(bottomStart, leftStart - bottomStart - 1);
+        auto left = fullString.substring(leftStart);
+
+        if (right == top && bottom == top && left == top)
+            serializer.builder().shrink(rightStart - 1);
+        else if (bottom == top && right == left)
+            serializer.builder().shrink(bottomStart - 1);
+        else if (right == left)
+            serializer.builder().shrink(leftStart - 1);
     }
 
 private:
     Quad() = default;
-    static String generateCSSString(const String& top, const String& right, const String& bottom, const String& left)
-    {
-        StringBuilder result;
-        // reserve space for the four strings, plus three space separator characters.
-        result.reserveCapacity(top.length() + right.length() + bottom.length() + left.length() + 3);
-        result.append(top);
-        if (right != top || bottom != top || left != top) {
-            result.append(' ');
-            result.append(right);
-            if (bottom != top || right != left) {
-                result.append(' ');
-                result.append(bottom);
-                if (left != right) {
-                    result.append(' ');
-                    result.append(left);
-                }
-            }
-        }
-        return result.toString();
-    }
 };
 
 } // namespace WebCore
