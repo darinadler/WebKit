@@ -2501,15 +2501,8 @@ bool CSSPropertyParser::consumeListStyleShorthand(bool important)
     if (noneCount > (static_cast<unsigned>(!parsedImage + !parsedType)))
         return false;
 
-    if (noneCount == 2) {
-        // Using implicit none for list-style-image is how we serialize "none" instead of "none none".
-        parsedImage = nullptr;
+    if (noneCount && !parsedType)
         parsedType = CSSPrimitiveValue::create(CSSValueNone);
-    } else if (noneCount == 1) {
-        // Use implicit none for list-style-image, but non-implicit for type.
-        if (!parsedType)
-            parsedType = CSSPrimitiveValue::create(CSSValueNone);
-    }
 
     addProperty(CSSPropertyListStylePosition, CSSPropertyListStyle, WTFMove(parsedPosition), important);
     addProperty(CSSPropertyListStyleImage, CSSPropertyListStyle, WTFMove(parsedImage), important);
