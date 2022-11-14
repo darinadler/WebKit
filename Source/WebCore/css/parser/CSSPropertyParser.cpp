@@ -5720,19 +5720,19 @@ bool CSSPropertyParser::consumeBorderImage(CSSPropertyID property, bool importan
         auto& valuePool = CSSValuePool::singleton();
         switch (property) {
         case CSSPropertyWebkitMaskBoxImage:
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSource, property, WTFMove(source), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSlice, property, WTFMove(slice), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageWidth, property, WTFMove(width), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageOutset, property, WTFMove(outset), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageRepeat, property, WTFMove(repeat), valuePool.createImplicitInitialValue(), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSource, property, WTFMove(source), valuePool.createIdentifierValue(CSSValueNone), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSlice, property, WTFMove(slice), valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageWidth, property, WTFMove(width), valuePool.createValue(1, CSSUnitType::CSS_NUMBER), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageOutset, property, WTFMove(outset), valuePool.createValue(0, CSSUnitType::CSS_PX), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageRepeat, property, WTFMove(repeat), valuePool.createIdentifierValue(CSSValueStretch), important);
             return true;
         case CSSPropertyBorderImage:
         case CSSPropertyWebkitBorderImage:
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageSource, property, WTFMove(source), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageSlice, property, WTFMove(slice), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageWidth, property, WTFMove(width), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageOutset, property, WTFMove(outset), valuePool.createImplicitInitialValue(), important);
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageRepeat, property, WTFMove(repeat), valuePool.createImplicitInitialValue(), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageSource, property, WTFMove(source), valuePool.createIdentifierValue(CSSValueNone), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageSlice, property, WTFMove(slice), valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageWidth, property, WTFMove(width), valuePool.createValue(1, CSSUnitType::CSS_NUMBER), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageOutset, property, WTFMove(outset), valuePool.createValue(0, CSSUnitType::CSS_PX), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageRepeat, property, WTFMove(repeat), valuePool.createIdentifierValue(CSSValueStretch), important);
             return true;
         default:
             ASSERT_NOT_REACHED();
@@ -6345,7 +6345,7 @@ bool CSSPropertyParser::consumeContainerShorthand(bool important)
         return false;
 
     addProperty(CSSPropertyContainerName, CSSPropertyContainer, name.releaseNonNull(), important);
-    addPropertyWithImplicitDefault(CSSPropertyContainerType, CSSPropertyContainer, WTFMove(type), CSSValuePool::singleton().createImplicitInitialValue(), important);
+    addPropertyWithImplicitDefault(CSSPropertyContainerType, CSSPropertyContainer, WTFMove(type), CSSValuePool::singleton().createIdentifierValue(CSSValueNormal), important);
     return true;
 }
 
@@ -6470,18 +6470,18 @@ bool CSSPropertyParser::consumeListStyleShorthand(bool important)
 
     // Use the implicit initial value for list-style-image, to serialize to "none" instead of "none none".
     if (noneCount == 2) {
-        parsedImage = valuePool.createImplicitInitialValue();
+        parsedImage = valuePool.createIdentifierValue(CSSValueNone);
         parsedType = valuePool.createIdentifierValue(CSSValueNone);
     } else if (noneCount == 1) {
         if (!parsedImage)
-            parsedImage = parsedType ? valuePool.createIdentifierValue(CSSValueNone) : valuePool.createImplicitInitialValue();
+            parsedImage = valuePool.createIdentifierValue(CSSValueNone);
         if (!parsedType)
             parsedType = valuePool.createIdentifierValue(CSSValueNone);
     }
 
-    addPropertyWithImplicitDefault(CSSPropertyListStylePosition, CSSPropertyListStyle, WTFMove(parsedPosition), valuePool.createImplicitInitialValue(), important);
-    addPropertyWithImplicitDefault(CSSPropertyListStyleImage, CSSPropertyListStyle, WTFMove(parsedImage), valuePool.createImplicitInitialValue(), important);
-    addPropertyWithImplicitDefault(CSSPropertyListStyleType, CSSPropertyListStyle, WTFMove(parsedType), valuePool.createImplicitInitialValue(), important);
+    addPropertyWithImplicitDefault(CSSPropertyListStylePosition, CSSPropertyListStyle, WTFMove(parsedPosition), valuePool.createIdentifierValue(CSSValueOutside), important);
+    addPropertyWithImplicitDefault(CSSPropertyListStyleImage, CSSPropertyListStyle, WTFMove(parsedImage), valuePool.createIdentifierValue(CSSValueNone), important);
+    addPropertyWithImplicitDefault(CSSPropertyListStyleType, CSSPropertyListStyle, WTFMove(parsedType), valuePool.createIdentifierValue(CSSValueNone), important);
     return m_range.atEnd();
 }
 
@@ -6653,7 +6653,7 @@ bool CSSPropertyParser::parseShorthand(CSSPropertyID property, bool important)
         addExpandedPropertyForValue(CSSPropertyBorderWidth, width.releaseNonNull(), important);
         addExpandedPropertyForValue(CSSPropertyBorderStyle, style.releaseNonNull(), important);
         addExpandedPropertyForValue(CSSPropertyBorderColor, color.releaseNonNull(), important);
-        addExpandedPropertyForValue(CSSPropertyBorderImage, CSSValuePool::singleton().createImplicitInitialValue(), important);
+        addExpandedPropertyForValue(CSSPropertyBorderImage, CSSValuePool::singleton().createIdentifierValue(CSSValueNone)), important);
         return true;
     }
     case CSSPropertyBorderImage:
