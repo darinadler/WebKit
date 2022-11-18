@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002, 2006, 2008, 2012 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2023 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -32,12 +32,9 @@ public:
     {
     }
 
-    virtual ~CSSUnknownRule() = default;
-
-    String cssText() const final { return String(); }
-    void reattach(StyleRuleBase&) final { }
-
 private:
+    void serialize(StringBuilder&) const final { }
+    void reattach(StyleRuleBase&) final { }
     StyleRuleType styleRuleType() const final { return StyleRuleType::Unknown; }
 };
 

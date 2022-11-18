@@ -1297,7 +1297,7 @@ static Ref<JSON::ArrayOf<Protocol::CSS::CSSSelector>> selectorsFromSource(const 
 
 Vector<Ref<CSSStyleRule>> InspectorStyleSheet::cssStyleRulesSplitFromSameRule(CSSStyleRule& rule)
 {
-    if (!rule.styleRule().isSplitRule())
+    if (!rule.wrappedRule().isSplitRule())
         return { rule };
 
     Vector<Ref<CSSStyleRule>> rules;
@@ -1312,7 +1312,7 @@ Vector<Ref<CSSStyleRule>> InspectorStyleSheet::cssStyleRulesSplitFromSameRule(CS
         if (!ruleAtPreviousIndex)
             break;
 
-        if (!ruleAtPreviousIndex->styleRule().isSplitRule() || ruleAtPreviousIndex->styleRule().isLastRuleInSplitRule())
+        if (!ruleAtPreviousIndex->wrappedRule().isSplitRule() || ruleAtPreviousIndex->wrappedRule().isLastRuleInSplitRule())
             break;
     }
 
@@ -1321,12 +1321,12 @@ Vector<Ref<CSSStyleRule>> InspectorStyleSheet::cssStyleRulesSplitFromSameRule(CS
         if (!rule)
             break;
 
-        if (!rule->styleRule().isSplitRule())
+        if (!rule->wrappedRule().isSplitRule())
             break;
 
         rules.append(*rule);
 
-        if (rule->styleRule().isLastRuleInSplitRule())
+        if (rule->wrappedRule().isLastRuleInSplitRule())
             break;
     }
 
@@ -1339,7 +1339,7 @@ Vector<const CSSSelector*> InspectorStyleSheet::selectorsForCSSStyleRule(CSSStyl
 
     Vector<const CSSSelector*> selectors;
     for (auto& rule : cssStyleRulesSplitFromSameRule(rule)) {
-        for (const CSSSelector* selector = rule->styleRule().selectorList().first(); selector; selector = CSSSelectorList::next(selector))
+        for (const CSSSelector* selector = rule->wrappedRule().selectorList().first(); selector; selector = CSSSelectorList::next(selector))
             selectors.append(selector);
     }
     return selectors;
@@ -1535,7 +1535,7 @@ unsigned InspectorStyleSheet::ruleIndexByStyle(StyleDeclarationOrCSSRule ruleOrD
             return index;
 
         if (cssStyleRule && combineSplitRules) {
-            if (!cssStyleRule->styleRule().isSplitRule() || cssStyleRule->styleRule().isLastRuleInSplitRule())
+            if (!cssStyleRule->wrappedRule().isSplitRule() || cssStyleRule->wrappedRule().isLastRuleInSplitRule())
                 ++index;
 
             continue;

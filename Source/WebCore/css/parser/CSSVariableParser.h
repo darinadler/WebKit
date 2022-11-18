@@ -29,13 +29,14 @@
 
 #pragma once
 
-#include "CSSParserTokenRange.h"
 #include <wtf/RefPtr.h>
 #include <wtf/text/AtomString.h>
 
 namespace WebCore {
 
 class CSSCustomPropertyValue;
+class CSSParserTokenRange;
+
 struct CSSParserContext;
 
 class CSSVariableParser {

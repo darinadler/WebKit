@@ -51,21 +51,13 @@ Ref<CSSLayerStatementRule> CSSLayerStatementRule::create(StyleRuleLayer& rule, C
 
 CSSLayerStatementRule::~CSSLayerStatementRule() = default;
 
-String CSSLayerStatementRule::cssText() const
+void CSSLayerStatementRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder result;
-
-    result.append("@layer ");
-
-    auto nameList = this->nameList();
-    for (auto& name : nameList) {
-        result.append(name);
-        if (&name != &nameList.last())
-            result.append(", ");
-    }
-    result.append(';');
-
-    return result.toString();
+    builder.append("@layer "_s);
+    auto separator = ""_s;
+    for (auto& name : nameList())
+        builder.append(std::exchange(separator, ", "_s), name);
+    builder.append(';');
 }
 
 Vector<String> CSSLayerStatementRule::nameList() const

@@ -89,6 +89,7 @@ public:
 
     CSSParserTokenRange consumeAll() { return { std::exchange(m_first, m_last), m_last }; }
 
+    void serialize(StringBuilder&) const;
     String serialize() const;
 
     const CSSParserToken* begin() const { return m_first; }

@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "StyleRuleType.h"
-
 namespace WebCore {
 
 class CSSParserToken;
 class CSSParserTokenRange;
+
+enum class StyleRuleType : uint8_t;
 
 // This is only for the inspector and shouldn't be used elsewhere.
 class CSSParserObserver {

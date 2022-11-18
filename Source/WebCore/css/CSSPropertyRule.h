@@ -41,10 +41,9 @@ public:
     bool inherits() const;
     String initialValue() const;
 
-    String cssText() const final;
-
 private:
     CSSPropertyRule(StyleRuleProperty&, CSSStyleSheet*);
+    void serialize(StringBuilder&) const final;
     StyleRuleType styleRuleType() const final { return StyleRuleType::Property; }
     void reattach(StyleRuleBase&) final;
 

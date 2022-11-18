@@ -31,7 +31,6 @@
 
 #include "CSSAtRuleID.h"
 #include "CSSParser.h"
-#include "CSSParserTokenRange.h"
 #include "CSSProperty.h"
 #include "CSSPropertyNames.h"
 #include "StyleRule.h"
@@ -43,6 +42,7 @@ namespace WebCore {
 
 class CSSParserObserver;
 class CSSParserObserverWrapper;
+class CSSParserTokenRange;
 class CSSSelectorList;
 class CSSTokenizer;
 class StyleRuleCounterStyle;

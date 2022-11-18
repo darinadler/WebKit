@@ -34,7 +34,6 @@
 #include "CSSParserIdioms.h"
 #include "CSSPropertyParserHelpers.h"
 #include "CSSRuleList.h"
-#include "CSSStyleRule.h"
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
 #include "ColorSerialization.h"

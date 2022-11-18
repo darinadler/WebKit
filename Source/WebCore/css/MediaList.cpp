@@ -28,6 +28,7 @@
 #include "Document.h"
 #include "MediaQuery.h"
 #include "MediaQueryParser.h"
+#include "StyleRuleImport.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/TextStream.h>
@@ -63,7 +64,7 @@ const MQ::MediaQueryList& MediaList::mediaQueries() const
     if (m_detachedMediaQueries)
         return *m_detachedMediaQueries;
     if (auto* rule = dynamicDowncast<CSSImportRule>(m_parentRule))
-        return rule->mediaQueries();
+        return rule->wrappedRule().mediaQueries();
     if (auto* rule = dynamicDowncast<CSSMediaRule>(m_parentRule))
         return rule->mediaQueries();
     return m_parentStyleSheet->mediaQueries();
@@ -79,7 +80,7 @@ void MediaList::setMediaQueries(MQ::MediaQueryList&& queries)
 
     CSSStyleSheet::RuleMutationScope mutationScope(m_parentRule);
     if (auto* rule = dynamicDowncast<CSSImportRule>(m_parentRule))
-        rule->setMediaQueries(WTFMove(queries));
+        rule->wrappedRule().setMediaQueries(WTFMove(queries));
     if (auto* rule = dynamicDowncast<CSSMediaRule>(m_parentRule))
         rule->setMediaQueries(WTFMove(queries));
 }

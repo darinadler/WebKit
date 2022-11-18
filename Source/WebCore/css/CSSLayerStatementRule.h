@@ -40,11 +40,11 @@ public:
     static Ref<CSSLayerStatementRule> create(StyleRuleLayer&, CSSStyleSheet* parent);
     virtual ~CSSLayerStatementRule();
 
-    String cssText() const final;
     Vector<String> nameList() const;
 
 private:
     CSSLayerStatementRule(StyleRuleLayer&, CSSStyleSheet*);
+    void serialize(StringBuilder&) const final;
     StyleRuleType styleRuleType() const final { return StyleRuleType::LayerStatement; }
     void reattach(StyleRuleBase&) final;
 

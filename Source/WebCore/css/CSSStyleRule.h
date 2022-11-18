@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002, 2006, 2008, 2012 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2023 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -36,9 +36,8 @@ class StyleRuleWithNesting;
 
 class CSSStyleRule final : public CSSRule, public CanMakeWeakPtr<CSSStyleRule> {
 public:
-    static Ref<CSSStyleRule> create(StyleRule& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSStyleRule(rule, sheet)); }
-    static Ref<CSSStyleRule> create(StyleRuleWithNesting& rule, CSSStyleSheet* sheet) { return adoptRef(* new CSSStyleRule(rule, sheet)); };
-
+    static Ref<CSSStyleRule> create(StyleRule&, CSSStyleSheet*);
+    static Ref<CSSStyleRule> create(StyleRuleWithNesting&, CSSStyleSheet*);
     virtual ~CSSStyleRule();
 
     WEBCORE_EXPORT String selectorText() const;
@@ -46,8 +45,7 @@ public:
 
     WEBCORE_EXPORT CSSStyleDeclaration& style();
 
-    // FIXME: Not CSSOM. Remove.
-    StyleRule& styleRule() const { return m_styleRule.get(); }
+    StyleRule& wrappedRule() const { return m_styleRule.get(); }
 
     CSSRuleList& cssRules() const;
     unsigned length() const;
@@ -56,11 +54,10 @@ public:
     StylePropertyMap& styleMap();
 
 private:
-    CSSStyleRule(StyleRule&, CSSStyleSheet*);
-    CSSStyleRule(StyleRuleWithNesting&, CSSStyleSheet*);
+    CSSStyleRule(StyleRule&, CSSStyleSheet*, size_t childRuleCount);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Style; }
-    String cssText() const final;
+    void serialize(StringBuilder&) const final;
     void reattach(StyleRuleBase&) final;
 
     String generateSelectorText() const;
@@ -70,8 +67,9 @@ private:
     Ref<DeclaredStylePropertyMap> m_styleMap;
     RefPtr<StyleRuleCSSStyleDeclaration> m_propertiesCSSOMWrapper;
 
-    mutable Vector<RefPtr<CSSRule>> m_childRuleCSSOMWrappers;
+    mutable FixedVector<RefPtr<CSSRule>> m_childRuleCSSOMWrappers;
     mutable std::unique_ptr<CSSRuleList> m_ruleListCSSOMWrapper;
+    mutable String m_cachedSelectorText;
 };
 
 } // namespace WebCore

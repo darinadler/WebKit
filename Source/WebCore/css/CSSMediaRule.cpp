@@ -52,19 +52,16 @@ void CSSMediaRule::setMediaQueries(MQ::MediaQueryList&& queries)
     downcast<StyleRuleMedia>(groupRule()).setMediaQueries(WTFMove(queries));
 }
 
-String CSSMediaRule::cssText() const
+void CSSMediaRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder builder;
-    builder.append("@media ", conditionText());
-    appendCSSTextForItems(builder);
-    return builder.toString();
+    builder.append("@media "_s);
+    serializeCondition(builder);
+    serializeItems(builder);
 }
 
-String CSSMediaRule::conditionText() const
+void CSSMediaRule::serializeCondition(StringBuilder& builder) const
 {
-    StringBuilder builder;
     MQ::serialize(builder, mediaQueries());
-    return builder.toString();
 }
 
 MediaList* CSSMediaRule::media() const

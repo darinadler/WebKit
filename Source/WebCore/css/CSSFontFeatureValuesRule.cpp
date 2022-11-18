@@ -36,48 +36,44 @@ CSSFontFeatureValuesRule::CSSFontFeatureValuesRule(StyleRuleFontFeatureValues& f
 {
 }
 
-String CSSFontFeatureValuesRule::cssText() const
+void CSSFontFeatureValuesRule::serialize(StringBuider& builder) const
 {
-    StringBuilder builder;
-    builder.append("@font-feature-values ");
-    auto joinFontFamiliesWithSeparator = [&builder] (const auto& elements, ASCIILiteral separator) {
-        bool first = true;
-        for (auto element : elements) {
-            if (!first)
-                builder.append(separator);
-            builder.append(serializeFontFamily(element));
+    builder.append("@font-feature-values "_s);
+    bool first = true;
+    for (auto& family : m_fontFeatureValuesRule->fontFamilies()) {
+        if (first)
             first = false;
+        else
+            builder.append(", "_s))
+        serializeFontFamily(builder, family);
+    }
+    builder.append(" { "_s);
+
+    auto addVariant = [&builder](ASCIILiteral variantName, const auto& tags) {
+        if (tags.isEmpty())
+            return;
+        builder.append('@', variantName, " { "_s);
+        for (auto tag : tags) {
+            serializeIdentifier(tag.key, builder);
+            builder.append(':');
+            for (auto integer : tag.value)
+                builder.append(' ', integer);
+            builder.append("; "_s);
         }
+        builder.append("} "_s);
     };
-    joinFontFamiliesWithSeparator(m_fontFeatureValuesRule->fontFamilies(), ", "_s);
-    builder.append(" { ");
-    const auto& value = m_fontFeatureValuesRule->value();
-    
-    auto addVariant = [&builder] (const String& variantName, const auto& tags) {
-        if (!tags.isEmpty()) {
-            builder.append("@", variantName, " { ");
-            for (auto tag : tags) {
-                serializeIdentifier(tag.key, builder);
-                builder.append(':');
-                for (auto integer : tag.value)
-                    builder.append(' ', integer);
-                builder.append("; ");
-            }
-            builder.append("} ");
-        }
-    };
-    
+
     // WPT expects the order used in Servo.
     // https://searchfox.org/mozilla-central/source/servo/components/style/stylesheets/font_feature_values_rule.rs#430
-    addVariant("swash"_s, value->swash());
-    addVariant("stylistic"_s, value->stylistic());
-    addVariant("ornaments"_s, value->ornaments());
-    addVariant("annotation"_s, value->annotation());
-    addVariant("character-variant"_s, value->characterVariant());
-    addVariant("styleset"_s, value->styleset());
-    
+    auto& value = m_fontFeatureValuesRule->value().get();
+    addVariant("swash"_s, value.swash());
+    addVariant("stylistic"_s, value.stylistic());
+    addVariant("ornaments"_s, value.ornaments());
+    addVariant("annotation"_s, value.annotation());
+    addVariant("character-variant"_s, value.characterVariant());
+    addVariant("styleset"_s, value.styleset());
+
     builder.append('}');
-    return builder.toString();
 }
 
 void CSSFontFeatureValuesRule::reattach(StyleRuleBase& rule)
@@ -91,13 +87,12 @@ CSSFontFeatureValuesBlockRule::CSSFontFeatureValuesBlockRule(StyleRuleFontFeatur
 {
 }
 
-String CSSFontFeatureValuesBlockRule::cssText() const
+void CSSFontFeatureValuesBlockRule::serialize(StringBuilder&) const
 {
     // This rule is always contained inside a FontFeatureValuesRule,
     // which is the only one we are expected to serialize to CSS.
-    // We should never serialize a Block by itself.
+    // We should never serialize a FontFeatureValuesBlockRule by itself.
     ASSERT_NOT_REACHED();
-    return { };
 }
 
 void CSSFontFeatureValuesBlockRule::reattach(StyleRuleBase& rule)

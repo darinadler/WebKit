@@ -35,15 +35,12 @@ class CSSContainerRule final : public CSSConditionRule {
 public:
     static Ref<CSSContainerRule> create(StyleRuleContainer&, CSSStyleSheet* parent);
 
-    String cssText() const final;
-    String conditionText() const final;
-    String nameText() const;
-
 private:
-    const StyleRuleContainer& styleRuleContainer() const;
-
     CSSContainerRule(StyleRuleContainer&, CSSStyleSheet*);
+    const StyleRuleContainer& styleRuleContainer() const;
     StyleRuleType styleRuleType() const final { return StyleRuleType::Container; }
+    void serialize(StringBuilder&) const final;
+    void serializeCondition(StringBuilder&) const final;
 };
 
 } // namespace WebCore

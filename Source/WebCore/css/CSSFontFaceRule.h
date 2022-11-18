@@ -41,7 +41,7 @@ private:
     CSSFontFaceRule(StyleRuleFontFace&, CSSStyleSheet* parent);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::FontFace; }
-    String cssText() const final;
+    void serialize(StringBuilder&) const final;
     void reattach(StyleRuleBase&) final;
 
     Ref<StyleRuleFontFace> m_fontFaceRule;

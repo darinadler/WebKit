@@ -123,7 +123,8 @@ public:
     Ref<ImmutableStyleProperties> immutableCopyIfNeeded() const;
 
     Ref<MutableStyleProperties> copyProperties(Span<const CSSPropertyID>) const;
-    
+
+    void serialize(StringBuilder&) const;
     String asText() const;
     AtomString asTextAtom() const;
 

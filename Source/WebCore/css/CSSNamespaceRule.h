@@ -34,17 +34,16 @@ class StyleRuleNamespace;
 class CSSNamespaceRule final : public CSSRule {
 public:
     static Ref<CSSNamespaceRule> create(StyleRuleNamespace& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSNamespaceRule(rule, sheet)); }
-
     virtual ~CSSNamespaceRule();
 
-    AtomString namespaceURI() const;
-    AtomString prefix() const;
+    const AtomString& namespaceURI() const;
+    const AtomString& prefix() const;
 
 private:
     CSSNamespaceRule(StyleRuleNamespace&, CSSStyleSheet*);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Namespace; }
-    String cssText() const final;
+    void serialize(StringBuilder&) const final;
     void reattach(StyleRuleBase&) final;
 
     Ref<StyleRuleNamespace> m_namespaceRule;

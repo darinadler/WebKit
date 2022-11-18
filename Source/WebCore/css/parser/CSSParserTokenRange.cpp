@@ -105,11 +105,16 @@ void CSSParserTokenRange::consumeComponentValue()
     } while (nestingLevel && m_first < m_last);
 }
 
+void CSSParserTokenRange::serialize(StringBuilder& builder) const
+{
+    for (auto* it = m_first; it < m_last; ++it)
+        it->serialize(builder, it + 1 == m_last ? nullptr : it + 1);
+}
+
 String CSSParserTokenRange::serialize() const
 {
     StringBuilder builder;
-    for (const CSSParserToken* it = m_first; it < m_last; ++it)
-        it->serialize(builder, it + 1 == m_last ? nullptr : it + 1);
+    serialize(builder);
     return builder.toString();
 }
 

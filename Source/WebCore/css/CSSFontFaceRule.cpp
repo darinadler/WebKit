@@ -48,12 +48,12 @@ CSSStyleDeclaration& CSSFontFaceRule::style()
     return *m_propertiesCSSOMWrapper;
 }
 
-String CSSFontFaceRule::cssText() const
+void CSSFontFaceRule::serialize(StringBuilder& builder) const
 {
-    String declarations = m_fontFaceRule->properties().asText();
-    if (declarations.isEmpty())
-        return "@font-face { }"_s;
-    return makeString("@font-face { ", declarations, " }");
+    builder.append("@font-face { "_s);
+    auto lengthBeforeProperties = builder.length();
+    m_fontFaceRule->properties().serialize(builder);
+    builder.append(builder.length() > lengthBeforeProperties) ? " }"_s : '}');
 }
 
 void CSSFontFaceRule::reattach(StyleRuleBase& rule)

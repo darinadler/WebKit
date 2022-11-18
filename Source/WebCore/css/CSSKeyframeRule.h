@@ -57,7 +57,7 @@ public:
     const StyleProperties& properties() const { return m_properties; }
     MutableStyleProperties& mutableProperties();
 
-    String cssText() const;
+    void serialize(StringBuilder&) const;
 
 private:
     explicit StyleRuleKeyframe(Ref<StyleProperties>&&);
@@ -71,7 +71,6 @@ class CSSKeyframeRule final : public CSSRule {
 public:
     virtual ~CSSKeyframeRule();
 
-    String cssText() const final { return m_keyframe->cssText(); }
     void reattach(StyleRuleBase&) final;
 
     String keyText() const { return m_keyframe->keyText(); }
@@ -82,6 +81,7 @@ public:
 private:
     CSSKeyframeRule(StyleRuleKeyframe&, CSSKeyframesRule* parent);
 
+    void serialize(StringBuilder&) const final;
     StyleRuleType styleRuleType() const final { return StyleRuleType::Keyframe; }
 
     Ref<StyleRuleKeyframe> m_keyframe;

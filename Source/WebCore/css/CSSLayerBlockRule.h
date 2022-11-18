@@ -30,7 +30,6 @@
 #pragma once
 
 #include "CSSGroupingRule.h"
-#include "StyleRuleType.h"
 
 namespace WebCore {
 
@@ -41,15 +40,16 @@ using CascadeLayerName = Vector<AtomString>;
 class CSSLayerBlockRule final : public CSSGroupingRule {
 public:
     static Ref<CSSLayerBlockRule> create(StyleRuleLayer&, CSSStyleSheet* parent);
-
-    String cssText() const final;
     String name() const;
 
 private:
     CSSLayerBlockRule(StyleRuleLayer&, CSSStyleSheet*);
+    void serialize(StringBuilder&) const final;
+    void serializeName(StringBuilder&, ASCIILiteral prefix) const;
     StyleRuleType styleRuleType() const final { return StyleRuleType::LayerBlock; }
 };
 
+void serialize(StringBuilder&, const CascadeLayerName&);
 String stringFromCascadeLayerName(const CascadeLayerName&);
 
 } // namespace WebCore

@@ -72,10 +72,6 @@ public:
     static Ref<CSSCounterStyleRule> create(StyleRuleCounterStyle&, CSSStyleSheet*);
     virtual ~CSSCounterStyleRule();
 
-    String cssText() const final;
-    void reattach(StyleRuleBase&) final;
-    StyleRuleType styleRuleType() const final { return StyleRuleType::CounterStyle; }
-
     String name() const { return m_counterStyleRule->name(); }
     String system() const { return m_counterStyleRule->system(); }
     String negative() const { return m_counterStyleRule->negative(); }
@@ -102,8 +98,11 @@ public:
 
 private:
     CSSCounterStyleRule(StyleRuleCounterStyle&, CSSStyleSheet* parent);
-
     void setterInternal(CSSPropertyID, const String&);
+
+    void reattach(StyleRuleBase&) final;
+    void serialize(StringBuilder&) const final;
+    StyleRuleType styleRuleType() const final { return StyleRuleType::CounterStyle; }
 
     Ref<StyleRuleCounterStyle> m_counterStyleRule;
 };

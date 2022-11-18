@@ -111,7 +111,7 @@ ExceptionOr<void> CSSGroupingRule::deleteRule(unsigned index)
     return { };
 }
 
-void CSSGroupingRule::appendCSSTextForItems(StringBuilder& builder) const
+void CSSGroupingRule::serializeItems(StringBuilder& builder) const
 {
     builder.append(" {");
 

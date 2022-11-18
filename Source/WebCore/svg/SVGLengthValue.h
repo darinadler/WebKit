@@ -28,6 +28,7 @@
 namespace WebCore {
 
 class CSSPrimitiveValue;
+class CSSToLengthConversionData;
 class Element;
 class SVGLengthContext;
 
@@ -51,7 +52,7 @@ enum class SVGLengthMode : uint8_t {
     Other
 };
 
-enum class SVGLengthNegativeValuesMode : uint8_t {
+enum class SVGLengthNegativeValuesMode : bool {
     Allow,
     Forbid
 };

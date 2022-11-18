@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002, 2005, 2006, 2008, 2012, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2023 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -35,38 +35,28 @@
 
 namespace WebCore {
 
-typedef HashMap<const CSSStyleRule*, String> SelectorTextCache;
-static SelectorTextCache& selectorTextCache()
-{
-    static NeverDestroyed<SelectorTextCache> cache;
-    return cache;
-}
-
-CSSStyleRule::CSSStyleRule(StyleRule& styleRule, CSSStyleSheet* parent)
+CSSStyleRule::CSSStyleRule(StyleRule& styleRule, CSSStyleSheet* parent, size_t childRuleCount)
     : CSSRule(parent)
     , m_styleRule(styleRule)
     , m_styleMap(DeclaredStylePropertyMap::create(*this))
-    , m_childRuleCSSOMWrappers(0)
+    , m_childRuleCSSOMWrappers(childRuleCount)
 {
 }
 
-CSSStyleRule::CSSStyleRule(StyleRuleWithNesting& styleRule, CSSStyleSheet* parent)
-    : CSSRule(parent)
-    , m_styleRule(styleRule)
-    , m_styleMap(DeclaredStylePropertyMap::create(*this))
-    , m_childRuleCSSOMWrappers(styleRule.nestedRules().size())
+Ref<CSSStyleRule> CSSStyleRule::create(StyleRule& rule, CSSStyleSheet* sheet)
 {
+    return adoptRef(*new CSSStyleRule(rule, sheet, 0));
+}
+
+Ref<CSSStyleRule> CSSStyleRule::create(StyleRuleWithNesting& rule, CSSStyleSheet* sheet)
+{
+    return adoptRef(*new CSSStyleRule(rule, sheet, rule.nestedRules().size()));
 }
 
 CSSStyleRule::~CSSStyleRule()
 {
     if (m_propertiesCSSOMWrapper)
         m_propertiesCSSOMWrapper->clearParentRule();
-
-    if (hasCachedSelectorText()) {
-        selectorTextCache().remove(this);
-        setHasCachedSelectorText(false);
-    }
 }
 
 CSSStyleDeclaration& CSSStyleRule::style()
@@ -81,23 +71,11 @@ StylePropertyMap& CSSStyleRule::styleMap()
     return m_styleMap.get();
 }
 
-String CSSStyleRule::generateSelectorText() const
-{
-    return m_styleRule->selectorList().selectorsText();
-}
-
 String CSSStyleRule::selectorText() const
 {
-    if (hasCachedSelectorText()) {
-        ASSERT(selectorTextCache().contains(this));
-        return selectorTextCache().get(this);
-    }
-
-    ASSERT(!selectorTextCache().contains(this));
-    String text = generateSelectorText();
-    selectorTextCache().set(this, text);
-    setHasCachedSelectorText(true);
-    return text;
+    if (m_cachedSelectorText.isNull())
+        m_cachedSelectorText = m_styleRule->selectorList().selectorsText();
+    return m_cachedSelectorText;
 }
 
 void CSSStyleRule::setSelectorText(const String& selectorText)
@@ -113,18 +91,14 @@ void CSSStyleRule::setSelectorText(const String& selectorText)
     if (!selectorList)
         return;
 
-    // NOTE: The selector list has to fit into RuleData. <http://webkit.org/b/118369>
+    // The selector list has to fit into RuleData. <http://webkit.org/b/118369>
     if (selectorList->componentCount() > Style::RuleData::maximumSelectorComponentCount)
         return;
 
     CSSStyleSheet::RuleMutationScope mutationScope(this);
-
     m_styleRule->wrapperAdoptSelectorList(WTFMove(*selectorList));
 
-    if (hasCachedSelectorText()) {
-        selectorTextCache().remove(this);
-        setHasCachedSelectorText(false);
-    }
+    m_cachedSelectorText = { };
 }
 
 Vector<Ref<StyleRuleBase>> CSSStyleRule::nestedRules() const
@@ -135,11 +109,9 @@ Vector<Ref<StyleRuleBase>> CSSStyleRule::nestedRules() const
     return { };
 }
 
-String CSSStyleRule::cssText() const
+String CSSStyleRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder builder;
-    builder.append(selectorText());
-    builder.append(" {");
+    builder.append(selectorText(), " {");
 
     auto declarations = m_styleRule->properties().asText();
 
@@ -148,18 +120,15 @@ String CSSStyleRule::cssText() const
             builder.append(' ', declarations, " }");
         else
             builder.append(" }");
-
-        return builder.toString();
+        return;
     }
 
     builder.append("\n  ", declarations);
-    for (const auto& nestedRule : nestedRules()) {
-        auto wrapped = nestedRule->createCSSOMWrapper();
-        auto text = wrapped->cssText();
+    for (auto& nestedRule : nestedRules()) {
+        // FIXME: Move serialization out of the wrappers into the actual rules!
+        nestedRule->createCSSOMWrapper()->serialize(builder);
         builder.append(text, "\n}");
     }
-
-    return builder.toString();
 }
 
 void CSSStyleRule::reattach(StyleRuleBase& rule)
@@ -167,6 +136,8 @@ void CSSStyleRule::reattach(StyleRuleBase& rule)
     m_styleRule = downcast<StyleRule>(rule);
     if (m_propertiesCSSOMWrapper)
         m_propertiesCSSOMWrapper->reattach(m_styleRule->mutableProperties());
+
+    m_cachedSelectorText = { };
 }
 
 unsigned CSSStyleRule::length() const

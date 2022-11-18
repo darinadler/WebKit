@@ -47,8 +47,8 @@ private:
     CSSMediaRule(StyleRuleMedia&, CSSStyleSheet*);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Media; }
-    String cssText() const final;
-    String conditionText() const final;
+    void serialize(StringBuilder&) const final;
+    void serializeCondition(StringBuilder&) const final;
 
     const MQ::MediaQueryList& mediaQueries() const;
     void setMediaQueries(MQ::MediaQueryList&&);

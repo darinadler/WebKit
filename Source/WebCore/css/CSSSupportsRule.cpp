@@ -48,12 +48,11 @@ Ref<CSSSupportsRule> CSSSupportsRule::create(StyleRuleSupports& rule, CSSStyleSh
     return adoptRef(*new CSSSupportsRule(rule, parent));
 }
 
-String CSSSupportsRule::cssText() const
+String CSSSupportsRule::serialize(StringBulder& builder) const
 {
-    StringBuilder builder;
-    builder.append("@supports ", conditionText());
-    appendCSSTextForItems(builder);
-    return builder.toString();
+    builder.append("@supports "_s);
+    serializeCondition(builder);
+    serializeItems(builder);
 }
 
 String CSSSupportsRule::conditionText() const

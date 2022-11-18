@@ -49,31 +49,16 @@ const StyleRuleContainer& CSSContainerRule::styleRuleContainer() const
     return downcast<StyleRuleContainer>(groupRule());
 }
 
-String CSSContainerRule::cssText() const
+void CSSContainerRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder builder;
-    builder.append("@container ");
+    builder.append("@container "_s);
     CQ::serialize(builder, styleRuleContainer().containerQuery());
-    appendCSSTextForItems(builder);
-    return builder.toString();
+    serializeItems(builder);
 }
 
-String CSSContainerRule::conditionText() const
+void CSSContainerRule::serializeCondition(StringBuilder& builder) const
 {
-    StringBuilder builder;
     MQ::serialize(builder, styleRuleContainer().containerQuery().condition);
-    return builder.toString();
-}
-
-String CSSContainerRule::nameText() const
-{
-    StringBuilder builder;
-    
-    auto name = styleRuleContainer().containerQuery().name;
-    if (!name.isEmpty())
-        serializeIdentifier(name, builder);
-
-    return builder.toString();
 }
 
 } // namespace WebCore

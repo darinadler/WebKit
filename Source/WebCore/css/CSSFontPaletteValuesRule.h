@@ -37,7 +37,6 @@ class StyleRuleFontPaletteValues;
 class CSSFontPaletteValuesRule final : public CSSRule {
 public:
     static Ref<CSSFontPaletteValuesRule> create(StyleRuleFontPaletteValues& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSFontPaletteValuesRule(rule, sheet)); }
-
     virtual ~CSSFontPaletteValuesRule();
 
     String name() const;
@@ -49,8 +48,9 @@ private:
     CSSFontPaletteValuesRule(StyleRuleFontPaletteValues&, CSSStyleSheet* parent);
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::FontPaletteValues; }
-    String cssText() const final;
+    void serialize(StringBuilder&) const final;
     void reattach(StyleRuleBase&) final;
+    void serializeOverrideColors(StringBuilder&) const;
 
     Ref<StyleRuleFontPaletteValues> m_fontPaletteValuesRule;
 };

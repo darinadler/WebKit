@@ -32,13 +32,11 @@
 
 namespace WebCore {
 
-class CSSStyleRule;
 class CSSStyleSheet;
-class ExtensionStyleSheets;
 
 namespace MQ {
 class MediaQueryEvaluator;
-};
+}
 
 namespace Style {
 

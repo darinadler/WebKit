@@ -68,11 +68,9 @@ private:
 class CSSKeyframesRule final : public CSSRule {
 public:
     static Ref<CSSKeyframesRule> create(StyleRuleKeyframes& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSKeyframesRule(rule, sheet)); }
-
     virtual ~CSSKeyframesRule();
 
     StyleRuleType styleRuleType() const final { return StyleRuleType::Keyframes; }
-    String cssText() const final;
     void reattach(StyleRuleBase&) final;
 
     const AtomString& name() const { return m_keyframesRule->name(); }
@@ -90,6 +88,7 @@ public:
 
 private:
     CSSKeyframesRule(StyleRuleKeyframes&, CSSStyleSheet* parent);
+    void serialize(StringBuilder&) const final;
 
     Ref<StyleRuleKeyframes> m_keyframesRule;
     mutable Vector<RefPtr<CSSKeyframeRule>> m_childRuleCSSOMWrappers;

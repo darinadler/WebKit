@@ -45,6 +45,7 @@
 #include "HashTools.h"
 #include "StyleColor.h"
 #include "StylePropertyShorthand.h"
+#include "StyleRuleType.h"
 
 namespace WebCore {
 

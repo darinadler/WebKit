@@ -30,29 +30,23 @@
 #pragma once
 
 #include "CSSParserToken.h"
-#include "CSSParserTokenRange.h"
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
+class CSSParserTokenRnage;
 class Document;
 
 struct SizesCalcValue {
-    double value;
-    bool isLength;
-    UChar operation;
+    double value { };
+    bool isLength { };
+    UChar operation { };
 
-    SizesCalcValue()
-        : value(0)
-        , isLength(false)
-        , operation(0)
-    {
-    }
+    SizesCalcValue() = default;
 
     SizesCalcValue(double numericValue, bool length)
         : value(numericValue)
         , isLength(length)
-        , operation(0)
     {
     }
 };

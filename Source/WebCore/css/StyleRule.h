@@ -389,8 +389,8 @@ public:
 
     Ref<StyleRuleNamespace> copy() const { return adoptRef(*new StyleRuleNamespace(*this)); }
 
-    AtomString prefix() const { return m_prefix; }
-    AtomString uri() const { return m_uri; }
+    const AtomString& prefix() const { return m_prefix; }
+    const AtomString& uri() const { return m_uri; }
 
 private:
     StyleRuleNamespace(const AtomString& prefix, const AtomString& uri);

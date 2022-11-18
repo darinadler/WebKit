@@ -35,7 +35,9 @@ namespace WebCore {
 
 class CSSConditionRule : public CSSGroupingRule {
 public:
-    virtual String conditionText() const = 0;
+    virtual String conditionText() const final;
+
+    virtual void serializeCondition(StringBuilder&) const = 0;
 
 protected:
     CSSConditionRule(StyleRuleGroup&, CSSStyleSheet* parent);

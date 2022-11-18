@@ -40,11 +40,10 @@ class CSSSupportsRule final : public CSSConditionRule {
 public:
     static Ref<CSSSupportsRule> create(StyleRuleSupports&, CSSStyleSheet* parent);
 
-    String cssText() const final;
-    String conditionText() const final;
-
 private:
     CSSSupportsRule(StyleRuleSupports&, CSSStyleSheet*);
+    void serialize(StringBuilder&) const final;
+    void serializeCondition(StringBuilder&) const final;
     StyleRuleType styleRuleType() const final { return StyleRuleType::Supports; }
 };
 

@@ -48,36 +48,44 @@ Ref<CSSLayerBlockRule> CSSLayerBlockRule::create(StyleRuleLayer& rule, CSSStyleS
     return adoptRef(*new CSSLayerBlockRule(rule, parent));
 }
 
-String CSSLayerBlockRule::cssText() const
+void CSSLayerBlockRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder builder;
-
-    builder.append("@layer");
-    if (auto name = this->name(); !name.isEmpty())
-        builder.append(" ", name);
-    appendCSSTextForItems(builder);
-    return builder.toString();
+    builder.append("@layer"_s);
+    serializeName(builder, " "_s);
+    serializeItems(builder);
 }
 
 String CSSLayerBlockRule::name() const
 {
+    StringBuilder builder;
+    serializeName(builder, ""_s);
+    return builder.toString();
+}
+
+void serialize(StringBuilder& builder, const CascadeLayerName& name)
+{
+    auto separator = ""_s;
+    for (auto& segment : name) {
+        builder.append(std::exchange(separator, "."_s));
+        serializeIdentifier(segment, builder);
+    }
+}
+
+void CSSLayerBlockRule::serializeName(StringBuilder& builder, ASCIILiteral prefix) const
+{
     auto& layer = downcast<StyleRuleLayer>(groupRule());
-
     if (layer.name().isEmpty())
-        return emptyString();
+        return;
 
-    return stringFromCascadeLayerName(layer.name());
+    builder.append(prefix);
+    WebCore::serialize(builder, layer.name());
 }
 
 String stringFromCascadeLayerName(const CascadeLayerName& name)
 {
-    StringBuilder result;
-    for (auto& segment : name) {
-        serializeIdentifier(segment, result);
-        if (&segment != &name.last())
-            result.append('.');
-    }
-    return result.toString();
+    StringBuilder builder;
+    serialize(builder, name);
+    return builder.toString();
 }
 
 } // namespace WebCore

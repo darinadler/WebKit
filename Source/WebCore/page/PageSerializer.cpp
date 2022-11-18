@@ -262,7 +262,7 @@ void PageSerializer::serializeCSSStyleSheet(CSSStyleSheet* styleSheet, const URL
             // FIXME: Add support for font face rule. It is not clear to me at this point if the actual otf/eot file can
             // be retrieved from the CSSFontFaceRule object.
         } else if (is<CSSStyleRule>(*rule))
-            retrieveResourcesForRule(downcast<CSSStyleRule>(*rule).styleRule(), document);
+            retrieveResourcesForRule(downcast<CSSStyleRule>(*rule).wrappedRule(), document);
     }
 
     if (url.isValid() && !m_resourceURLs.contains(url)) {

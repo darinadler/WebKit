@@ -29,14 +29,13 @@
 
 #pragma once
 
-#include "CSSParserTokenRange.h"
-#include "CSSPrimitiveValue.h"
+#include "CSSUnits.h"
 #include "MediaQuery.h"
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
-class CSSValue;
+class CSSParserTokenRange;
 class Document;
 
 class SizesAttributeParser {

@@ -61,34 +61,31 @@ MediaList& CSSImportRule::media() const
 
 String CSSImportRule::layerName() const
 {
-    auto name = m_importRule.get().cascadeLayerName();
+    auto& name = m_importRule.get().cascadeLayerName();
     if (!name)
         return { };
 
     return stringFromCascadeLayerName(*name);
 }
 
-String CSSImportRule::cssText() const
+String CSSImportRule::serialize(StringBuilder& builder) const
 {
-    StringBuilder builder;
-
-    builder.append("@import ", serializeURL(m_importRule.get().href()));
-
-    if (auto layerName = this->layerName(); !layerName.isNull()) {
-        if (layerName.isEmpty())
+    builder.append("@import ");
+    serializeURL(builder, m_importRule.get().href()));
+    if (auto& name = m_importRule.get().cascadeLayerName()) {
+        if (*name.isEmpty())
             builder.append(" layer");
-        else
-            builder.append(" layer(", layerName, ')');
+        else {
+            builder.append(" layer(");
+            WebCore::serialize(builder, *name);
+            builder.append(')');
+        }
     }
-
-    if (!mediaQueries().isEmpty()) {
+    if (auto& queries = m_importRule->mediaQueries(); !queries.isEmpty()) {
         builder.append(' ');
-        MQ::serialize(builder, mediaQueries());
+        MQ::serialize(builder, queries);
     }
-
     builder.append(';');
-
-    return builder.toString();
 }
 
 CSSStyleSheet* CSSImportRule::styleSheet() const
@@ -105,16 +102,5 @@ void CSSImportRule::reattach(StyleRuleBase&)
     // FIXME: Implement when enabling caching for stylesheets with import rules.
     ASSERT_NOT_REACHED();
 }
-
-const MQ::MediaQueryList& CSSImportRule::mediaQueries() const
-{
-    return m_importRule->mediaQueries();
-}
-
-void CSSImportRule::setMediaQueries(MQ::MediaQueryList&& queries)
-{
-    m_importRule->setMediaQueries(WTFMove(queries));
-}
-
 
 } // namespace WebCore

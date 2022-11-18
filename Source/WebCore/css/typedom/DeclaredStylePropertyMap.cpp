@@ -155,7 +155,7 @@ void DeclaredStylePropertyMap::removeCustomProperty(const AtomString& property)
 
 StyleRule* DeclaredStylePropertyMap::styleRule() const
 {
-    return m_ownerRule ? &m_ownerRule->styleRule() : nullptr;
+    return m_ownerRule ? &m_ownerRule->wrappedRule() : nullptr;
 }
 
 void DeclaredStylePropertyMap::clear()

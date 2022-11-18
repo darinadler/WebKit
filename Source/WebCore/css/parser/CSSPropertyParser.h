@@ -26,7 +26,6 @@
 #include "CSSParserTokenRange.h"
 #include "CSSPropertyParserHelpers.h"
 #include "CSSPropertyParserWorkerSafe.h"
-#include "StyleRuleType.h"
 #include <wtf/text/StringView.h>
 
 namespace WebCore {
@@ -34,6 +33,8 @@ namespace WebCore {
 class CSSCustomPropertyValue;
 class CSSProperty;
 class StylePropertyShorthand;
+
+enum class StyleRuleType : uint8_t;
 
 namespace Style {
 class BuilderState;

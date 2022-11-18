@@ -75,11 +75,12 @@ void CSSPageRule::setSelectorText(const String& selectorText)
     m_pageRule->wrapperAdoptSelectorList(WTFMove(*selectorList));
 }
 
-String CSSPageRule::cssText() const
+void CSSPageRule::serialize(StringBuilder& builder) const
 {
     if (auto declarations = m_pageRule->properties().asText(); !declarations.isEmpty())
-        return makeString(selectorText(), " { ", declarations, " }");
-    return makeString(selectorText(), " { }");
+        builder.append(selectorText(), " { ", declarations, " }");
+    else
+        builder.append(selectorText(), " { }");
 }
 
 void CSSPageRule::reattach(StyleRuleBase& rule)
