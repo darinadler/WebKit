@@ -24,11 +24,11 @@
 
 #pragma once
 
-#include "CSSSelector.h"
 #include <wtf/BloomFilter.h>
 
 namespace WebCore {
 
+class CSSSelector;
 class Element;
 
 namespace Style {
@@ -38,7 +38,7 @@ enum class MatchElement : uint8_t;
 class HasSelectorFilter {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    enum class Type : uint8_t { Children, Descendants };
+    enum class Type : bool { Children, Descendants };
     HasSelectorFilter(const Element&, Type);
 
     Type type() const { return m_type; }

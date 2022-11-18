@@ -243,92 +243,62 @@ static inline Ref<CSSBorderImageSliceValue> valueForNinePieceImageSlice(const Ni
 {
     auto& slices = image.imageSlices();
 
-    RefPtr<CSSPrimitiveValue> top = valueForImageSliceSide(slices.top());
-
-    RefPtr<CSSPrimitiveValue> right;
-    RefPtr<CSSPrimitiveValue> bottom;
-    RefPtr<CSSPrimitiveValue> left;
-
-    if (slices.right() == slices.top() && slices.bottom() == slices.top() && slices.left() == slices.top()) {
-        right = top;
-        bottom = top;
-        left = top;
+    RefPtr<CSSValue> slicesValue;
+    if (slices.right() == slices.top() && slices.bottom() == slices.top() && slices.left() == slices.top())
+        slicesValue = valueForImageSliceSide(slices.top());
+    else if (slices.bottom() == slices.top() && slices.right() == slices.left()) {
+        auto list = CSSValueList::createSpaceSeparated();
+        list->append(valueForImageSliceSide(slices.top()));
+        list->append(valueForImageSliceSide(slices.right()));
+        slicesValue = WTFMove(list);
+    } else if (slices.left() == slices.right()) {
+        auto list = CSSValueList::createSpaceSeparated();
+        list->append(valueForImageSliceSide(slices.top()));
+        list->append(valueForImageSliceSide(slices.right()));
+        list->append(valueForImageSliceSide(slices.bottom()));
+        slicesValue = WTFMove(list);
     } else {
-        right = valueForImageSliceSide(slices.right());
-
-        if (slices.bottom() == slices.top() && slices.right() == slices.left()) {
-            bottom = top;
-            left = right;
-        } else {
-            bottom = valueForImageSliceSide(slices.bottom());
-
-            if (slices.left() == slices.right())
-                left = right;
-            else
-                left = valueForImageSliceSide(slices.left());
-        }
+        auto list = CSSValueList::createSpaceSeparated();
+        list->append(valueForImageSliceSide(slices.top()));
+        list->append(valueForImageSliceSide(slices.right()));
+        list->append(valueForImageSliceSide(slices.bottom()));
+        list->append(valueForImageSliceSide(slices.left()));
+        slicesValue = WTFMove(list);
     }
 
-    auto quad = Quad::create();
-    quad->setTop(WTFMove(top));
-    quad->setRight(WTFMove(right));
-    quad->setBottom(WTFMove(bottom));
-    quad->setLeft(WTFMove(left));
-
-    return CSSBorderImageSliceValue::create(CSSValuePool::singleton().createValue(WTFMove(quad)), image.fill());
+    return CSSBorderImageSliceValue::create(slicesValue.releaseNonNull(), image.fill());
 }
 
-static Ref<CSSPrimitiveValue> valueForNinePieceImageQuad(const LengthBox& box, const RenderStyle& style)
+static Ref<CSSValue> valueForNinePieceImageQuad(const LengthBox& box, const RenderStyle& style)
 {
-    RefPtr<CSSPrimitiveValue> top;
-    RefPtr<CSSPrimitiveValue> right;
-    RefPtr<CSSPrimitiveValue> bottom;
-    RefPtr<CSSPrimitiveValue> left;
+    auto createValue = [&](const Length& length) {
+        auto& pool = CSSValuePool::singleton();
+        if (length.isRelative())
+            return pool.createValue(length.value(), CSSUnitType::CSS_NUMBER);
+        return pool.createValue(length, style);
+    };
 
-    auto& cssValuePool = CSSValuePool::singleton();
-
-    if (box.top().isRelative())
-        top = cssValuePool.createValue(box.top().value(), CSSUnitType::CSS_NUMBER);
-    else
-        top = cssValuePool.createValue(box.top(), style);
-
-    if (box.right() == box.top() && box.bottom() == box.top() && box.left() == box.top()) {
-        right = top;
-        bottom = top;
-        left = top;
-    } else {
-        if (box.right().isRelative())
-            right = cssValuePool.createValue(box.right().value(), CSSUnitType::CSS_NUMBER);
-        else
-            right = cssValuePool.createValue(box.right(), style);
-
-        if (box.bottom() == box.top() && box.right() == box.left()) {
-            bottom = top;
-            left = right;
-        } else {
-            if (box.bottom().isRelative())
-                bottom = cssValuePool.createValue(box.bottom().value(), CSSUnitType::CSS_NUMBER);
-            else
-                bottom = cssValuePool.createValue(box.bottom(), style);
-
-            if (box.left() == box.right())
-                left = right;
-            else {
-                if (box.left().isRelative())
-                    left = cssValuePool.createValue(box.left().value(), CSSUnitType::CSS_NUMBER);
-                else
-                    left = cssValuePool.createValue(box.left(), style);
-            }
-        }
+    if (box.bottom() == box.top() && box.right() == box.left()) {
+        auto list = CSSValueList::createSpaceSeparated();
+        list->append(createValue(box.top()));
+        list->append(createValue(box.right()));
+        return list;
     }
 
-    auto quad = Quad::create();
-    quad->setTop(WTFMove(top));
-    quad->setRight(WTFMove(right));
-    quad->setBottom(WTFMove(bottom));
-    quad->setLeft(WTFMove(left));
+    if (box.left() == box.right()) {
+        auto list = CSSValueList::createSpaceSeparated();
+        list->append(createValue(box.top()));
+        list->append(createValue(box.right()));
+        list->append(createValue(box.bottom()));
+        return list;
+    }
 
-    return cssValuePool.createValue(WTFMove(quad));
+    auto list = CSSValueList::createSpaceSeparated();
+    list->append(createValue(box.top()));
+    list->append(createValue(box.right()));
+    list->append(createValue(box.bottom()));
+    list->append(createValue(box.left()));
+    return list;
 }
 
 static Ref<CSSValue> valueForNinePieceImageRepeat(const NinePieceImage& image)

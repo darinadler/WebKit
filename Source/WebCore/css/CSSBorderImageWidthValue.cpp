@@ -31,26 +31,38 @@
 
 namespace WebCore {
 
-CSSBorderImageWidthValue::CSSBorderImageWidthValue(RefPtr<CSSPrimitiveValue>&& widths, bool overridesBorderWidths)
+CSSBorderImageWidthValue::CSSBorderImageWidthValue(Ref<CSSValue>&& widths)
     : CSSValue(BorderImageWidthClass)
     , m_widths(WTFMove(widths))
-    , m_overridesBorderWidths(overridesBorderWidths)
 {
+}
+
+Ref<CSSBorderImageWidthValue> CSSBorderImageWidthValue::create(Ref<CSSValue> widths)
+{
+    return adoptRef(*new CSSBorderImageWidthValue(WTFMove(widths)));
 }
 
 String CSSBorderImageWidthValue::customCSSText() const
 {
     // border-image-width can't set m_overridesBorderWidths to true by itself, so serialize as empty string.
     // It can only be true via the -webkit-border-image shorthand, whose serialization will unwrap widths() if needed.
-    if (m_overridesBorderWidths)
-        return emptyString();
-
-    return m_widths->cssText();
+    return emptyString();
 }
 
 bool CSSBorderImageWidthValue::equals(const CSSBorderImageWidthValue& other) const
 {
-    return m_overridesBorderWidths == other.m_overridesBorderWidths && compareCSSValuePtr(m_widths, other.m_widths);
+    return compareCSSValue(m_widths, other.m_widths);
+}
+
+bool CSSBorderImageWidthValue::overridesBorderWidths(CSSValue& widths)
+{
+    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(widths))
+        return primitiveValue->isLength();
+    for (auto& width : downcast<CSSValueList>(widths)) {
+        if (!downcast<CSSPrimitiveValue>(width.get()).isLength())
+            return false;
+    }
+    return true;
 }
 
 } // namespace WebCore

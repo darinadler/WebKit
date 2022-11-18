@@ -74,37 +74,4 @@ private:
     }
 };
 
-class Quad final : public RectBase, public RefCounted<Quad> {
-public:
-    static Ref<Quad> create() { return adoptRef(*new Quad); }
-
-    String cssText() const
-    {
-        return generateCSSString(top()->cssText(), right()->cssText(), bottom()->cssText(), left()->cssText());
-    }
-
-private:
-    Quad() = default;
-    static String generateCSSString(const String& top, const String& right, const String& bottom, const String& left)
-    {
-        StringBuilder result;
-        // reserve space for the four strings, plus three space separator characters.
-        result.reserveCapacity(top.length() + right.length() + bottom.length() + left.length() + 3);
-        result.append(top);
-        if (right != top || bottom != top || left != top) {
-            result.append(' ');
-            result.append(right);
-            if (bottom != top || right != left) {
-                result.append(' ');
-                result.append(bottom);
-                if (left != right) {
-                    result.append(' ');
-                    result.append(left);
-                }
-            }
-        }
-        return result.toString();
-    }
-};
-
 } // namespace WebCore

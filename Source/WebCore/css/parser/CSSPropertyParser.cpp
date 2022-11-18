@@ -3044,110 +3044,99 @@ static RefPtr<CSSPrimitiveValue> consumeBorderImageRepeatKeyword(CSSParserTokenR
 
 static RefPtr<CSSValue> consumeBorderImageRepeat(CSSParserTokenRange& range)
 {
-    RefPtr<CSSPrimitiveValue> horizontal = consumeBorderImageRepeatKeyword(range);
+    auto horizontal = consumeBorderImageRepeatKeyword(range);
     if (!horizontal)
         return nullptr;
-    RefPtr<CSSPrimitiveValue> vertical = consumeBorderImageRepeatKeyword(range);
+    auto vertical = consumeBorderImageRepeatKeyword(range);
     if (!vertical)
-        vertical = horizontal;
-    return createPrimitiveValuePair(horizontal.releaseNonNull(), vertical.releaseNonNull(), Pair::IdenticalValueEncoding::Coalesce);
+        return horizontal;
+    auto list = CSSValueList::createSpaceSeparated();
+    list->append(horizontal.releaseNonNull());
+    list->append(vertical.releaseNonNull());
+    return WTFMove(list);
 }
 
 static RefPtr<CSSValue> consumeBorderImageSlice(CSSPropertyID property, CSSParserTokenRange& range)
 {
+    RefPtr<CSSPrimitiveValue> slices[4];
     bool fill = consumeIdent<CSSValueFill>(range);
-    RefPtr<CSSPrimitiveValue> slices[4] = { nullptr };
-
-    for (size_t index = 0; index < 4; ++index) {
-        RefPtr<CSSPrimitiveValue> value = consumePercent(range, ValueRange::NonNegative);
+    unsigned count;
+    for (count = 0; count < 4; ++count) {
+        auto value = consumePercent(range, ValueRange::NonNegative);
         if (!value)
             value = consumeNumber(range, ValueRange::NonNegative);
         if (!value)
             break;
-        slices[index] = value;
+        slices[count] = value;
     }
-    if (!slices[0])
+    if (!count)
         return nullptr;
     if (consumeIdent<CSSValueFill>(range)) {
         if (fill)
             return nullptr;
         fill = true;
     }
-    complete4Sides(slices);
-    // FIXME: For backwards compatibility, -webkit-border-image, -webkit-mask-box-image and -webkit-box-reflect have to do a fill by default.
-    // FIXME: What do we do with -webkit-box-reflect and -webkit-mask-box-image? Probably just have to leave them filling...
+
+    // For backwards compatibility these properties always fill, and since they also always serialize with "fill" it's fine to do this in the parser.
     if (property == CSSPropertyWebkitBorderImage || property == CSSPropertyWebkitMaskBoxImage || property == CSSPropertyWebkitBoxReflect)
         fill = true;
-    
-    // Now build a rect value to hold all four of our primitive values.
-    // FIXME-NEWPARSER: Should just have a CSSQuadValue.
-    auto quad = Quad::create();
-    quad->setTop(slices[0].releaseNonNull());
-    quad->setRight(slices[1].releaseNonNull());
-    quad->setBottom(slices[2].releaseNonNull());
-    quad->setLeft(slices[3].releaseNonNull());
-    
-    // Make our new border image value now.
-    return CSSBorderImageSliceValue::create(CSSValuePool::singleton().createValue(WTFMove(quad)), fill);
+
+    if (count == 1)
+        return CSSBorderImageSliceValue::create(slices[0].releaseNonNull(), fill);
+
+    auto list = CSSValueList::createSpaceSeparated();
+    for (unsigned i = 0; i < count; ++i)
+        list->append(slices[i].releaseNonNull());
+    return CSSBorderImageSliceValue::create(WTFMove(list), fill);
 }
 
 static RefPtr<CSSValue> consumeBorderImageOutset(CSSParserTokenRange& range)
 {
-    RefPtr<CSSPrimitiveValue> outsets[4] = { nullptr };
-
-    RefPtr<CSSPrimitiveValue> value;
-    for (size_t index = 0; index < 4; ++index) {
-        value = consumeNumber(range, ValueRange::NonNegative);
+    RefPtr<CSSPrimitiveValue> outsets[4];
+    unsigned count = 0;
+    for (count = 0; count < 4; ++count) {
+        auto value = consumeNumber(range, ValueRange::NonNegative);
         if (!value)
             value = consumeLength(range, HTMLStandardMode, ValueRange::NonNegative);
         if (!value)
             break;
-        outsets[index] = value;
+        outsets[count] = value;
     }
-    if (!outsets[0])
-        return nullptr;
-    complete4Sides(outsets);
-    
-    // FIXME-NEWPARSER: Should just have a CSSQuadValue.
-    auto quad = Quad::create();
-    quad->setTop(outsets[0].releaseNonNull());
-    quad->setRight(outsets[1].releaseNonNull());
-    quad->setBottom(outsets[2].releaseNonNull());
-    quad->setLeft(outsets[3].releaseNonNull());
-    
-    return CSSValuePool::singleton().createValue(WTFMove(quad));
+    if (count <= 1)
+        return WTFMove(outsets[0]);
+    auto list = CSSValueList::createSpaceSeparated();
+    for (unsigned i = 0; i < count; ++i)
+        list->append(outsets[i].releaseNonNull());
+    return WTFMove(list);
 }
 
 static RefPtr<CSSValue> consumeBorderImageWidth(CSSPropertyID property, CSSParserTokenRange& range)
 {
     RefPtr<CSSPrimitiveValue> widths[4];
-
-    RefPtr<CSSPrimitiveValue> value;
-    for (size_t index = 0; index < 4; ++index) {
-        value = consumeNumber(range, ValueRange::NonNegative);
+    unsigned count = 0;
+    for (count = 0; count < 4; ++count) {
+        auto value = consumeNumber(range, ValueRange::NonNegative);
         if (!value)
             value = consumeLengthOrPercent(range, HTMLStandardMode, ValueRange::NonNegative, UnitlessQuirk::Forbid);
         if (!value)
             value = consumeIdent<CSSValueAuto>(range);
         if (!value)
             break;
-        widths[index] = value;
+        widths[count] = WTFMove(value);
     }
-    if (!widths[0])
+    if (!count)
         return nullptr;
-    complete4Sides(widths);
-
-    // -webkit-border-image has a legacy behavior that makes fixed border slices also set the border widths.
-    bool overridesBorderWidths = property == CSSPropertyWebkitBorderImage && (widths[0]->isLength() || widths[1]->isLength() || widths[2]->isLength() || widths[3]->isLength());
-
-    // FIXME-NEWPARSER: Should just have a CSSQuadValue.
-    auto quad = Quad::create();
-    quad->setTop(widths[0].releaseNonNull());
-    quad->setRight(widths[1].releaseNonNull());
-    quad->setBottom(widths[2].releaseNonNull());
-    quad->setLeft(widths[3].releaseNonNull());
-
-    return CSSBorderImageWidthValue::create(CSSValuePool::singleton().createValue(WTFMove(quad)), overridesBorderWidths);
+    auto createWidthsValue = [&]() -> Ref<CSSValue> {
+        if (count == 1)
+            return widths[0].releaseNonNull();
+        auto list = CSSValueList::createSpaceSeparated();
+        for (unsigned i = 0; i < count; ++i)
+            list->append(widths[i].releaseNonNull());
+        return WTFMove(list);
+    };
+    if (property == CSSPropertyWebkitBorderImage)
+        return CSSBorderImageWidthValue::create(createWidthsValue());
+    return createWidthsValue();
 }
 
 static bool consumeBorderImageComponents(CSSPropertyID property, CSSParserTokenRange& range, const CSSParserContext& context, RefPtr<CSSValue>& source,
@@ -5721,7 +5710,7 @@ bool CSSPropertyParser::consumeBorderImage(CSSPropertyID property, bool importan
         switch (property) {
         case CSSPropertyWebkitMaskBoxImage:
             addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSource, property, WTFMove(source), valuePool.createIdentifierValue(CSSValueNone), important);
-            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSlice, property, WTFMove(slice), valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), important);
+            addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageSlice, property, WTFMove(slice), CSSBorderImageSliceValue::create(valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), false), important);
             addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageWidth, property, WTFMove(width), valuePool.createValue(1, CSSUnitType::CSS_NUMBER), important);
             addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageOutset, property, WTFMove(outset), valuePool.createValue(0, CSSUnitType::CSS_PX), important);
             addPropertyWithImplicitDefault(CSSPropertyWebkitMaskBoxImageRepeat, property, WTFMove(repeat), valuePool.createIdentifierValue(CSSValueStretch), important);
@@ -5729,7 +5718,7 @@ bool CSSPropertyParser::consumeBorderImage(CSSPropertyID property, bool importan
         case CSSPropertyBorderImage:
         case CSSPropertyWebkitBorderImage:
             addPropertyWithImplicitDefault(CSSPropertyBorderImageSource, property, WTFMove(source), valuePool.createIdentifierValue(CSSValueNone), important);
-            addPropertyWithImplicitDefault(CSSPropertyBorderImageSlice, property, WTFMove(slice), valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), important);
+            addPropertyWithImplicitDefault(CSSPropertyBorderImageSlice, property, WTFMove(slice), CSSBorderImageSliceValue::create(valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), false), important);
             addPropertyWithImplicitDefault(CSSPropertyBorderImageWidth, property, WTFMove(width), valuePool.createValue(1, CSSUnitType::CSS_NUMBER), important);
             addPropertyWithImplicitDefault(CSSPropertyBorderImageOutset, property, WTFMove(outset), valuePool.createValue(0, CSSUnitType::CSS_PX), important);
             addPropertyWithImplicitDefault(CSSPropertyBorderImageRepeat, property, WTFMove(repeat), valuePool.createIdentifierValue(CSSValueStretch), important);
@@ -6650,10 +6639,15 @@ bool CSSPropertyParser::parseShorthand(CSSPropertyID property, bool important)
         if (!consumeBorder(width, style, color))
             return false;
 
+        auto& valuePool = CSSValuePool::singleton();
         addExpandedPropertyForValue(CSSPropertyBorderWidth, width.releaseNonNull(), important);
         addExpandedPropertyForValue(CSSPropertyBorderStyle, style.releaseNonNull(), important);
         addExpandedPropertyForValue(CSSPropertyBorderColor, color.releaseNonNull(), important);
-        addExpandedPropertyForValue(CSSPropertyBorderImage, CSSValuePool::singleton().createIdentifierValue(CSSValueNone)), important);
+        addProperty(CSSPropertyBorderImageSource, CSSPropertyBorder, valuePool.createIdentifierValue(CSSValueNone), important);
+        addProperty(CSSPropertyBorderImageSlice, CSSPropertyBorder, CSSBorderImageSliceValue::create(valuePool.createValue(100, CSSUnitType::CSS_PERCENTAGE), false), important);
+        addProperty(CSSPropertyBorderImageWidth, CSSPropertyBorder, valuePool.createValue(1, CSSUnitType::CSS_NUMBER), important);
+        addProperty(CSSPropertyBorderImageOutset, CSSPropertyBorder, valuePool.createValue(0, CSSUnitType::CSS_PX), important);
+        addProperty(CSSPropertyBorderImageRepeat, CSSPropertyBorder, valuePool.createIdentifierValue(CSSValueStretch), important);
         return true;
     }
     case CSSPropertyBorderImage:

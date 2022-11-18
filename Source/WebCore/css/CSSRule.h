@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Andreas Kling (kling@webkit.org)
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "ExceptionOr.h"
 #include "StyleRuleType.h"
-#include <wtf/TypeCasts.h>
+#include <wtf/RefCounted.h>
+#include <wtf/StdLibExtras.h>
 
 namespace WebCore {
 
@@ -32,6 +32,8 @@ class CSSStyleSheet;
 class StyleRuleBase;
 
 struct CSSParserContext;
+
+template<typename> class ExceptionOr;
 
 class CSSRule : public RefCounted<CSSRule> {
 public:
@@ -46,51 +48,54 @@ public:
     void setParentStyleSheet(CSSStyleSheet*);
     void setParentRule(CSSRule*);
     CSSStyleSheet* parentStyleSheet() const;
-    CSSRule* parentRule() const { return m_parentIsRule ? m_parentRule : nullptr; }
+    CSSRule* parentRule() const;
 
     WEBCORE_EXPORT ExceptionOr<void> setCssText(const String&);
 
 protected:
     explicit CSSRule(CSSStyleSheet*);
 
-    bool hasCachedSelectorText() const { return m_hasCachedSelectorText; }
-    void setHasCachedSelectorText(bool hasCachedSelectorText) const { m_hasCachedSelectorText = hasCachedSelectorText; }
-
     const CSSParserContext& parserContext() const;
 
 private:
-    mutable unsigned char m_hasCachedSelectorText : 1;
-    unsigned char m_parentIsRule : 1;
-    union {
-        CSSRule* m_parentRule;
-        CSSStyleSheet* m_parentStyleSheet;
-    };
+    std::variant<CSSRule*, CSSStyleSheet*> m_parent;
 };
 
 inline CSSRule::CSSRule(CSSStyleSheet* parent)
-    : m_hasCachedSelectorText(false)
-    , m_parentIsRule(false)
-    , m_parentStyleSheet(parent)
+    : m_parent(parent)
 {
 }
 
 inline void CSSRule::setParentStyleSheet(CSSStyleSheet* styleSheet)
 {
-    m_parentIsRule = false;
-    m_parentStyleSheet = styleSheet;
+    m_parent = styleSheet;
 }
 
 inline void CSSRule::setParentRule(CSSRule* rule)
 {
-    m_parentIsRule = true;
-    m_parentRule = rule;
+    m_parent = rule;
+}
+
+inline CSSRule* CSSRule::parentRule() const
+{
+    return WTF::switchOn(m_parent,
+        [](CSSRule* rule) {
+            return rule;
+        }, [](CSSStyleSheet*) -> CSSRule* {
+            return nullptr;
+        }
+    );
 }
 
 inline CSSStyleSheet* CSSRule::parentStyleSheet() const
 {
-    if (m_parentIsRule)
-        return m_parentRule ? m_parentRule->parentStyleSheet() : nullptr;
-    return m_parentStyleSheet;
+    return WTF::switchOn(m_parent,
+        [](CSSRule* rule) {
+            return rule ? rule->parentStyleSheet() : nullptr;
+        }, [](CSSStyleSheet* sheet) {
+            return sheet;
+        }
+    );
 }
 
 } // namespace WebCore

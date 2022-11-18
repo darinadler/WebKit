@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002, 2005, 2006, 2008, 2012, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2022 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -34,13 +34,6 @@
 
 namespace WebCore {
 
-typedef HashMap<const CSSStyleRule*, String> SelectorTextCache;
-static SelectorTextCache& selectorTextCache()
-{
-    static NeverDestroyed<SelectorTextCache> cache;
-    return cache;
-}
-
 CSSStyleRule::CSSStyleRule(StyleRule& styleRule, CSSStyleSheet* parent)
     : CSSRule(parent)
     , m_styleRule(styleRule)
@@ -52,11 +45,6 @@ CSSStyleRule::~CSSStyleRule()
 {
     if (m_propertiesCSSOMWrapper)
         m_propertiesCSSOMWrapper->clearParentRule();
-
-    if (hasCachedSelectorText()) {
-        selectorTextCache().remove(this);
-        setHasCachedSelectorText(false);
-    }
 }
 
 CSSStyleDeclaration& CSSStyleRule::style()
@@ -71,23 +59,11 @@ StylePropertyMap& CSSStyleRule::styleMap()
     return m_styleMap.get();
 }
 
-String CSSStyleRule::generateSelectorText() const
-{
-    return m_styleRule->selectorList().selectorsText();
-}
-
 String CSSStyleRule::selectorText() const
 {
-    if (hasCachedSelectorText()) {
-        ASSERT(selectorTextCache().contains(this));
-        return selectorTextCache().get(this);
-    }
-
-    ASSERT(!selectorTextCache().contains(this));
-    String text = generateSelectorText();
-    selectorTextCache().set(this, text);
-    setHasCachedSelectorText(true);
-    return text;
+    if (m_cachedSelectorText.isNull())
+        m_cachedSelectorText = m_styleRule->selectorList().selectorsText();
+    return m_cachedSelectorText;
 }
 
 void CSSStyleRule::setSelectorText(const String& selectorText)
@@ -103,18 +79,14 @@ void CSSStyleRule::setSelectorText(const String& selectorText)
     if (!selectorList)
         return;
 
-    // NOTE: The selector list has to fit into RuleData. <http://webkit.org/b/118369>
+    // The selector list has to fit into RuleData. <http://webkit.org/b/118369>
     if (selectorList->componentCount() > Style::RuleData::maximumSelectorComponentCount)
         return;
 
     CSSStyleSheet::RuleMutationScope mutationScope(this);
-
     m_styleRule->wrapperAdoptSelectorList(WTFMove(*selectorList));
 
-    if (hasCachedSelectorText()) {
-        selectorTextCache().remove(this);
-        setHasCachedSelectorText(false);
-    }
+    m_cachedSelectorText = { };
 }
 
 String CSSStyleRule::cssText() const
@@ -130,6 +102,8 @@ void CSSStyleRule::reattach(StyleRuleBase& rule)
     m_styleRule = downcast<StyleRule>(rule);
     if (m_propertiesCSSOMWrapper)
         m_propertiesCSSOMWrapper->reattach(m_styleRule->mutableProperties());
+
+    m_cachedSelectorText = { };
 }
 
 } // namespace WebCore

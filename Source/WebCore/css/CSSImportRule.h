@@ -22,6 +22,7 @@
 #pragma once
 
 #include "CSSRule.h"
+#include <wtf/WeakPtr.h>
 
 namespace WebCore {
 

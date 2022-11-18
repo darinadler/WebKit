@@ -25,31 +25,28 @@
 
 #pragma once
 
-#include "CSSPrimitiveValue.h"
-#include <wtf/RefPtr.h>
+#include "CSSValue.h"
+#include <wtf/Ref.h>
 
 namespace WebCore {
 
-class Rect;
-
+// FIXME: This is only used for legacy border image width that sometimes overrides border widths.
 class CSSBorderImageWidthValue final : public CSSValue {
 public:
-    static Ref<CSSBorderImageWidthValue> create(RefPtr<CSSPrimitiveValue>&& widths, bool overridesBorderWidths)
-    {
-        return adoptRef(*new CSSBorderImageWidthValue(WTFMove(widths), overridesBorderWidths));
-    }
+    static Ref<CSSBorderImageWidthValue> create(Ref<CSSValue> widths);
 
     String customCSSText() const;
-
-    Quad* widths() const { return m_widths ? m_widths->quadValue() : nullptr; }
-
     bool equals(const CSSBorderImageWidthValue&) const;
 
-    RefPtr<CSSPrimitiveValue> m_widths;
-    bool m_overridesBorderWidths;
+    const Ref<CSSValue>& widths() const { return m_widths; }
+    bool overridesBorderWidths() const { return overridesBorderWidths(m_widths); }
+
+    static bool overridesBorderWidths(CSSValue&);
 
 private:
-    CSSBorderImageWidthValue(RefPtr<CSSPrimitiveValue>&& widths, bool overridesBorderWidths);
+    CSSBorderImageWidthValue(Ref<CSSValue>&& widths);
+
+    Ref<CSSValue> m_widths;
 };
 
 } // namespace WebCore

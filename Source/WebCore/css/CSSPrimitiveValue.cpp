@@ -520,7 +520,6 @@ void CSSPrimitiveValue::cleanup()
         m_value.rect->deref();
         break;
     case CSSUnitType::CSS_QUAD:
-        m_value.quad->deref();
         break;
     case CSSUnitType::CSS_PAIR:
         m_value.pair->deref();
@@ -1434,7 +1433,7 @@ ALWAYS_INLINE String CSSPrimitiveValue::formatNumberForCustomCSSText() const
     case CSSUnitType::CSS_RECT:
         return rectValue()->cssText();
     case CSSUnitType::CSS_QUAD:
-        return quadValue()->cssText();
+        return { };
     case CSSUnitType::CSS_RGBCOLOR:
         return serializationForCSS(color());
     case CSSUnitType::CSS_PAIR:
@@ -1609,7 +1608,7 @@ bool CSSPrimitiveValue::equals(const CSSPrimitiveValue& other) const
     case CSSUnitType::CSS_RECT:
         return m_value.rect && other.m_value.rect && m_value.rect->equals(*other.m_value.rect);
     case CSSUnitType::CSS_QUAD:
-        return m_value.quad && other.m_value.quad && m_value.quad->equals(*other.m_value.quad);
+        return false;
     case CSSUnitType::CSS_RGBCOLOR:
         return color() == other.color();
     case CSSUnitType::CSS_PAIR:

@@ -1,7 +1,7 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
  * (C) 2002-2003 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2002, 2006, 2008, 2012 Apple Inc. All rights reserved.
+ * Copyright (C) 2002-2022 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -35,7 +35,6 @@ class StyleRule;
 class CSSStyleRule final : public CSSRule, public CanMakeWeakPtr<CSSStyleRule> {
 public:
     static Ref<CSSStyleRule> create(StyleRule& rule, CSSStyleSheet* sheet) { return adoptRef(*new CSSStyleRule(rule, sheet)); }
-
     virtual ~CSSStyleRule();
 
     WEBCORE_EXPORT String selectorText() const;
@@ -43,7 +42,6 @@ public:
 
     WEBCORE_EXPORT CSSStyleDeclaration& style();
 
-    // FIXME: Not CSSOM. Remove.
     StyleRule& styleRule() const { return m_styleRule.get(); }
 
     StylePropertyMap& styleMap();
@@ -55,11 +53,10 @@ private:
     String cssText() const final;
     void reattach(StyleRuleBase&) final;
 
-    String generateSelectorText() const;
-
     Ref<StyleRule> m_styleRule;
     Ref<DeclaredStylePropertyMap> m_styleMap;
     RefPtr<StyleRuleCSSStyleDeclaration> m_propertiesCSSOMWrapper;
+    mutable String m_cachedSelectorText;
 };
 
 } // namespace WebCore
