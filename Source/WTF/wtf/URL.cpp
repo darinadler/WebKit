@@ -908,7 +908,6 @@ bool protocolIsJavaScript(StringView string)
 bool protocolIsInFTPFamily(StringView url)
 {
     auto length = url.length();
-    // Do the comparison without making a new string object.
     return length >= 4
         && isASCIIAlphaCaselessEqual(url[0], 'f')
         && isASCIIAlphaCaselessEqual(url[1], 't')
@@ -919,7 +918,6 @@ bool protocolIsInFTPFamily(StringView url)
 bool protocolIsInHTTPFamily(StringView url)
 {
     auto length = url.length();
-    // Do the comparison without making a new string object.
     return length >= 5
         && isASCIIAlphaCaselessEqual(url[0], 'h')
         && isASCIIAlphaCaselessEqual(url[1], 't')
@@ -928,6 +926,10 @@ bool protocolIsInHTTPFamily(StringView url)
         && (url[4] == ':' || (isASCIIAlphaCaselessEqual(url[4], 's') && length >= 6 && url[5] == ':'));
 }
 
+bool isProtocolInHTTPFamily(StringView protocol)
+{
+    return equalLettersIgnoringASCIICase(protocol, "http"_s) || equalLettersIgnoringASCIICase(protocol, "https"_s);
+}
 
 static StaticStringImpl aboutBlankString { "about:blank" };
 const URL& aboutBlankURL()

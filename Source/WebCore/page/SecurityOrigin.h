@@ -226,7 +226,7 @@ private:
 
     // This method checks that the scheme for this origin is an HTTP-family
     // scheme, e.g. HTTP and HTTPS.
-    bool isHTTPFamily() const { return m_data.protocol == "http"_s || m_data.protocol == "https"_s; }
+    bool isHTTPFamily() const { return isProtocolInHTTPFamily(m_data.protocol); }
     
     enum ShouldAllowFromThirdParty { AlwaysAllowFromThirdParty, MaybeAllowFromThirdParty };
     WEBCORE_EXPORT bool canAccessStorage(const SecurityOrigin*, ShouldAllowFromThirdParty = MaybeAllowFromThirdParty) const;

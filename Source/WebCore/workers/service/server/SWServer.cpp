@@ -1386,13 +1386,7 @@ void SWServer::createContextConnection(const RegistrableDomain& registrableDomai
 
 bool SWServer::canHandleScheme(StringView scheme) const
 {
-    if (scheme.isNull())
-        return false;
-    if (!startsWithLettersIgnoringASCIICase(scheme, "http"_s))
-        return false;
-    if (scheme.length() == 5 && isASCIIAlphaCaselessEqual(scheme[4], 's'))
-        return true;
-    return scheme.length() == 4;
+    return isProtocolInHTTPFamily(scheme);
 }
 
 // https://w3c.github.io/ServiceWorker/#soft-update

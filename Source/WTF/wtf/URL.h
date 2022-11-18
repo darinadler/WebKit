@@ -274,6 +274,8 @@ WTF_EXPORT_PRIVATE bool protocolIsJavaScript(StringView url);
 WTF_EXPORT_PRIVATE bool protocolIsInFTPFamily(StringView url);
 WTF_EXPORT_PRIVATE bool protocolIsInHTTPFamily(StringView url);
 
+WTF_EXPORT_PRIVATE bool isProtocolInHTTPFamily(StringView protocol);
+
 WTF_EXPORT_PRIVATE std::optional<uint16_t> defaultPortForProtocol(StringView protocol);
 WTF_EXPORT_PRIVATE bool isDefaultPortForProtocol(uint16_t port, StringView protocol);
 WTF_EXPORT_PRIVATE bool portAllowed(const URL&); // Disallow ports that should never be used for Web resources.

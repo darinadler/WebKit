@@ -71,7 +71,7 @@ String WebsiteDataRecord::displayNameForOrigin(const WebCore::SecurityOriginData
         return displayNameForLocalFiles();
 
 #if ENABLE(PUBLIC_SUFFIX_LIST)
-    if (protocol == "http"_s || protocol == "https"_s)
+    if (isProtocolInHTTPFamily(protocol))
         return WebCore::topPrivatelyControlledDomain(securityOrigin.host);
 #endif
 

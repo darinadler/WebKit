@@ -180,11 +180,6 @@ bool ContentSecurityPolicySourceList::matches(const String& nonce) const
     return m_nonces.contains(nonce);
 }
 
-static bool schemeIsInHttpFamily(StringView scheme)
-{
-    return equalLettersIgnoringASCIICase(scheme, "https"_s) || equalLettersIgnoringASCIICase(scheme, "http"_s);
-}
-
 static bool isRestrictedDirectiveForMode(const String& directive, ContentSecurityPolicyModeForExtension mode)
 {
     switch (mode) {
@@ -230,7 +225,7 @@ bool ContentSecurityPolicySourceList::isValidSourceForExtensionMode(const Conten
         if (!isRestrictedDirectiveForMode(m_directiveName, ContentSecurityPolicyModeForExtension::ManifestV3))
             return true;
 
-        if (!schemeIsInHttpFamily(parsedSource.scheme) || !SecurityOrigin::isLocalHostOrLoopbackIPAddress(parsedSource.host.value))
+        if (!isProtocolInHTTPFamily(parsedSource.scheme) || !SecurityOrigin::isLocalHostOrLoopbackIPAddress(parsedSource.host.value))
             return false;
     }
     return true;

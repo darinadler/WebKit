@@ -114,7 +114,7 @@ static NSString* visibleDomain(const String& host)
 
 NSString *applicationVisibleNameFromOrigin(const WebCore::SecurityOriginData& origin)
 {
-    if (origin.protocol != "http"_s && origin.protocol != "https"_s)
+    if (!isProtocolInHTTPFamily(origin.protocol))
         return nil;
 
     return visibleDomain(origin.host);
