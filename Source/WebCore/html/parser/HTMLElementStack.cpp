@@ -293,7 +293,11 @@ void HTMLElementStack::pushRootNode(HTMLStackItem&& rootItem)
 
 void HTMLElementStack::pushHTMLHtmlElement(HTMLStackItem&& item)
 {
+<<<<<<< Updated upstream
     ASSERT(item.elementName() == HTML::html);
+=======
+    ASSERT(item.hasTagName(HTMLNames::htmlTag));
+>>>>>>> Stashed changes
     pushRootNodeCommon(WTFMove(item));
 }
     
@@ -307,7 +311,11 @@ void HTMLElementStack::pushRootNodeCommon(HTMLStackItem&& rootItem)
 
 void HTMLElementStack::pushHTMLHeadElement(HTMLStackItem&& item)
 {
+<<<<<<< Updated upstream
     ASSERT(item.elementName() == HTML::head);
+=======
+    ASSERT(item.hasTagName(HTMLNames::headTag));
+>>>>>>> Stashed changes
     ASSERT(!m_headElement);
     m_headElement = &item.element();
     pushCommon(WTFMove(item));
@@ -315,7 +323,11 @@ void HTMLElementStack::pushHTMLHeadElement(HTMLStackItem&& item)
 
 void HTMLElementStack::pushHTMLBodyElement(HTMLStackItem&& item)
 {
+<<<<<<< Updated upstream
     ASSERT(item.elementName() == HTML::body);
+=======
+    ASSERT(item.hasTagName(HTMLNames::bodyTag));
+>>>>>>> Stashed changes
     ASSERT(!m_bodyElement);
     m_bodyElement = &item.element();
     pushCommon(WTFMove(item));
@@ -323,9 +335,15 @@ void HTMLElementStack::pushHTMLBodyElement(HTMLStackItem&& item)
 
 void HTMLElementStack::push(HTMLStackItem&& item)
 {
+<<<<<<< Updated upstream
     ASSERT(item.elementName() != HTML::html);
     ASSERT(item.elementName() != HTML::head);
     ASSERT(item.elementName() != HTML::body);
+=======
+    ASSERT(!item.hasTagName(HTMLNames::htmlTag));
+    ASSERT(!item.hasTagName(HTMLNames::headTag));
+    ASSERT(!item.hasTagName(HTMLNames::bodyTag));
+>>>>>>> Stashed changes
     ASSERT(m_rootNode);
     pushCommon(WTFMove(item));
 }
@@ -333,9 +351,15 @@ void HTMLElementStack::push(HTMLStackItem&& item)
 void HTMLElementStack::insertAbove(HTMLStackItem&& item, ElementRecord& recordBelow)
 {
     ASSERT(m_top);
+<<<<<<< Updated upstream
     ASSERT(item.elementName() != HTML::html);
     ASSERT(item.elementName() != HTML::head);
     ASSERT(item.elementName() != HTML::body);
+=======
+    ASSERT(!item.hasTagName(HTMLNames::htmlTag));
+    ASSERT(!item.hasTagName(HTMLNames::headTag));
+    ASSERT(!item.hasTagName(HTMLNames::bodyTag));
+>>>>>>> Stashed changes
     ASSERT(m_rootNode);
     if (&recordBelow == m_top.get()) {
         push(WTFMove(item));

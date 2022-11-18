@@ -530,6 +530,7 @@ void HTMLConstructionSite::insertHTMLElement(AtomHTMLToken&& token)
     auto element = createHTMLElement(token);
     attachLater(currentNode(), element.copyRef());
     m_openElements.push(HTMLStackItem(WTFMove(element), WTFMove(token)));
+<<<<<<< Updated upstream
 }
 
 void HTMLConstructionSite::insertHTMLTemplateElement(AtomHTMLToken&& token)
@@ -560,6 +561,8 @@ void HTMLConstructionSite::insertHTMLTemplateElement(AtomHTMLToken&& token)
         }
     }
     insertHTMLElement(WTFMove(token));
+=======
+>>>>>>> Stashed changes
 }
 
 std::unique_ptr<CustomElementConstructionData> HTMLConstructionSite::insertHTMLElementOrFindCustomElementInterface(AtomHTMLToken&& token)
@@ -577,7 +580,11 @@ void HTMLConstructionSite::insertCustomElement(Ref<Element>&& element, Vector<At
 {
     setAttributes(element, attributes, HasDuplicateAttribute::No, m_parserContentPolicy);
     attachLater(currentNode(), element.copyRef());
+<<<<<<< Updated upstream
     m_openElements.push(HTMLStackItem(WTFMove(element), WTFMove(attributes)));
+=======
+    m_openElements.push(HTMLStackItem(WTFMove(element), localName, WTFMove(attributes)));
+>>>>>>> Stashed changes
     executeQueuedTasks();
 }
 
@@ -627,6 +634,7 @@ void HTMLConstructionSite::insertForeignElement(AtomHTMLToken&& token, const Ato
     if (scriptingContentIsAllowed(m_parserContentPolicy) || !isScriptElement(element.get()))
         attachLater(currentNode(), element.copyRef(), token.selfClosing());
     if (!token.selfClosing())
+<<<<<<< Updated upstream
         m_openElements.push(HTMLStackItem(WTFMove(element), WTFMove(token)));
 }
 
@@ -657,6 +665,9 @@ static ALWAYS_INLINE unsigned findBreakIndex(const String& string, unsigned curr
         return proposedBreakIndex;
 
     return findBreakIndexSlow(string, currentPosition, proposedBreakIndex);
+=======
+        m_openElements.push(HTMLStackItem(WTFMove(element), WTFMove(token), namespaceURI));
+>>>>>>> Stashed changes
 }
 
 void HTMLConstructionSite::insertTextNode(const String& characters, WhitespaceMode whitespaceMode)
@@ -835,8 +846,13 @@ HTMLStackItem HTMLConstructionSite::createElementFromSavedToken(const HTMLStackI
     auto tagName = tagNameForElement(item.elementName());
     AtomHTMLToken fakeToken(HTMLToken::Type::StartTag, tagName, item.localName(), Vector<Attribute>(item.attributes()));
     ASSERT(item.namespaceURI() == HTMLNames::xhtmlNamespaceURI);
+<<<<<<< Updated upstream
     ASSERT(isFormattingTag(tagName));
     return HTMLStackItem(createHTMLElement(fakeToken), WTFMove(fakeToken));
+=======
+    ASSERT(isFormattingTag(item.localName()));
+    return HTMLStackItem(createHTMLElement(fakeToken), WTFMove(fakeToken), item.namespaceURI());
+>>>>>>> Stashed changes
 }
 
 std::optional<unsigned> HTMLConstructionSite::indexOfFirstUnopenFormattingElement() const

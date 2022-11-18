@@ -40,26 +40,41 @@ public:
     HTMLStackItem() = default;
 
     // Normal HTMLElementStack and HTMLFormattingElementList items.
+<<<<<<< Updated upstream
     HTMLStackItem(Ref<Element>&&, AtomHTMLToken&&);
     HTMLStackItem(Ref<Element>&&, Vector<Attribute>&&);
+=======
+    HTMLStackItem(Ref<Element>&&, AtomHTMLToken&&, const AtomString& namespaceURI = HTMLNames::xhtmlNamespaceURI);
+    HTMLStackItem(Ref<Element>&&, const AtomString& localName, Vector<Attribute>&&);
+>>>>>>> Stashed changes
 
     // Document fragment or element for parsing context.
     explicit HTMLStackItem(Element&);
     explicit HTMLStackItem(DocumentFragment&);
 
     bool isNull() const { return !m_node; }
+<<<<<<< Updated upstream
     bool isElement() const { return m_node && is<Element>(*m_node); }
     bool isDocumentFragment() const { return m_node && is<DocumentFragment>(*m_node); }
+=======
+    bool isElement() const { return !m_localName.isNull(); }
+    bool isDocumentFragment() const { return m_localName.isNull(); }
+>>>>>>> Stashed changes
 
     ContainerNode& node() const { return *m_node; }
     Element& element() const { return downcast<Element>(node()); }
     Element* elementOrNull() const { return downcast<Element>(m_node.get()); }
 
+<<<<<<< Updated upstream
     const AtomString& localName() const { return isElement() ? element().localName() : nullAtom(); }
     const AtomString& namespaceURI() const { return isElement() ? element().namespaceURI() : nullAtom(); }
 
     ElementName elementName() const { return m_elementName; }
     Namespace nodeNamespace() const { return m_namespace; }
+=======
+    const AtomString& namespaceURI() const { return m_namespaceURI; }
+    const AtomString& localName() const { return m_localName; }
+>>>>>>> Stashed changes
 
     const Vector<Attribute>& attributes() const;
     const Attribute* findAttribute(const QualifiedName& attributeName) const;
@@ -68,8 +83,13 @@ public:
 
 private:
     RefPtr<ContainerNode> m_node;
+<<<<<<< Updated upstream
     ElementName m_elementName = ElementName::Unknown;
     Namespace m_namespace = Namespace::Unknown;
+=======
+    AtomString m_namespaceURI;
+    AtomString m_localName;
+>>>>>>> Stashed changes
     Vector<Attribute> m_attributes;
 };
 
@@ -77,7 +97,11 @@ bool isInHTMLNamespace(const HTMLStackItem&);
 bool isNumberedHeaderElement(const HTMLStackItem&);
 bool isSpecialNode(const HTMLStackItem&);
 
+<<<<<<< Updated upstream
 inline HTMLStackItem::HTMLStackItem(Ref<Element>&& element, AtomHTMLToken&& token)
+=======
+inline HTMLStackItem::HTMLStackItem(Ref<Element>&& element, AtomHTMLToken&& token, const AtomString& namespaceURI)
+>>>>>>> Stashed changes
     : m_node(WTFMove(element))
     , m_elementName(downcast<Element>(*m_node).elementName())
     , m_namespace(downcast<Element>(*m_node).nodeNamespace())
@@ -85,18 +109,33 @@ inline HTMLStackItem::HTMLStackItem(Ref<Element>&& element, AtomHTMLToken&& toke
 {
 }
 
+<<<<<<< Updated upstream
 inline HTMLStackItem::HTMLStackItem(Ref<Element>&& element, Vector<Attribute>&& attributes)
     : m_node(WTFMove(element))
     , m_elementName(downcast<Element>(*m_node).elementName())
     , m_namespace(downcast<Element>(*m_node).nodeNamespace())
+=======
+inline HTMLStackItem::HTMLStackItem(Ref<Element>&& element, const AtomString& localName, Vector<Attribute>&& attributes)
+    : m_node(WTFMove(element))
+    , m_namespaceURI(downcast<Element>(*m_node).namespaceURI())
+    , m_localName(localName)
+>>>>>>> Stashed changes
     , m_attributes(WTFMove(attributes))
 {
 }
 
+<<<<<<< Updated upstream
 inline HTMLStackItem::HTMLStackItem(Element& element)
     : m_node(&element)
     , m_elementName(element.elementName())
     , m_namespace(element.nodeNamespace())
+=======
+
+inline HTMLStackItem::HTMLStackItem(Element& element)
+    : m_node(&element)
+    , m_namespaceURI(element.namespaceURI())
+    , m_localName(element.localName())
+>>>>>>> Stashed changes
 {
 }
 

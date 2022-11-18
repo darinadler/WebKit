@@ -53,7 +53,11 @@ public:
 
         Element& element() const { return m_item.element(); }
         ContainerNode& node() const { return m_item.node(); }
+<<<<<<< Updated upstream
         ElementName elementName() const { return m_item.elementName(); }
+=======
+        const AtomString& namespaceURI() const { return m_item.namespaceURI(); }
+>>>>>>> Stashed changes
         HTMLStackItem& stackItem() { return m_item; }
         const HTMLStackItem& stackItem() const { return m_item; }
 

@@ -47,7 +47,11 @@ Element* HTMLFormattingElementList::closestElementInScopeWithName(ElementName ta
         const Entry& entry = m_entries[m_entries.size() - i];
         if (entry.isMarker())
             return nullptr;
+<<<<<<< Updated upstream
         if (entry.stackItem().elementName() == targetElement)
+=======
+        if (entry.stackItem().matchesHTMLTag(targetName))
+>>>>>>> Stashed changes
             return &entry.element();
     }
     return nullptr;
@@ -133,6 +137,7 @@ void HTMLFormattingElementList::clearToLastMarker()
     }
 }
 
+<<<<<<< Updated upstream
 static bool itemsHaveMatchingNames(const HTMLStackItem& a, const HTMLStackItem& b)
 {
     if (a.elementName() != b.elementName())
@@ -146,11 +151,19 @@ static bool itemsHaveMatchingNames(const HTMLStackItem& a, const HTMLStackItem& 
 
 Vector<const HTMLStackItem*> HTMLFormattingElementList::tryToEnsureNoahsArkConditionQuickly(HTMLStackItem& newItem)
 {
+=======
+Vector<HTMLStackItem> HTMLFormattingElementList::tryToEnsureNoahsArkConditionQuickly(HTMLStackItem& newItem)
+{
+>>>>>>> Stashed changes
     if (m_entries.size() < kNoahsArkCapacity)
         return { };
 
     // Use a vector with inline capacity to avoid a malloc in the common case of quickly ensuring the condition.
+<<<<<<< Updated upstream
     Vector<const HTMLStackItem*, 10> candidates;
+=======
+    Vector<HTMLStackItem, 10> candidates;
+>>>>>>> Stashed changes
 
     size_t newItemAttributeCount = newItem.attributes().size();
 
@@ -162,12 +175,20 @@ Vector<const HTMLStackItem*> HTMLFormattingElementList::tryToEnsureNoahsArkCondi
 
         // Quickly reject obviously non-matching candidates.
         auto& candidate = entry.stackItem();
+<<<<<<< Updated upstream
         if (!itemsHaveMatchingNames(newItem, candidate))
+=======
+        if (newItem.localName() != candidate.localName() || newItem.namespaceURI() != candidate.namespaceURI())
+>>>>>>> Stashed changes
             continue;
         if (candidate.attributes().size() != newItemAttributeCount)
             continue;
 
+<<<<<<< Updated upstream
         candidates.append(&candidate);
+=======
+        candidates.append(HTMLStackItem(candidate));
+>>>>>>> Stashed changes
     }
 
     if (candidates.size() < kNoahsArkCapacity)
@@ -183,16 +204,25 @@ void HTMLFormattingElementList::ensureNoahsArkCondition(HTMLStackItem& newItem)
         return;
 
     // We pre-allocate and re-use this second vector to save one malloc per attribute that we verify.
+<<<<<<< Updated upstream
     Vector<const HTMLStackItem*> remainingCandidates;
+=======
+    Vector<HTMLStackItem> remainingCandidates;
+>>>>>>> Stashed changes
     remainingCandidates.reserveInitialCapacity(candidates.size());
 
     for (auto& attribute : newItem.attributes()) {
         for (auto* candidate : candidates) {
             // These properties should already have been checked by tryToEnsureNoahsArkConditionQuickly.
+<<<<<<< Updated upstream
             ASSERT(newItem.attributes().size() == candidate->attributes().size());
             ASSERT(itemsHaveMatchingNames(newItem, *candidate));
+=======
+            ASSERT(newItem.attributes().size() == candidate.attributes().size());
+            ASSERT(newItem.localName() == candidate.localName() && newItem.namespaceURI() == candidate.namespaceURI());
+>>>>>>> Stashed changes
 
-            auto* candidateAttribute = candidate->findAttribute(attribute.name());
+            auto* candidateAttribute = candidate.findAttribute(attribute.name());
             if (candidateAttribute && candidateAttribute->value() == attribute.value())
                 remainingCandidates.uncheckedAppend(candidate);
         }
@@ -208,7 +238,7 @@ void HTMLFormattingElementList::ensureNoahsArkCondition(HTMLStackItem& newItem)
     // however, that we will spin the loop more than once because of how the
     // formatting element list gets permuted.
     for (size_t i = kNoahsArkCapacity - 1; i < candidates.size(); ++i)
-        remove(candidates[i]->element());
+        remove(candidates[i].element());
 }
 
 #if ENABLE(TREE_DEBUGGING)

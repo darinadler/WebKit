@@ -1544,7 +1544,11 @@ void HTMLTreeBuilder::callTheAdoptionAgency(AtomHTMLToken& token)
         // 4.9.
         ASSERT(furthestBlock->isAbove(*formattingElementRecord));
         auto& commonAncestor = formattingElementRecord->next()->stackItem();
+<<<<<<< Updated upstream
         // 4.10.
+=======
+        // 8.
+>>>>>>> Stashed changes
         HTMLFormattingElementList::Bookmark bookmark = m_tree.activeFormattingElements().bookmarkFor(*formattingElement);
         // 4.11.
         auto* node = furthestBlock;
@@ -1575,6 +1579,10 @@ void HTMLTreeBuilder::callTheAdoptionAgency(AtomHTMLToken& token)
             // 4.13.6.
             auto newItem = m_tree.createElementFromSavedToken(node->stackItem());
 
+<<<<<<< Updated upstream
+=======
+            HTMLFormattingElementList::Entry* nodeEntry = m_tree.activeFormattingElements().find(node->element());
+>>>>>>> Stashed changes
             nodeEntry->replaceElement(HTMLStackItem(newItem));
             node->replaceElement(WTFMove(newItem));
 
@@ -1586,8 +1594,19 @@ void HTMLTreeBuilder::callTheAdoptionAgency(AtomHTMLToken& token)
             // 4.13.9.
             lastNode = node;
         }
+<<<<<<< Updated upstream
         // 14.
         m_tree.insertAlreadyParsedChild(commonAncestor, *lastNode);
+=======
+        // 10.
+        m_tree.insertAlreadyParsedChild(commonAncestor, *lastNode);
+        // 11.
+        auto newItem = m_tree.createElementFromSavedToken(formattingElementRecord->stackItem());
+        // 12. & 13.
+        m_tree.takeAllChildrenAndReparent(newItem, *furthestBlock);
+        // 14.
+        m_tree.activeFormattingElements().swapTo(*formattingElement, HTMLStackItem(newItem), bookmark);
+>>>>>>> Stashed changes
         // 15.
         auto newItem = m_tree.createElementFromSavedToken(formattingElementRecord->stackItem());
         // 16.
@@ -1606,7 +1625,10 @@ void HTMLTreeBuilder::resetInsertionModeAppropriately()
     bool last = false;
     for (auto* record = &m_tree.openElements().topRecord(); ; record = record->next()) {
         auto* item = &record->stackItem();
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
         if (&item->node() == &m_tree.openElements().rootNode()) {
             last = true;
             bool shouldCreateItem = isParsingFragment();
@@ -1665,7 +1687,12 @@ void HTMLTreeBuilder::resetInsertionModeAppropriately()
         case HTML::frameset:
             m_insertionMode = InsertionMode::InFrameset;
             return;
+<<<<<<< Updated upstream
         case HTML::html:
+=======
+        }
+        if (item->hasTagName(htmlTag)) {
+>>>>>>> Stashed changes
             if (!m_tree.headStackItem().isNull()) {
                 m_insertionMode = InsertionMode::AfterHead;
                 return;
