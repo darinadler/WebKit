@@ -385,13 +385,6 @@ CSSPrimitiveValue::CSSPrimitiveValue(StaticCSSValueTag, double num, CSSUnitType 
     makeStatic();
 }
 
-CSSPrimitiveValue::CSSPrimitiveValue(StaticCSSValueTag, ImplicitInitialValueTag)
-    : CSSPrimitiveValue(CSSValueInitial)
-{
-    m_isImplicit = true;
-    makeStatic();
-}
-
 void CSSPrimitiveValue::init(const Length& length)
 {
     switch (length.type()) {
@@ -1425,9 +1418,9 @@ ALWAYS_INLINE String CSSPrimitiveValue::formatNumberForCustomCSSText() const
     case CSSUnitType::CSS_PROPERTY_ID:
         return nameString(m_value.propertyID);
     case CSSUnitType::CSS_ATTR:
-        return "attr(" + String(m_value.string) + ')';
+        return makeString("attr(", m_value.string, ')');
     case CSSUnitType::CSS_COUNTER_NAME:
-        return "counter(" + String(m_value.string) + ')';
+        return makeString("counter(", m_value.string, ')');
     case CSSUnitType::CSS_COUNTER: {
         StringBuilder result;
         auto separator = m_value.counter->separator();

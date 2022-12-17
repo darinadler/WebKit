@@ -27,6 +27,7 @@
 #include "CSSStyleSheet.h"
 #include "CustomElementReactionQueue.h"
 #include "DOMWindow.h"
+#include "DeprecatedCSSOMValue.h"
 #include "HTMLNames.h"
 #include "InspectorInstrumentation.h"
 #include "JSDOMGlobalObject.h"

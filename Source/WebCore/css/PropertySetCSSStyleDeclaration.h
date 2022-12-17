@@ -25,9 +25,7 @@
 
 #pragma once
 
-#include "CSSParserContext.h"
 #include "CSSStyleDeclaration.h"
-#include "DeprecatedCSSOMValue.h"
 #include <memory>
 #include <wtf/HashMap.h>
 #include <wtf/RefPtr.h>
@@ -38,9 +36,12 @@ namespace WebCore {
 class CSSRule;
 class CSSProperty;
 class CSSValue;
+class DeprecatedCSSOMValue;
 class MutableStyleProperties;
 class StyleSheetContents;
 class StyledElement;
+
+struct CSSParserContext;
 
 class PropertySetCSSStyleDeclaration : public CSSStyleDeclaration {
     WTF_MAKE_ISO_ALLOCATED(PropertySetCSSStyleDeclaration);

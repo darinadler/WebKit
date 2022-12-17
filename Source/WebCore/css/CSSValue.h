@@ -77,15 +77,10 @@ public:
     bool isNamedImageValue() const { return m_classType == NamedImageClass; }
     bool isImageSetValue() const { return m_classType == ImageSetClass; }
     bool isImageValue() const { return m_classType == ImageClass; }
-    bool isImplicitInitialValue() const;
     bool isInheritValue() const;
-    bool isInitialValue() const;
-    bool isUnsetValue() const;
     bool isRevertValue() const;
-    bool isRevertLayerValue() const;
     bool isCSSWideKeyword() const;
     bool treatAsInitialValue(CSSPropertyID) const;
-    bool treatAsInheritedValue(CSSPropertyID) const;
     bool isLinearGradientValue() const { return m_classType == LinearGradientClass; }
     bool isRadialGradientValue() const { return m_classType == RadialGradientClass; }
     bool isConicGradientValue() const { return m_classType == ConicGradientClass; }

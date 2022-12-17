@@ -4221,11 +4221,11 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyQuotes:
         return valueForQuotes(style.quotes());
 
-    /* Unimplemented CSS 3 properties (including CSS3 shorthand properties) */
+    // Unimplemented CSS 3 properties (including CSS3 shorthand properties).
     case CSSPropertyAll:
         return nullptr;
 
-    /* Directional properties are resolved by resolveDirectionAwareProperty() before the switch. */
+    // Directional properties are resolved by resolveDirectionAwareProperty() before the switch.
     case CSSPropertyBorderBlockEndColor:
     case CSSPropertyBorderBlockEndStyle:
     case CSSPropertyBorderBlockEndWidth:
@@ -4300,7 +4300,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyAdditiveSymbols:
         return nullptr;
 
-    /* Unimplemented @font-face properties */
+    // Unimplemented @font-face properties.
     case CSSPropertySrc:
     case CSSPropertyUnicodeRange:
     case CSSPropertyFontDisplay:
@@ -4311,12 +4311,12 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyOverrideColors:
         return nullptr;
 
-    /* Other unimplemented properties */
+    // Other unimplemented properties.
     case CSSPropertyPage: // for @page
     case CSSPropertySize: // for @page
         return nullptr;
 
-    /* Unimplemented -webkit- properties */
+    // Unimplemented -webkit- properties.
     case CSSPropertyWebkitMask:
     case CSSPropertyPerspectiveOriginX:
     case CSSPropertyPerspectiveOriginY:

@@ -38,8 +38,6 @@ LazyNeverDestroyed<StaticCSSValuePool> staticCSSValuePool;
 
 StaticCSSValuePool::StaticCSSValuePool()
 {
-    m_implicitInitialValue.construct(CSSValue::StaticCSSValue, CSSPrimitiveValue::ImplicitInitialValue);
-    
     m_transparentColor.construct(CSSValue::StaticCSSValue, Color::transparentBlack);
     m_whiteColor.construct(CSSValue::StaticCSSValue, Color::white);
     m_blackColor.construct(CSSValue::StaticCSSValue, Color::black);

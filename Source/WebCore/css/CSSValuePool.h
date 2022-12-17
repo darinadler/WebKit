@@ -51,8 +51,6 @@ public:
 private:
     StaticCSSValuePool();
 
-    LazyNeverDestroyed<CSSPrimitiveValue> m_implicitInitialValue;
-
     LazyNeverDestroyed<CSSPrimitiveValue> m_transparentColor;
     LazyNeverDestroyed<CSSPrimitiveValue> m_whiteColor;
     LazyNeverDestroyed<CSSPrimitiveValue> m_blackColor;
@@ -77,7 +75,6 @@ public:
 
     RefPtr<CSSValueList> createFontFaceValue(const AtomString&);
     Ref<CSSPrimitiveValue> createFontFamilyValue(const String&, FromSystemFontID = FromSystemFontID::No);
-    Ref<CSSPrimitiveValue> createImplicitInitialValue() { return staticCSSValuePool->m_implicitInitialValue.get(); }
     Ref<CSSPrimitiveValue> createIdentifierValue(CSSValueID identifier);
     Ref<CSSPrimitiveValue> createIdentifierValue(CSSPropertyID identifier);
     Ref<CSSPrimitiveValue> createColorValue(const Color&);

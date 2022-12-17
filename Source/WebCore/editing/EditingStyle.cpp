@@ -1151,9 +1151,9 @@ void EditingStyle::prepareToApplyAt(const Position& position, ShouldPreserveWrit
         m_mutableStyle->removeProperty(CSSPropertyBackgroundColor);
 
     if (is<CSSPrimitiveValue>(unicodeBidi)) {
-        m_mutableStyle->setProperty(CSSPropertyUnicodeBidi, static_cast<CSSValueID>(downcast<CSSPrimitiveValue>(*unicodeBidi).valueID()));
+        m_mutableStyle->setProperty(CSSPropertyUnicodeBidi, downcast<CSSPrimitiveValue>(*unicodeBidi).valueID());
         if (is<CSSPrimitiveValue>(direction))
-            m_mutableStyle->setProperty(CSSPropertyDirection, static_cast<CSSValueID>(downcast<CSSPrimitiveValue>(*direction).valueID()));
+            m_mutableStyle->setProperty(CSSPropertyDirection, downcast<CSSPrimitiveValue>(*direction).valueID());
     }
 }
 

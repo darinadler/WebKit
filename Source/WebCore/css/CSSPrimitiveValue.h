@@ -118,12 +118,6 @@ public:
     bool isFlex() const { return primitiveType() == CSSUnitType::CSS_FR; }
     bool isCustomIdent() const { return primitiveUnitType() == CSSUnitType::CustomIdent; }
 
-    bool isInitialValue() const { return valueID() == CSSValueInitial; }
-    bool isImplicitInitialValue() const { return isInitialValue() && m_isImplicit; }
-    bool isInheritValue() const { return valueID() == CSSValueInherit; }
-    bool isUnsetValue() const { return valueID() == CSSValueUnset; }
-    bool isRevertValue() const { return valueID() == CSSValueRevert; }
-    bool isRevertLayerValue() const { return valueID() == CSSValueRevertLayer; }
     bool isCSSWideKeyword() const;
 
     static Ref<CSSPrimitiveValue> createIdentifier(CSSValueID valueID) { return adoptRef(*new CSSPrimitiveValue(valueID)); }
@@ -158,7 +152,7 @@ public:
 
     // It's usually wrong to call this; it can trigger type conversion in calc without sufficient context to resolve relative length units.
     double doubleValue() const;
-    
+
     double doubleValueDividingBy100IfPercentage() const;
 
     // These return nullopt for calc, for which range checking is not done at parse time: <https://www.w3.org/TR/css3-values/#calc-range>.
@@ -227,8 +221,6 @@ private:
     CSSPrimitiveValue(StaticCSSValueTag, CSSValueID);
     CSSPrimitiveValue(StaticCSSValueTag, const Color&);
     CSSPrimitiveValue(StaticCSSValueTag, double, CSSUnitType);
-    enum ImplicitInitialValueTag { ImplicitInitialValue };
-    CSSPrimitiveValue(StaticCSSValueTag, ImplicitInitialValueTag);
 
     template<typename T> CSSPrimitiveValue(T); // Defined in CSSPrimitiveValueMappings.h
     template<typename T> CSSPrimitiveValue(T, CSSPropertyID); // Defined in CSSPrimitiveValueMappings.h
