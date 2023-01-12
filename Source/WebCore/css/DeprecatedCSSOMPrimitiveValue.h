@@ -87,7 +87,6 @@ public:
 
     String stringValue() const { return m_value->stringValue(); }
     bool isCSSWideKeyword() const { return m_value->isCSSWideKeyword(); }
-    static unsigned short cssValueType() { return CSS_PRIMITIVE_VALUE; }
 
 private:
     DeprecatedCSSOMPrimitiveValue(const CSSPrimitiveValue& value, CSSStyleDeclaration& owner)

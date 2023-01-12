@@ -72,6 +72,7 @@
 #include "CSSUnicodeRangeValue.h"
 #include "CSSValueList.h"
 #include "CSSValuePair.h"
+#include "CSSValuePool.h"
 #include "CSSVariableReferenceValue.h"
 #include "DeprecatedCSSOMPrimitiveValue.h"
 #include "DeprecatedCSSOMValueList.h"
@@ -154,6 +155,8 @@ template<typename Visitor> constexpr decltype(auto) CSSValue::visitDerived(Visit
         return std::invoke(std::forward<Visitor>(visitor), downcast<CSSImageValue>(*this));
     case ImageSetClass:
         return std::invoke(std::forward<Visitor>(visitor), downcast<CSSImageSetValue>(*this));
+    case InitialValuePlaceholderClass:
+        return std::invoke(std::forward<Visitor>(visitor), downcast<CSSInitialValuePlaceholder>(*this));
     case LineBoxContainClass:
         return std::invoke(std::forward<Visitor>(visitor), downcast<CSSLineBoxContainValue>(*this));
     case LinearGradientClass:
@@ -248,6 +251,8 @@ void CSSValue::collectDirectRootComputationalDependencies(HashSet<CSSPropertyID>
 
 bool CSSValue::equals(const CSSValue& other) const
 {
+    ASSERT(classType() != InitialValuePlaceholderClass);
+    ASSERT(other.classType() != InitialValuePlaceholderClass);
     if (classType() == other.classType()) {
         return visitDerived([&](auto& typedThis) {
             return typedThis.equals(downcast<std::remove_reference_t<decltype(typedThis)>>(other));
@@ -302,53 +307,38 @@ Ref<DeprecatedCSSOMValue> CSSValue::createDeprecatedCSSOMWrapper(CSSStyleDeclara
         return DeprecatedCSSOMPrimitiveValue::create(downcast<CSSPrimitiveValue>(*this), styleDeclaration);
     if (isValueList())
         return DeprecatedCSSOMValueList::create(downcast<CSSValueList>(*this), styleDeclaration);
+    if (isInitialValuePlaceholder())
+        return DeprecatedCSSOMPrimitiveValue::create(CSSValuePool::createIdentifierValue(CSSValueInitial), styleDeclaration);
     return DeprecatedCSSOMComplexValue::create(*this, styleDeclaration);
 }
 
-bool CSSValue::treatAsInheritedValue(CSSPropertyID propertyID) const
+bool CSSValue::treatAsInitialValue(CSSPropertyID property) const
 {
-    return isInheritValue() || (isUnsetValue() && CSSProperty::isInheritedProperty(propertyID));
-}
-
-bool CSSValue::treatAsInitialValue(CSSPropertyID propertyID) const
-{
-    return isInitialValue() || (isUnsetValue() && !CSSProperty::isInheritedProperty(propertyID));
-}
-
-bool CSSValue::isInitialValue() const
-{
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isInitialValue();
-}
-
-bool CSSValue::isImplicitInitialValue() const
-{
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isImplicitInitialValue();
+    if (isInitialValuePlaceholder())
+        return true;
+    switch (valueID(*this)) {
+    case CSSValueInitial:
+        return true;
+    case CSSValueUnset:
+        return !CSSProperty::isInheritedProperty(property);
+    default:
+        return false;
+    }
 }
 
 bool CSSValue::isInheritValue() const
 {
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isInheritValue();
-}
-
-bool CSSValue::isUnsetValue() const
-{
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isUnsetValue();
+    return isValueID(*this, CSSValueInherit);
 }
 
 bool CSSValue::isRevertValue() const
 {
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isRevertValue();
-}
-
-bool CSSValue::isRevertLayerValue() const
-{
-    return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isRevertLayerValue();
+    return isValueID(*this, CSSValueRevert);
 }
 
 bool CSSValue::isCSSWideKeyword() const
 {
     return is<CSSPrimitiveValue>(*this) && downcast<CSSPrimitiveValue>(*this).isCSSWideKeyword();
 }
-
 
 }

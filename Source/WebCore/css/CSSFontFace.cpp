@@ -343,8 +343,8 @@ void CSSFontFace::setDisplay(CSSPrimitiveValue& loadingBehaviorValue)
 String CSSFontFace::family() const
 {
     // Code to extract the name of the first family is needed because we incorrectly use a list of families.
-    // FIXME: Consider switching to getPropertyValue after https://bugs.webkit.org/show_bug.cgi?id=196381 is fixed.
-    auto family = properties().getPropertyCSSValue(CSSPropertyFontFamily);
+    // FIXME: Consider switching to propertyAsString after https://bugs.webkit.org/show_bug.cgi?id=196381 is fixed.
+    auto family = properties().propertyValue(CSSPropertyFontFamily);
     auto familyList = dynamicDowncast<CSSValueList>(family.get());
     if (!familyList)
         return { };
@@ -356,32 +356,32 @@ String CSSFontFace::family() const
 
 String CSSFontFace::style() const
 {
-    return properties().getPropertyValue(CSSPropertyFontStyle);
+    return properties().propertyAsString(CSSPropertyFontStyle);
 }
 
 String CSSFontFace::weight() const
 {
-    return properties().getPropertyValue(CSSPropertyFontWeight);
+    return properties().propertyAsString(CSSPropertyFontWeight);
 }
 
 String CSSFontFace::stretch() const
 {
-    return properties().getPropertyValue(CSSPropertyFontStretch);
+    return properties().propertyAsString(CSSPropertyFontStretch);
 }
 
 String CSSFontFace::unicodeRange() const
 {
-    return properties().getPropertyValue(CSSPropertyUnicodeRange);
+    return properties().propertyAsString(CSSPropertyUnicodeRange);
 }
 
 String CSSFontFace::featureSettings() const
 {
-    return properties().getPropertyValue(CSSPropertyFontFeatureSettings);
+    return properties().propertyAsString(CSSPropertyFontFeatureSettings);
 }
 
 String CSSFontFace::display() const
 {
-    return properties().getPropertyValue(CSSPropertyFontDisplay);
+    return properties().propertyAsString(CSSPropertyFontDisplay);
 }
 
 RefPtr<CSSValueList> CSSFontFace::families() const

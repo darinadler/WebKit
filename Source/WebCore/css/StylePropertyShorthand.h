@@ -33,21 +33,19 @@ public:
 
     template<unsigned numProperties> StylePropertyShorthand(CSSPropertyID id, const CSSPropertyID (&properties)[numProperties])
         : m_properties(properties)
-        , m_length(numProperties)
         , m_shorthandID(id)
     {
     }
 
-    const CSSPropertyID* begin() const { return properties(); }
-    const CSSPropertyID* end() const { return properties() + length(); }
+    const CSSPropertyID* begin() const { return properties().begin(); }
+    const CSSPropertyID* end() const { return properties().end(); }
 
-    const CSSPropertyID* properties() const { return m_properties; }
-    unsigned length() const { return m_length; }
+    Span<const CSSPropertyID> properties() const { return m_properties; }
+    unsigned length() const { return m_properties.size(); }
     CSSPropertyID id() const { return m_shorthandID; }
 
 private:
-    const CSSPropertyID* m_properties { nullptr };
-    unsigned m_length { 0 };
+    Span<const CSSPropertyID> m_properties;
     CSSPropertyID m_shorthandID { CSSPropertyInvalid };
 };
 

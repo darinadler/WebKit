@@ -48,6 +48,11 @@ CSSGridTemplateAreasValue::CSSGridTemplateAreasValue(const NamedGridAreaMap& gri
     ASSERT(m_columnCount);
 }
 
+Ref<CSSGridTemplateAreasValue> CSSGridTemplateAreasValue::create(const NamedGridAreaMap& gridAreaMap, size_t rowCount, size_t columnCount)
+{
+    return adoptRef(*new CSSGridTemplateAreasValue(gridAreaMap, rowCount, columnCount));
+}
+
 static String stringForPosition(const NamedGridAreaMap& gridAreaMap, size_t row, size_t column)
 {
     Vector<String> candidates;
@@ -67,7 +72,7 @@ static String stringForPosition(const NamedGridAreaMap& gridAreaMap, size_t row,
     return "."_s;
 }
 
-String CSSGridTemplateAreasValue::stringForRow(size_t row)
+String CSSGridTemplateAreasValue::stringForRow(size_t row) const
 {
     Vector<String> columns;
     columns.grow(m_columnCount);
@@ -84,11 +89,11 @@ String CSSGridTemplateAreasValue::stringForRow(size_t row)
     bool first = true;
     for (const auto& name : columns) {
         if (!first)
-            builder.append(" ");
+            builder.append(' ');
         first = false;
 
         if (name.isNull())
-            builder.append(".");
+            builder.append('.');
         else
             builder.append(name);
     }

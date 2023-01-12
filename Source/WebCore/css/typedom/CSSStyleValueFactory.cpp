@@ -78,7 +78,7 @@ ExceptionOr<RefPtr<CSSValue>> CSSStyleValueFactory::extractCSSValue(const CSSPro
     if (parseResult == CSSParser::ParseResult::Error)
         return Exception { TypeError, makeString(cssText, " cannot be parsed.")};
 
-    return styleDeclaration->getPropertyCSSValue(propertyID);
+    return styleDeclaration->propertyValue(propertyID);
 }
 
 ExceptionOr<RefPtr<CSSStyleValue>> CSSStyleValueFactory::extractShorthandCSSValues(const CSSPropertyID& propertyID, const String& cssText)
@@ -91,7 +91,7 @@ ExceptionOr<RefPtr<CSSStyleValue>> CSSStyleValueFactory::extractShorthandCSSValu
     if (parseResult == CSSParser::ParseResult::Error)
         return Exception { TypeError, makeString(cssText, " cannot be parsed.")};
 
-    return constructStyleValueForShorthandSerialization(styleDeclaration->getPropertyValue(propertyID));
+    return constructStyleValueForShorthandSerialization(styleDeclaration->propertyAsString(propertyID));
 }
 
 ExceptionOr<Ref<CSSUnparsedValue>> CSSStyleValueFactory::extractCustomCSSValues(const String& cssText)

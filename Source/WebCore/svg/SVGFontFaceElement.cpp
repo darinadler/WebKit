@@ -82,7 +82,7 @@ void SVGFontFaceElement::parseAttribute(const QualifiedName& name, const AtomStr
             // The above parser is designed for the font-face properties, not descriptors, and the properties accept the global keywords, but descriptors don't.
             // Rather than invasively modifying the parser for the properties to have a special mode, we can simply detect the error condition after-the-fact and
             // avoid it explicitly.
-            if (auto parsedValue = properties.getPropertyCSSValue(propertyId)) {
+            if (auto parsedValue = properties.propertyValue(propertyId)) {
                 if (parsedValue->isCSSWideKeyword())
                     properties.removeProperty(propertyId);
             }
@@ -247,7 +247,7 @@ int SVGFontFaceElement::descent() const
 
 String SVGFontFaceElement::fontFamily() const
 {
-    return m_fontFaceRule->properties().getPropertyValue(CSSPropertyFontFamily);
+    return m_fontFaceRule->properties().propertyAsString(CSSPropertyFontFamily);
 }
 
 SVGFontElement* SVGFontFaceElement::associatedFontElement() const
@@ -289,7 +289,7 @@ void SVGFontFaceElement::rebuildFontFace()
 
     if (describesParentFont) {    
         // Traverse parsed CSS values and associate CSSFontFaceSrcLocalValue elements with ourselves.
-        if (auto* srcList = downcast<CSSValueList>(m_fontFaceRule->properties().getPropertyCSSValue(CSSPropertySrc).get())) {
+        if (auto* srcList = downcast<CSSValueList>(m_fontFaceRule->properties().propertyValue(CSSPropertySrc).get())) {
             for (auto& item : *srcList)
                 downcast<CSSFontFaceSrcLocalValue>(item.get()).setSVGFontFaceElement(*this);
         }

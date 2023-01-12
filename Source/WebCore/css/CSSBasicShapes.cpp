@@ -81,7 +81,7 @@ static Ref<CSSPrimitiveValue> buildSerializablePositionOffset(CSSPrimitiveValue*
         side = defaultSide;
     }
 
-    return cssValuePool.createValue(Pair::create(cssValuePool.createValue(side), WTFMove(amount)));
+    return cssValuePool.createValue(Pair::create(CSSValuePool::createIdentifierValue(side), WTFMove(amount)));
 }
 
 static String buildCircleString(const String& radius, const String& centerX, const String& centerY)

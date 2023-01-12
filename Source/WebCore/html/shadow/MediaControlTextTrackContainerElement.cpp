@@ -453,11 +453,10 @@ void MediaControlTextTrackContainerElement::show()
 
 bool MediaControlTextTrackContainerElement::isShowing() const
 {
-    const StyleProperties* propertySet = inlineStyle();
-
     // Following the code from show() and hide() above, we only have
-    // to check for the presense of inline display.
-    return (!propertySet || !propertySet->getPropertyCSSValue(CSSPropertyDisplay));
+    // to check for the presence of an inline display property.
+    auto* propertySet = inlineStyle();
+    return !propertySet || !propertySet->propertyValue(CSSPropertyDisplay);
 }
 
 

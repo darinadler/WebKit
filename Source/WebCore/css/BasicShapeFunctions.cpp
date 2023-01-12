@@ -34,6 +34,7 @@
 #include "CSSBasicShapes.h"
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSValuePool.h"
+#include "CalculationValue.h"
 #include "Pair.h"
 #include "RenderStyle.h"
 #include "SVGPathByteStream.h"
@@ -47,7 +48,7 @@ static Ref<CSSPrimitiveValue> valueForCenterCoordinate(CSSValuePool& pool, const
 
     CSSValueID keyword = orientation == BoxOrient::Horizontal ? CSSValueRight : CSSValueBottom;
 
-    return pool.createValue(Pair::create(pool.createIdentifierValue(keyword), pool.createValue(center.length(), style)));
+    return pool.createValue(Pair::create(CSSValuePool::createIdentifierValue(keyword), pool.createValue(center.length(), style)));
 }
 
 static Ref<CSSPrimitiveValue> basicShapeRadiusToCSSValue(const RenderStyle& style, CSSValuePool& pool, const BasicShapeRadius& radius)
@@ -56,13 +57,13 @@ static Ref<CSSPrimitiveValue> basicShapeRadiusToCSSValue(const RenderStyle& styl
     case BasicShapeRadius::Type::Value:
         return pool.createValue(radius.value(), style);
     case BasicShapeRadius::Type::ClosestSide:
-        return pool.createIdentifierValue(CSSValueClosestSide);
+        return CSSValuePool::createIdentifierValue(CSSValueClosestSide);
     case BasicShapeRadius::Type::FarthestSide:
-        return pool.createIdentifierValue(CSSValueFarthestSide);
+        return CSSValuePool::createIdentifierValue(CSSValueFarthestSide);
     }
 
     ASSERT_NOT_REACHED();
-    return pool.createIdentifierValue(CSSValueClosestSide);
+    return CSSValuePool::createIdentifierValue(CSSValueClosestSide);
 }
 
 static std::unique_ptr<SVGPathByteStream> copySVGPathByteStream(const SVGPathByteStream& source, SVGPathConversion conversion)

@@ -1,6 +1,6 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
- * Copyright (C) 2004, 2005, 2006, 2008 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Alexey Proskuryakov <ap@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
@@ -119,7 +119,6 @@ public:
     bool isCustomIdent() const { return primitiveUnitType() == CSSUnitType::CustomIdent; }
 
     bool isInitialValue() const { return valueID() == CSSValueInitial; }
-    bool isImplicitInitialValue() const { return isInitialValue() && m_isImplicit; }
     bool isInheritValue() const { return valueID() == CSSValueInherit; }
     bool isUnsetValue() const { return valueID() == CSSValueUnset; }
     bool isRevertValue() const { return valueID() == CSSValueRevert; }
@@ -225,8 +224,6 @@ private:
     CSSPrimitiveValue(StaticCSSValueTag, CSSValueID);
     CSSPrimitiveValue(StaticCSSValueTag, const Color&);
     CSSPrimitiveValue(StaticCSSValueTag, double, CSSUnitType);
-    enum ImplicitInitialValueTag { ImplicitInitialValue };
-    CSSPrimitiveValue(StaticCSSValueTag, ImplicitInitialValueTag);
 
     template<typename T> CSSPrimitiveValue(T); // Defined in CSSPrimitiveValueMappings.h
     template<typename T> CSSPrimitiveValue(T, CSSPropertyID); // Defined in CSSPrimitiveValueMappings.h
@@ -240,7 +237,7 @@ private:
     void init(const Length&);
     void init(const LengthSize&, const RenderStyle&);
     void init(Ref<CSSBasicShape>&&);
-    void init(RefPtr<CSSCalcValue>&&);
+    void init(Ref<CSSCalcValue>&&);
     void init(Ref<Counter>&&);
     void init(Ref<Pair>&&);
     void init(Ref<Quad>&&);

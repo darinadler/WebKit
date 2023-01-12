@@ -97,7 +97,7 @@ CSSParser::ParseResult CSSParserImpl::parseCustomPropertyValue(MutableStylePrope
     return declaration->addParsedProperties(parser.topContext().m_parsedProperties) ? CSSParser::ParseResult::Changed : CSSParser::ParseResult::Unchanged;
 }
 
-static inline void filterProperties(bool important, const ParsedPropertyVector& input, ParsedPropertyVector& output, size_t& unusedEntries, std::bitset<numCSSProperties>& seenProperties, HashSet<AtomString>& seenCustomProperties)
+static inline void filterProperties(bool important, Span<const CSSProperty> input, Vector<CSSProperty, 256>& output, size_t& unusedEntries, std::bitset<numCSSProperties>& seenProperties, HashSet<AtomString>& seenCustomProperties)
 {
     // Add properties in reverse order so that highest priority definitions are reached first. Duplicate definitions can then be ignored when found.
     for (size_t i = input.size(); i--; ) {
@@ -123,19 +123,17 @@ static inline void filterProperties(bool important, const ParsedPropertyVector& 
     }
 }
 
-static Ref<ImmutableStyleProperties> createStyleProperties(ParsedPropertyVector& parsedProperties, CSSParserMode mode)
+static Ref<ImmutableStyleProperties> createStyleProperties(Span<const CSSProperty> parsedProperties, CSSParserMode mode)
 {
     std::bitset<numCSSProperties> seenProperties;
     size_t unusedEntries = parsedProperties.size();
-    ParsedPropertyVector results(unusedEntries);
+    Vector<CSSProperty, 256> results(unusedEntries);
     HashSet<AtomString> seenCustomProperties;
 
     filterProperties(true, parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
     filterProperties(false, parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
 
-    Ref<ImmutableStyleProperties> result = ImmutableStyleProperties::create(results.data() + unusedEntries, results.size() - unusedEntries, mode);
-    parsedProperties.clear();
-    return result;
+    return ImmutableStyleProperties::create(results.span().subspan(unusedEntries), mode);
 }
 
 Ref<ImmutableStyleProperties> CSSParserImpl::parseInlineStyleDeclaration(const String& string, const Element* element)
@@ -802,11 +800,11 @@ RefPtr<StyleRuleFontPaletteValues> CSSParserImpl::consumeFontPaletteValuesRule(C
     auto properties = createStyleProperties(declarations, m_context.mode);
 
     AtomString fontFamily;
-    if (auto fontFamilyValue = properties->getPropertyCSSValue(CSSPropertyFontFamily))
+    if (auto fontFamilyValue = properties->propertyValue(CSSPropertyFontFamily))
         fontFamily = AtomString { downcast<CSSPrimitiveValue>(*fontFamilyValue).fontFamily().familyName };
 
     std::optional<FontPaletteIndex> basePalette;
-    if (auto basePaletteValue = properties->getPropertyCSSValue(CSSPropertyBasePalette)) {
+    if (auto basePaletteValue = properties->propertyValue(CSSPropertyBasePalette)) {
         const auto& primitiveValue = downcast<CSSPrimitiveValue>(*basePaletteValue);
         if (primitiveValue.isInteger())
             basePalette = FontPaletteIndex(primitiveValue.value<unsigned>());
@@ -817,7 +815,7 @@ RefPtr<StyleRuleFontPaletteValues> CSSParserImpl::consumeFontPaletteValuesRule(C
     }
 
     Vector<FontPaletteValues::OverriddenColor> overrideColors;
-    if (auto overrideColorsValue = properties->getPropertyCSSValue(CSSPropertyOverrideColors)) {
+    if (auto overrideColorsValue = properties->propertyValue(CSSPropertyOverrideColors)) {
         const auto& list = downcast<CSSValueList>(*overrideColorsValue);
         for (const auto& item : list) {
             const auto& pair = downcast<CSSFontPaletteValuesOverrideColorsValue>(item.get());
@@ -1170,7 +1168,7 @@ void CSSParserImpl::consumeDeclarationListOrStyleBlockHelper(CSSParserTokenRange
     }
 }
 
-ParsedPropertyVector CSSParserImpl::consumeDeclarationListInNewNestingContext(CSSParserTokenRange range, StyleRuleType ruleType)
+auto CSSParserImpl::consumeDeclarationListInNewNestingContext(CSSParserTokenRange range, StyleRuleType ruleType) -> ParsedPropertyVector
 {
     ParsedPropertyVector result;
     runInNewNestingContext([&]() {

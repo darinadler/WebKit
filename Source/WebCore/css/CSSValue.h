@@ -49,6 +49,9 @@ public:
     String cssText() const;
 
     bool isPrimitiveValue() const { return m_classType == PrimitiveClass; }
+
+    bool isInitialValuePlaceholder() const { return m_classType == InitialValuePlaceholderClass; }
+
     bool isValueList() const { return m_classType >= ValueListClass; }
     bool isValuePair() const { return m_classType == ValuePairClass; }
 
@@ -77,15 +80,10 @@ public:
     bool isNamedImageValue() const { return m_classType == NamedImageClass; }
     bool isImageSetValue() const { return m_classType == ImageSetClass; }
     bool isImageValue() const { return m_classType == ImageClass; }
-    bool isImplicitInitialValue() const;
     bool isInheritValue() const;
-    bool isInitialValue() const;
-    bool isUnsetValue() const;
     bool isRevertValue() const;
-    bool isRevertLayerValue() const;
     bool isCSSWideKeyword() const;
     bool treatAsInitialValue(CSSPropertyID) const;
-    bool treatAsInheritedValue(CSSPropertyID) const;
     bool isLinearGradientValue() const { return m_classType == LinearGradientClass; }
     bool isRadialGradientValue() const { return m_classType == RadialGradientClass; }
     bool isConicGradientValue() const { return m_classType == ConicGradientClass; }
@@ -150,6 +148,8 @@ protected:
     static const size_t ClassTypeBits = 6;
     enum ClassType {
         PrimitiveClass,
+
+        InitialValuePlaceholderClass,
 
         // Image classes.
         ImageClass,

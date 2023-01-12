@@ -42,15 +42,14 @@ CSSContentDistributionValue::~CSSContentDistributionValue() = default;
 
 String CSSContentDistributionValue::customCSSText() const
 {
-    auto& cssValuePool = CSSValuePool::singleton();
     auto list = CSSValueList::createSpaceSeparated();
     if (m_distribution != CSSValueInvalid)
         list->append(distribution());
     if (m_position != CSSValueInvalid) {
         if (m_position == CSSValueFirstBaseline || m_position == CSSValueLastBaseline) {
             CSSValueID preference = m_position == CSSValueFirstBaseline ? CSSValueFirst : CSSValueLast;
-            list->append(cssValuePool.createIdentifierValue(preference));
-            list->append(cssValuePool.createIdentifierValue(CSSValueBaseline));
+            list->append(CSSValuePool::createIdentifierValue(preference));
+            list->append(CSSValuePool::createIdentifierValue(CSSValueBaseline));
         } else {
             if (m_overflow != CSSValueInvalid)
                 list->append(overflow());

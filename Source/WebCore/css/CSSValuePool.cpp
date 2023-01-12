@@ -38,8 +38,8 @@ LazyNeverDestroyed<StaticCSSValuePool> staticCSSValuePool;
 
 StaticCSSValuePool::StaticCSSValuePool()
 {
-    m_implicitInitialValue.construct(CSSValue::StaticCSSValue, CSSPrimitiveValue::ImplicitInitialValue);
-    
+    m_initialValuePlaceholder.construct();
+
     m_transparentColor.construct(CSSValue::StaticCSSValue, Color::transparentBlack);
     m_whiteColor.construct(CSSValue::StaticCSSValue, Color::white);
     m_blackColor.construct(CSSValue::StaticCSSValue, Color::black);
@@ -77,11 +77,6 @@ Ref<CSSPrimitiveValue> CSSValuePool::createIdentifierValue(CSSValueID ident)
 {
     RELEASE_ASSERT(ident < std::size(staticCSSValuePool->m_identifierValues));
     return staticCSSValuePool->m_identifierValues[ident].get();
-}
-
-Ref<CSSPrimitiveValue> CSSValuePool::createIdentifierValue(CSSPropertyID ident)
-{
-    return CSSPrimitiveValue::createIdentifier(ident);
 }
 
 Ref<CSSPrimitiveValue> CSSValuePool::createColorValue(const Color& color)
@@ -163,6 +158,18 @@ void CSSValuePool::drain()
     m_colorValueCache.clear();
     m_fontFaceValueCache.clear();
     m_fontFamilyValueCache.clear();
+}
+
+CSSInitialValuePlaceholder::CSSInitialValuePlaceholder()
+    : CSSValue(InitialValuePlaceholderClass)
+{
+    makeStatic();
+}
+
+String CSSInitialValuePlaceholder::customCSSText() const
+{
+    ASSERT_NOT_REACHED();
+    return { };
 }
 
 }

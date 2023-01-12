@@ -1,6 +1,6 @@
 /*
  * (C) 1999-2003 Lars Knoll (knoll@kde.org)
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2012, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2022 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -349,7 +349,8 @@ CSSPrimitiveValue::CSSPrimitiveValue(const Length& length, const RenderStyle& st
         m_value.num = adjustFloatForAbsoluteZoom(length.value(), style);
         return;
     case LengthType::Calculated:
-        init(CSSCalcValue::create(length.calculationValue(), style));
+        if (auto value = CSSCalcValue::create(length.calculationValue(), style))
+            init(value.releaseNonNull());
         return;
     case LengthType::Relative:
     case LengthType::Undefined:
@@ -380,13 +381,6 @@ CSSPrimitiveValue::CSSPrimitiveValue(StaticCSSValueTag, const Color& color)
 CSSPrimitiveValue::CSSPrimitiveValue(StaticCSSValueTag, double num, CSSUnitType type)
     : CSSPrimitiveValue(num, type)
 {
-    makeStatic();
-}
-
-CSSPrimitiveValue::CSSPrimitiveValue(StaticCSSValueTag, ImplicitInitialValueTag)
-    : CSSPrimitiveValue(CSSValueInitial)
-{
-    m_isImplicit = true;
     makeStatic();
 }
 
@@ -485,14 +479,11 @@ void CSSPrimitiveValue::init(Ref<CSSBasicShape>&& shape)
     m_value.shape = &shape.leakRef();
 }
 
-void CSSPrimitiveValue::init(RefPtr<CSSCalcValue>&& c)
+void CSSPrimitiveValue::init(Ref<CSSCalcValue>&& value)
 {
-    // FIXME (231111): This init should take Ref<CSSCalcValue> instead.
-    if (!c)
-        return;
     setPrimitiveUnitType(CSSUnitType::CSS_CALC);
     m_hasCachedCSSText = false;
-    m_value.calc = c.leakRef();
+    m_value.calc = &value.leakRef();
 }
 
 CSSPrimitiveValue::~CSSPrimitiveValue()
@@ -1421,9 +1412,9 @@ ALWAYS_INLINE String CSSPrimitiveValue::formatNumberForCustomCSSText() const
     case CSSUnitType::CSS_PROPERTY_ID:
         return nameString(m_value.propertyID);
     case CSSUnitType::CSS_ATTR:
-        return "attr(" + String(m_value.string) + ')';
+        return makeString("attr(", m_value.string, ')');
     case CSSUnitType::CSS_COUNTER_NAME:
-        return "counter(" + String(m_value.string) + ')';
+        return makeString("counter(", m_value.string, ')');
     case CSSUnitType::CSS_COUNTER: {
         StringBuilder result;
         auto separator = m_value.counter->separator();

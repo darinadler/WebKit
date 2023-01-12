@@ -42,6 +42,15 @@ class CSSValuePool;
 
 enum class FromSystemFontID { No, Yes };
 
+class CSSInitialValuePlaceholder : public CSSValue {
+    friend class LazyNeverDestroyed<CSSInitialValuePlaceholder>;
+public:
+    String customCSSText() const;
+    static bool equals(const CSSInitialValuePlaceholder&) { return true; }
+private:
+    CSSInitialValuePlaceholder();
+};
+
 class StaticCSSValuePool {
     friend class CSSValuePool;
     friend class LazyNeverDestroyed<StaticCSSValuePool>;
@@ -51,7 +60,7 @@ public:
 private:
     StaticCSSValuePool();
 
-    LazyNeverDestroyed<CSSPrimitiveValue> m_implicitInitialValue;
+    LazyNeverDestroyed<CSSInitialValuePlaceholder> m_initialValuePlaceholder;
 
     LazyNeverDestroyed<CSSPrimitiveValue> m_transparentColor;
     LazyNeverDestroyed<CSSPrimitiveValue> m_whiteColor;
@@ -75,33 +84,31 @@ public:
 
     static CSSValuePool& singleton();
 
+    static CSSInitialValuePlaceholder& initialValuePlaceholder() { return staticCSSValuePool->m_initialValuePlaceholder; }
+    static Ref<CSSPrimitiveValue> createIdentifierValue(CSSValueID);
+    static Ref<CSSPrimitiveValue> createValue(double value, CSSUnitType);
+
+    Ref<CSSPrimitiveValue> createColorValue(const Color&);
     RefPtr<CSSValueList> createFontFaceValue(const AtomString&);
     Ref<CSSPrimitiveValue> createFontFamilyValue(const String&, FromSystemFontID = FromSystemFontID::No);
-    Ref<CSSPrimitiveValue> createImplicitInitialValue() { return staticCSSValuePool->m_implicitInitialValue.get(); }
-    Ref<CSSPrimitiveValue> createIdentifierValue(CSSValueID identifier);
-    Ref<CSSPrimitiveValue> createIdentifierValue(CSSPropertyID identifier);
-    Ref<CSSPrimitiveValue> createColorValue(const Color&);
-    Ref<CSSPrimitiveValue> createValue(double value, CSSUnitType);
-    Ref<CSSPrimitiveValue> createValue(const String& value, CSSUnitType type) { return CSSPrimitiveValue::create(value, type); }
-    Ref<CSSPrimitiveValue> createValue(const Length& value, const RenderStyle& style) { return CSSPrimitiveValue::create(value, style); }
-    Ref<CSSPrimitiveValue> createValue(const LengthSize& value, const RenderStyle& style) { return CSSPrimitiveValue::create(value, style); }
-    Ref<CSSPrimitiveValue> createCustomIdent(const String& value) { return CSSPrimitiveValue::create(value, CSSUnitType::CustomIdent); }
+
+    // FIXME: Why are these functions in the pool, since the pool is not optimizing anything?
+    static Ref<CSSPrimitiveValue> createValue(const String& value, CSSUnitType type) { return CSSPrimitiveValue::create(value, type); }
+    static Ref<CSSPrimitiveValue> createValue(const Length& value, const RenderStyle& style) { return CSSPrimitiveValue::create(value, style); }
+    static Ref<CSSPrimitiveValue> createValue(const LengthSize& value, const RenderStyle& style) { return CSSPrimitiveValue::create(value, style); }
+    static Ref<CSSPrimitiveValue> createCustomIdent(const String& value) { return CSSPrimitiveValue::create(value, CSSUnitType::CustomIdent); }
     template<typename T> static Ref<CSSPrimitiveValue> createValue(T&& value) { return CSSPrimitiveValue::create(std::forward<T>(value)); }
     template<typename T> static Ref<CSSPrimitiveValue> createValue(T&& value, CSSPropertyID identifier) { return CSSPrimitiveValue::create(std::forward<T>(value), identifier); }
+    void createValue(CSSValueID) = delete;
 
     void drain();
 
 private:
-    typedef HashMap<Color, RefPtr<CSSPrimitiveValue>> ColorValueCache;
-    ColorValueCache m_colorValueCache;
-
-    typedef HashMap<AtomString, RefPtr<CSSValueList>> FontFaceValueCache;
-    FontFaceValueCache m_fontFaceValueCache;
-
-    typedef HashMap<std::pair<String, bool>, RefPtr<CSSPrimitiveValue>> FontFamilyValueCache;
-    FontFamilyValueCache m_fontFamilyValueCache;
-
-    friend class NeverDestroyed<CSSValuePool>;
+    HashMap<Color, RefPtr<CSSPrimitiveValue>> m_colorValueCache;
+    HashMap<AtomString, RefPtr<CSSValueList>> m_fontFaceValueCache;
+    HashMap<std::pair<String, bool>, RefPtr<CSSPrimitiveValue>> m_fontFamilyValueCache;
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_CSS_VALUE(CSSInitialValuePlaceholder, isInitialValuePlaceholder())

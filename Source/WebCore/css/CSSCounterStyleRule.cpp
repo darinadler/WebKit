@@ -109,7 +109,7 @@ static bool symbolsValidForSystem(CSSCounterStyleDescriptors::System system, Ref
 
 bool StyleRuleCounterStyle::newValueInvalidOrEqual(CSSPropertyID propertyID, const RefPtr<CSSValue> newValue) const
 {
-    auto currentValue = m_properties->getPropertyCSSValue(propertyID);
+    auto currentValue = m_properties->propertyValue(propertyID);
     if (compareCSSValuePtr(currentValue, newValue))
         return true;
 
@@ -123,16 +123,16 @@ bool StyleRuleCounterStyle::newValueInvalidOrEqual(CSSPropertyID propertyID, con
         return toCounterStyleSystemEnum(currentValue) != toCounterStyleSystemEnum(newValue);
     case CSSPropertySymbols:
         symbols = newValue;
-        additiveSymbols = m_properties->getPropertyCSSValue(CSSPropertyAdditiveSymbols);
+        additiveSymbols = m_properties->propertyValue(CSSPropertyAdditiveSymbols);
         break;
     case CSSPropertyAdditiveSymbols:
-        symbols = m_properties->getPropertyCSSValue(CSSPropertySymbols);
+        symbols = m_properties->propertyValue(CSSPropertySymbols);
         additiveSymbols = newValue;
         break;
     default:
         return false;
     }
-    auto system = m_properties->getPropertyCSSValue(CSSPropertySystem);
+    auto system = m_properties->propertyValue(CSSPropertySystem);
     return symbolsValidForSystem(toCounterStyleSystemEnum(system), symbols, additiveSymbols);
 }
 

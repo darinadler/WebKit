@@ -224,7 +224,7 @@ StyleRule::StyleRule(Ref<StyleProperties>&& properties, bool hasDocumentSecurity
 
 StyleRule::StyleRule(bool hasDocumentSecurityOrigin, CSSSelectorList&& selectors)
     : StyleRuleBase(StyleRuleType::Style, hasDocumentSecurityOrigin)
-    , m_properties(MutableStyleProperties::createEmpty())
+    , m_properties(MutableStyleProperties::create())
     , m_selectorList(WTFMove(selectors))
 {
 }

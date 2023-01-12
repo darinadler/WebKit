@@ -61,8 +61,7 @@ private:
     ExceptionOr<String> removeProperty(const String& propertyName) final;
     String cssText() const final;
     ExceptionOr<void> setCssText(const String&) final;
-    RefPtr<CSSValue> getPropertyCSSValueInternal(CSSPropertyID) final;
-    String getPropertyValueInternal(CSSPropertyID) final;
+    String getPropertyValueInternal(CSSPropertyID) const final;
     ExceptionOr<void> setPropertyInternal(CSSPropertyID, const String& value, bool important) final;
     Ref<MutableStyleProperties> copyProperties() const final;
 

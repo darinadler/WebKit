@@ -356,10 +356,10 @@ RefPtr<CSSPrimitiveValue> consumeFontWeightAbsolute(CSSParserTokenRange& range, 
 }
 #endif
 
-RefPtr<CSSPrimitiveValue> consumeFontStretchKeywordValue(CSSParserTokenRange& range, CSSValuePool& pool)
+RefPtr<CSSPrimitiveValue> consumeFontStretchKeywordValue(CSSParserTokenRange& range, CSSValuePool&)
 {
     if (auto valueID = CSSPropertyParserHelpers::consumeFontStretchKeywordValueRaw(range))
-        return pool.createIdentifierValue(*valueID);
+        return CSSValuePool::createIdentifierValue(*valueID);
     return nullptr;
 }
 

@@ -183,39 +183,34 @@ public:
         , m_range(range)
         , m_pool(pool)
     {
-        const CSSParserToken& token = range.peek();
-        auto functionId = token.functionId();
+        auto functionId = range.peek().functionId();
         if (CSSCalcValue::isCalcFunction(functionId))
-            m_calcValue = CSSCalcValue::create(functionId, consumeFunction(m_range), destinationCategory, valueRange, symbolTable, negativePercentagePolicy == NegativePercentagePolicy::Allow);
+            m_value = CSSCalcValue::create(functionId, consumeFunction(m_range), destinationCategory, valueRange, symbolTable, negativePercentagePolicy == NegativePercentagePolicy::Allow);
     }
 
-    const CSSCalcValue* value() const { return m_calcValue.get(); }
+    const CSSCalcValue* value() const { return m_value.get(); }
 
     RefPtr<CSSPrimitiveValue> consumeValue()
     {
-        if (!m_calcValue)
+        if (!m_value)
             return nullptr;
         m_sourceRange = m_range;
-        return m_pool.createValue(WTFMove(m_calcValue));
+        return m_pool.createValue(m_value.releaseNonNull());
     }
 
     RefPtr<CSSPrimitiveValue> consumeValueIfCategory(CalculationCategory category)
     {
-        if (!m_calcValue)
-            return nullptr;
-
-        if (m_calcValue->category() != category) {
-            LOG_WITH_STREAM(Calc, stream << "CalcParser::consumeValueIfCategory - failing because calc category " << m_calcValue->category() << " does not match requested category " << category);
+        if (m_value && m_value->category() != category) {
+            LOG_WITH_STREAM(Calc, stream << "CalcParser::consumeValueIfCategory - failing because calc category " << m_value->category() << " does not match requested category " << category);
             return nullptr;
         }
-        m_sourceRange = m_range;
-        return m_pool.createValue(WTFMove(m_calcValue));
+        return consumeValue();
     }
 
 private:
     CSSParserTokenRange& m_sourceRange;
     CSSParserTokenRange m_range;
-    RefPtr<CSSCalcValue> m_calcValue;
+    RefPtr<CSSCalcValue> m_value;
     CSSValuePool& m_pool;
 };
 
@@ -225,8 +220,7 @@ static RefPtr<CSSCalcValue> consumeCalcRawWithKnownTokenTypeFunction(CSSParserTo
 {
     ASSERT(range.peek().type() == FunctionToken);
 
-    const auto& token = range.peek();
-    auto functionId = token.functionId();
+    auto functionId = range.peek().functionId();
     if (!CSSCalcValue::isCalcFunction(functionId))
         return nullptr;
 
@@ -1650,10 +1644,10 @@ RefPtr<CSSPrimitiveValue> consumeIdent(CSSParserTokenRange& range)
     return consumeIdentWorkerSafe(range, CSSValuePool::singleton());
 }
 
-RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool& pool)
+RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool&)
 {
     if (auto result = consumeIdentRaw(range))
-        return pool.createIdentifierValue(*result);
+        return CSSValuePool::createIdentifierValue(*result);
     return nullptr;
 }
 
@@ -4942,7 +4936,7 @@ RefPtr<CSSValue> consumeAspectRatio(CSSParserTokenRange& range)
         return ratioList;
 
     auto list = CSSValueList::createSpaceSeparated();
-    list->append(CSSValuePool::singleton().createIdentifierValue(CSSValueAuto));
+    list->append(CSSValuePool::createIdentifierValue(CSSValueAuto));
     list->append(ratioList.releaseNonNull());
 
     return list;
@@ -4987,7 +4981,7 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range)
     CSSValueID nextValueID = range.peek().id();
     if (nextValueID == CSSValueWebkitInlineFlex || nextValueID == CSSValueWebkitFlex) {
         consumeIdent(range);
-        return CSSValuePool::singleton().createValue(
+        return CSSValuePool::createIdentifierValue(
             nextValueID == CSSValueWebkitInlineFlex ? CSSValueInlineFlex : CSSValueFlex);
     }
 
@@ -5048,7 +5042,7 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range)
         }
     };
 
-    return CSSValuePool::singleton().createValue(selectShortValue());
+    return CSSValuePool::createIdentifierValue(selectShortValue());
 }
 
 RefPtr<CSSValue> consumeWillChange(CSSParserTokenRange& range, const CSSParserContext& context)
@@ -5078,7 +5072,7 @@ RefPtr<CSSValue> consumeWillChange(CSSParserTokenRange& range, const CSSParserCo
             if (!isExposed(propertyID, &context.propertySettings))
                 propertyID = CSSPropertyInvalid;
             if (propertyID != CSSPropertyInvalid) {
-                values->append(CSSValuePool::singleton().createIdentifierValue(propertyID));
+                values->append(CSSPrimitiveValue::create(propertyID));
                 range.consumeIncludingWhitespace();
                 break;
             }
@@ -5208,22 +5202,22 @@ RefPtr<CSSValue> consumeFontVariantEastAsian(CSSParserTokenRange& range)
     case FontVariantEastAsianVariant::Normal:
         break;
     case FontVariantEastAsianVariant::Jis78:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueJis78));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueJis78));
         break;
     case FontVariantEastAsianVariant::Jis83:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueJis83));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueJis83));
         break;
     case FontVariantEastAsianVariant::Jis90:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueJis90));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueJis90));
         break;
     case FontVariantEastAsianVariant::Jis04:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueJis04));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueJis04));
         break;
     case FontVariantEastAsianVariant::Simplified:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueSimplified));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueSimplified));
         break;
     case FontVariantEastAsianVariant::Traditional:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueTraditional));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueTraditional));
         break;
     }
 
@@ -5231,10 +5225,10 @@ RefPtr<CSSValue> consumeFontVariantEastAsian(CSSParserTokenRange& range)
     case FontVariantEastAsianWidth::Normal:
         break;
     case FontVariantEastAsianWidth::Full:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueFullWidth));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueFullWidth));
         break;
     case FontVariantEastAsianWidth::Proportional:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueProportionalWidth));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueProportionalWidth));
         break;
     }
         
@@ -5242,7 +5236,7 @@ RefPtr<CSSValue> consumeFontVariantEastAsian(CSSParserTokenRange& range)
     case FontVariantEastAsianRuby::Normal:
         break;
     case FontVariantEastAsianRuby::Yes:
-        values->append(CSSValuePool::singleton().createIdentifierValue(CSSValueRuby));
+        values->append(CSSValuePool::createIdentifierValue(CSSValueRuby));
     }
 
     if (!values->length())
@@ -5258,7 +5252,7 @@ RefPtr<CSSValue> consumeFontVariantAlternates(CSSParserTokenRange& range)
 
     if (range.peek().id() == CSSValueNormal) {
         consumeIdent<CSSValueNormal>(range);
-        return CSSValuePool::singleton().createIdentifierValue(CSSValueNormal);
+        return CSSValuePool::createIdentifierValue(CSSValueNormal);
     }
 
     auto result = FontVariantAlternates::Normal();
@@ -5359,7 +5353,7 @@ RefPtr<CSSValue> consumeFontWeight(CSSParserTokenRange& range)
 {
     if (auto result = consumeFontWeightRaw(range)) {
         return WTF::switchOn(*result, [] (CSSValueID valueID) {
-            return CSSValuePool::singleton().createIdentifierValue(valueID);
+            return CSSValuePool::createIdentifierValue(valueID);
         }, [] (double weightNumber) {
             return CSSValuePool::singleton().createValue(weightNumber, CSSUnitType::CSS_NUMBER);
         });
@@ -5545,9 +5539,9 @@ RefPtr<CSSValue> consumeMarginTrim(CSSParserTokenRange& range)
     // Try to serialize into either block or inline form
     if (list->size() == 2) {
         if (list->hasValue(CSSValueBlockStart) && list->hasValue(CSSValueBlockEnd))
-            return CSSValuePool::singleton().createValue(CSSValueBlock);
+            return CSSValuePool::createIdentifierValue(CSSValueBlock);
         if (list->hasValue(CSSValueInlineStart) && list->hasValue(CSSValueInlineEnd))
-            return CSSValuePool::singleton().createValue(CSSValueInline);
+            return CSSValuePool::createIdentifierValue(CSSValueInline);
     }
     return list;
 }
@@ -5626,7 +5620,7 @@ RefPtr<CSSValue> consumeKeyframesName(CSSParserTokenRange& range, const CSSParse
     if (range.peek().type() == StringToken) {
         const CSSParserToken& token = range.consumeIncludingWhitespace();
         if (equalLettersIgnoringASCIICase(token.value(), "none"_s))
-            return CSSValuePool::singleton().createIdentifierValue(CSSValueNone);
+            return CSSValuePool::createIdentifierValue(CSSValueNone);
         return CSSValuePool::singleton().createValue(token.value().toString(), CSSUnitType::CSS_STRING);
     }
 
@@ -5637,7 +5631,7 @@ static RefPtr<CSSValue> consumeSingleTransitionPropertyIdent(CSSParserTokenRange
 {
     if (auto property = token.parseAsCSSPropertyID()) {
         range.consumeIncludingWhitespace();
-        return CSSValuePool::singleton().createIdentifierValue(property);
+        return CSSPrimitiveValue::createIdentifier(property);
     }
     return consumeCustomIdent(range);
 }
@@ -6431,7 +6425,7 @@ RefPtr<CSSValue> consumeCursor(CSSParserTokenRange& range, const CSSParserContex
     if (id == CSSValueHand) {
         if (!inQuirksMode) // Non-standard behavior
             return nullptr;
-        cursorType = CSSValuePool::singleton().createIdentifierValue(CSSValuePointer);
+        cursorType = CSSValuePool::createIdentifierValue(CSSValuePointer);
         range.consumeIncludingWhitespace();
     } else if ((id >= CSSValueAuto && id <= CSSValueWebkitZoomOut) || id == CSSValueCopy || id == CSSValueNone)
         cursorType = consumeIdent(range);
@@ -6485,7 +6479,7 @@ RefPtr<CSSValue> consumeCounterContent(CSSParserTokenRange args, bool counters)
             return nullptr;
         listStyle = consumeIdent(args);
     } else
-        listStyle = CSSValuePool::singleton().createIdentifierValue(CSSValueDecimal);
+        listStyle = CSSValuePool::createIdentifierValue(CSSValueDecimal);
 
     if (!args.atEnd())
         return nullptr;
@@ -7208,7 +7202,7 @@ template<CSSPropertyID property> RefPtr<CSSValue> consumeBackgroundSize(CSSParse
             // Legacy syntax: "-webkit-background-size: 10px" is equivalent to "background-size: 10px 10px".
             vertical = horizontal;
         } else if constexpr (property == CSSPropertyBackgroundSize) {
-            vertical = CSSValuePool::singleton().createIdentifierValue(CSSValueAuto);
+            vertical = CSSValuePool::createIdentifierValue(CSSValueAuto);
         } else if constexpr (property == CSSPropertyMaskSize) {
             return horizontal;
         }
@@ -7285,7 +7279,7 @@ RefPtr<CSSValueList> consumeMasonryAutoFlow(CSSParserTokenRange& range)
     if (!packOrNextValue) {
         packOrNextValue = consumeIdent<CSSValuePack, CSSValueNext>(range);
         if (!packOrNextValue)
-            packOrNextValue = CSSValuePool::singleton().createIdentifierValue(CSSValuePack);
+            packOrNextValue = CSSValuePool::createIdentifierValue(CSSValuePack);
     }
 
     RefPtr<CSSValueList> parsedValues = CSSValueList::createSpaceSeparated();
@@ -8122,9 +8116,9 @@ RefPtr<CSSValue> consumeTextEmphasisPosition(CSSParserTokenRange& range)
     if (!foundOverOrUnder)
         return nullptr;
     RefPtr<CSSValueList> list = CSSValueList::createSpaceSeparated();
-    list->append(CSSValuePool::singleton().createIdentifierValue(overUnderValueID));
+    list->append(CSSValuePool::createIdentifierValue(overUnderValueID));
     if (foundLeftOrRight)
-        list->append(CSSValuePool::singleton().createIdentifierValue(leftRightValueID));
+        list->append(CSSValuePool::createIdentifierValue(leftRightValueID));
     return list;
 }
 
@@ -8166,7 +8160,7 @@ RefPtr<CSSValue> consumeColorScheme(CSSParserTokenRange& range)
 
     RefPtr<CSSValueList> list = CSSValueList::createSpaceSeparated();
     for (auto id : identifiers)
-        list->append(CSSValuePool::singleton().createIdentifierValue(id));
+        list->append(CSSValuePool::createIdentifierValue(id));
     return list;
 }
 

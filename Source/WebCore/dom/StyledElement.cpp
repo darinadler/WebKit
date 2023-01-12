@@ -122,7 +122,7 @@ PropertySetCSSStyleDeclaration* StyledElement::inlineStyleCSSOMWrapper()
 
 static bool usesStyleBasedEditability(const StyleProperties& properties)
 {
-    return properties.getPropertyCSSValue(CSSPropertyWebkitUserModify);
+    return properties.hasProperty(CSSPropertyWebkitUserModify);
 }
 
 void StyledElement::setInlineStyleFromString(const AtomString& newStyleString)
@@ -193,14 +193,7 @@ void StyledElement::inlineStyleChanged()
     
 bool StyledElement::setInlineStyleProperty(CSSPropertyID propertyID, CSSValueID identifier, bool important)
 {
-    ensureMutableInlineStyle().setProperty(propertyID, CSSValuePool::singleton().createIdentifierValue(identifier), important);
-    inlineStyleChanged();
-    return true;
-}
-
-bool StyledElement::setInlineStyleProperty(CSSPropertyID propertyID, CSSPropertyID identifier, bool important)
-{
-    ensureMutableInlineStyle().setProperty(propertyID, CSSValuePool::singleton().createIdentifierValue(identifier), important);
+    ensureMutableInlineStyle().setProperty(propertyID, CSSValuePool::createIdentifierValue(identifier), important);
     inlineStyleChanged();
     return true;
 }
@@ -302,7 +295,7 @@ void StyledElement::rebuildPresentationalHintStyle()
 
 void StyledElement::addPropertyToPresentationalHintStyle(MutableStyleProperties& style, CSSPropertyID propertyID, CSSValueID identifier)
 {
-    style.setProperty(propertyID, CSSValuePool::singleton().createIdentifierValue(identifier));
+    style.setProperty(propertyID, CSSValuePool::createIdentifierValue(identifier));
 }
 
 void StyledElement::addPropertyToPresentationalHintStyle(MutableStyleProperties& style, CSSPropertyID propertyID, double value, CSSUnitType unit)

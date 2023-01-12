@@ -41,20 +41,20 @@ public:
 
     const StyleProperties& properties() const { return m_properties; }
     const CSSCounterStyleDescriptors& descriptors() const { return m_descriptors; };
-    RefPtr<CSSValue> getPropertyCSSValue(CSSPropertyID id) const { return m_properties->getPropertyCSSValue(id); }
+    RefPtr<CSSValue> getPropertyCSSValue(CSSPropertyID id) const { return m_properties->propertyValue(id); }
     MutableStyleProperties& mutableProperties();
 
     const AtomString& name() const { return m_name; }
-    String system() const { return m_properties->getPropertyValue(CSSPropertySystem); }
-    String negative() const { return m_properties->getPropertyValue(CSSPropertyNegative); }
-    String prefix() const { return m_properties->getPropertyValue(CSSPropertyPrefix); }
-    String suffix() const { return m_properties->getPropertyValue(CSSPropertySuffix); }
-    String range() const { return m_properties->getPropertyValue(CSSPropertyRange); }
-    String pad() const { return m_properties->getPropertyValue(CSSPropertyPad); }
-    String fallback() const { return m_properties->getPropertyValue(CSSPropertyFallback); }
-    String symbols() const { return m_properties->getPropertyValue(CSSPropertySymbols); }
-    String additiveSymbols() const { return m_properties->getPropertyValue(CSSPropertyAdditiveSymbols); }
-    String speakAs() const { return m_properties->getPropertyValue(CSSPropertySpeakAs); }
+    String system() const { return m_properties->propertyAsString(CSSPropertySystem); }
+    String negative() const { return m_properties->propertyAsString(CSSPropertyNegative); }
+    String prefix() const { return m_properties->propertyAsString(CSSPropertyPrefix); }
+    String suffix() const { return m_properties->propertyAsString(CSSPropertySuffix); }
+    String range() const { return m_properties->propertyAsString(CSSPropertyRange); }
+    String pad() const { return m_properties->propertyAsString(CSSPropertyPad); }
+    String fallback() const { return m_properties->propertyAsString(CSSPropertyFallback); }
+    String symbols() const { return m_properties->propertyAsString(CSSPropertySymbols); }
+    String additiveSymbols() const { return m_properties->propertyAsString(CSSPropertyAdditiveSymbols); }
+    String speakAs() const { return m_properties->propertyAsString(CSSPropertySpeakAs); }
     bool newValueInvalidOrEqual(CSSPropertyID, const RefPtr<CSSValue> newValue) const;
 
     void setName(const AtomString& name) { m_name = name; }

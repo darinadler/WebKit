@@ -361,11 +361,11 @@ template<CSSValueID... names> RefPtr<CSSPrimitiveValue> consumeIdent(CSSParserTo
     return consumeIdentWorkerSafe<names...>(range, CSSValuePool::singleton());
 }
 
-template<CSSValueID... names> RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool& cssValuePool)
+template<CSSValueID... names> RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool&)
 {
     if (range.peek().type() != IdentToken || !identMatches<names...>(range.peek().id()))
         return nullptr;
-    return cssValuePool.createIdentifierValue(range.consumeIncludingWhitespace().id());
+    return CSSValuePool::createIdentifierValue(range.consumeIncludingWhitespace().id());
 }
 
 template<typename Predicate, typename... Args> std::optional<CSSValueID> consumeIdentRaw(CSSParserTokenRange& range, Predicate&& predicate, Args&&... args)
@@ -382,11 +382,11 @@ template<typename Predicate, typename... Args> RefPtr<CSSPrimitiveValue> consume
     return consumeIdentWorkerSafe(range, CSSValuePool::singleton(), std::forward<Predicate>(predicate), std::forward<Args>(args)...);
 }
 
-template<typename Predicate, typename... Args> RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool& cssValuePool, Predicate&& predicate, Args&&... args)
+template<typename Predicate, typename... Args> RefPtr<CSSPrimitiveValue> consumeIdentWorkerSafe(CSSParserTokenRange& range, CSSValuePool&, Predicate&& predicate, Args&&... args)
 {
     if (auto keyword = range.peek().id(); predicate(keyword, std::forward<Args>(args)...)) {
         range.consumeIncludingWhitespace();
-        return cssValuePool.createIdentifierValue(keyword);
+        return CSSValuePool::createIdentifierValue(keyword);
     }
     return nullptr;
 }

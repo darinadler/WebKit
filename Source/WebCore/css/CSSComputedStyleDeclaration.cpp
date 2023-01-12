@@ -222,12 +222,7 @@ ExceptionOr<String> CSSComputedStyleDeclaration::removeProperty(const String&)
     return Exception { NoModificationAllowedError };
 }
     
-RefPtr<CSSValue> CSSComputedStyleDeclaration::getPropertyCSSValueInternal(CSSPropertyID propertyID)
-{
-    return getPropertyCSSValue(propertyID);
-}
-
-String CSSComputedStyleDeclaration::getPropertyValueInternal(CSSPropertyID propertyID)
+String CSSComputedStyleDeclaration::getPropertyValueInternal(CSSPropertyID propertyID) const
 {
     return getPropertyValue(propertyID);
 }

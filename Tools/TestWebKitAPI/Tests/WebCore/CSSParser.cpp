@@ -80,7 +80,7 @@ TEST(CSSPropertyParserTest, GridTrackLimits)
 
     for (auto& testCase : testCases) {
         ASSERT_TRUE(parser.parseDeclaration(properties, testCase.input));
-        RefPtr<CSSValue> value = properties->getPropertyCSSValue(testCase.propertyID);
+        RefPtr<CSSValue> value = properties->propertyValue(testCase.propertyID);
 
         ASSERT_TRUE(value->isValueList());
         EXPECT_EQ(computeNumberOfTracks(*downcast<CSSValueList>(value.get())), testCase.output);

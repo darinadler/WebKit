@@ -39,9 +39,9 @@ public:
     }
     ~CSSContentDistributionValue();
 
-    Ref<CSSPrimitiveValue> distribution() const { return CSSValuePool::singleton().createIdentifierValue(m_distribution); }
-    Ref<CSSPrimitiveValue> position() const { return CSSValuePool::singleton().createIdentifierValue(m_position); }
-    Ref<CSSPrimitiveValue> overflow() const { return CSSValuePool::singleton().createIdentifierValue(m_overflow); }
+    Ref<CSSPrimitiveValue> distribution() const { return CSSValuePool::createIdentifierValue(m_distribution); }
+    Ref<CSSPrimitiveValue> position() const { return CSSValuePool::createIdentifierValue(m_position); }
+    Ref<CSSPrimitiveValue> overflow() const { return CSSValuePool::createIdentifierValue(m_overflow); }
 
     String customCSSText() const;
 

@@ -191,7 +191,7 @@ void CSSParser::parseDeclarationForInspector(const CSSParserContext& context, co
     CSSParserImpl::parseDeclarationListForInspector(string, context, observer);
 }
 
-RefPtr<CSSValue> CSSParser::parseValueWithVariableReferences(CSSPropertyID propID, const CSSValue& value, Style::BuilderState& builderState)
+RefPtr<CSSValue> CSSParser::parseValueWithVariableReferences(CSSPropertyID propertyID, const CSSValue& value, Style::BuilderState& builderState)
 {
     if (is<CSSPendingSubstitutionValue>(value)) {
         // FIXME: Should have a resolvedShorthands cache to stop this from being done over and over for each longhand value.
@@ -203,12 +203,12 @@ RefPtr<CSSValue> CSSParser::parseValueWithVariableReferences(CSSPropertyID propI
         if (!resolvedData)
             return nullptr;
 
-        ParsedPropertyVector parsedProperties;
+        Vector<CSSProperty, 256> parsedProperties;
         if (!CSSPropertyParser::parseValue(shorthandID, false, resolvedData->tokens(), substitution.shorthandValue().context(), parsedProperties, StyleRuleType::Style))
             return nullptr;
 
         for (auto& property : parsedProperties) {
-            if (property.id() == propID)
+            if (property.id() == propertyID)
                 return property.value();
         }
 
@@ -220,7 +220,7 @@ RefPtr<CSSValue> CSSParser::parseValueWithVariableReferences(CSSPropertyID propI
     if (!resolvedData)
         return nullptr;
 
-    return CSSPropertyParser::parseSingleValue(propID, resolvedData->tokens(), valueWithReferences.context());
+    return CSSPropertyParser::parseSingleValue(propertyID, resolvedData->tokens(), valueWithReferences.context());
 }
 
 RefPtr<CSSCustomPropertyValue> CSSParser::parseCustomPropertyValueWithVariableReferences(const CSSCustomPropertyValue& value, Style::BuilderState& builderState)

@@ -580,7 +580,7 @@ void HTMLElement::addParsedWidthAndHeightToAspectRatioList(double width, double 
     ratioList->append(CSSValuePool::singleton().createValue(width, CSSUnitType::CSS_NUMBER));
     ratioList->append(CSSValuePool::singleton().createValue(height, CSSUnitType::CSS_NUMBER));
     auto list = CSSValueList::createSpaceSeparated();
-    list->append(CSSValuePool::singleton().createIdentifierValue(CSSValueAuto));
+    list->append(CSSValuePool::createIdentifierValue(CSSValueAuto));
     list->append(ratioList);
 
     style.setProperty(CSSPropertyAspectRatio, RefPtr<CSSValue>(WTFMove(list)));

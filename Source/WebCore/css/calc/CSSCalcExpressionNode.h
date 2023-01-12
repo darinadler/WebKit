@@ -27,13 +27,13 @@
 #pragma once
 
 #include "CalculationCategory.h"
-#include "CalculationValue.h"
 #include <wtf/RefCounted.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {
 
 class CSSToLengthConversionData;
+class CalcExpressionNode;
 
 enum CSSPropertyID : uint16_t;
 
