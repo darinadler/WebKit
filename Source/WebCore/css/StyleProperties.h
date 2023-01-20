@@ -178,14 +178,13 @@ protected:
     unsigned m_arraySize : 27;
 
 private:
-    String getGridShorthandValue(const StylePropertyShorthand&) const;
     String getGridRowColumnShorthandValue(const StylePropertyShorthand&) const;
     String getGridAreaShorthandValue() const;
     String getGridTemplateValue() const;
     String getGridValue() const;
-    String getShorthandValue(const StylePropertyShorthand&, const char* separator = " ") const;
+    String getShorthandValue(const StylePropertyShorthand&) const;
     String getCommonValue(const StylePropertyShorthand&) const;
-    String getAlignmentShorthandValue(const StylePropertyShorthand&) const;
+    String placeContentValue() const;
     String borderImagePropertyValue(const StylePropertyShorthand&) const;
     String borderPropertyValue(const StylePropertyShorthand&, const StylePropertyShorthand&, const StylePropertyShorthand&) const;
     String borderRadiusShorthandValue(const StylePropertyShorthand&) const;
@@ -199,6 +198,7 @@ private:
     String fontVariantValue() const;
     String fontSynthesisValue() const;
     String offsetValue() const;
+    String flexValue() const;
     String commonShorthandChecks(const StylePropertyShorthand&) const;
     bool hasAllInitialValues(const StylePropertyShorthand&) const;
     StringBuilder asTextInternal() const;

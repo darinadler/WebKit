@@ -9,7 +9,7 @@ var testDiv = document.getElementById("testDiv");
 
 shouldBeEmptyString("testDiv.style['flex']");
 evalAndLog("testDiv.style['flex'] = 'calc(2 * 3) calc(2 * 3)'");
-shouldBeEqualToString("testDiv.style['flex']", "6 6 0%");
+shouldBeEqualToString("testDiv.style['flex']", "6 6");
 shouldBeEqualToString("window.getComputedStyle(testDiv).getPropertyValue('flex')", "6 6 0%");
 
 evalAndLog("testDiv.style['flex'] = 'calc(2 * 3) calc(2 * 3) calc(10% * 2)'");
@@ -17,7 +17,7 @@ shouldBeEqualToString("testDiv.style['flex']", "6 6 calc(20%)");
 shouldBeEqualToString("window.getComputedStyle(testDiv).getPropertyValue('flex')", "6 6 20%");
 
 evalAndLog("testDiv.style['flex'] = 'calc(2 * 3) calc(2 * 3) calc(3 - 3)'");
-shouldBeEqualToString("testDiv.style['flex']", "6 6 0px");
+shouldBeEqualToString("testDiv.style['flex']", "6 6");
 shouldBeEqualToString("window.getComputedStyle(testDiv).getPropertyValue('flex')", "6 6 0px");
 
 </script>

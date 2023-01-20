@@ -436,6 +436,21 @@ template<typename TargetType> inline CSSPrimitiveValue::operator TargetType() co
     return fromCSSValueID<TargetType>(valueID());
 }
 
+inline bool isNumber(const CSSPrimitiveValue& value, double number, CSSUnitType type)
+{
+    return !value.isCalculated() && value.primitiveType() == type && value.doubleValue() == number;
+}
+
+inline bool isNumber(const CSSPrimitiveValue* value, double number, CSSUnitType type)
+{
+    return value && isNumber(*value, number, type);
+}
+
+inline bool isNumber(const CSSValue& value, double number, CSSUnitType type)
+{
+    return isNumber(dynamicDowncast<CSSPrimitiveValue>(value), number, type);
+}
+
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_CSS_VALUE(CSSPrimitiveValue, isPrimitiveValue())

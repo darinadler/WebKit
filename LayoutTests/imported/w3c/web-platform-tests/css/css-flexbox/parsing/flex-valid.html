@@ -12,12 +12,12 @@
 </head>
 <body>
 <script>
-test_valid_value("flex", "none", "0 0 auto");
-test_valid_value("flex", "1", "1 1 0%");
-test_valid_value("flex", "2 3", "2 3 0%");
+test_valid_value("flex", "none");
+test_valid_value("flex", "1");
+test_valid_value("flex", "2 3");
 test_valid_value("flex", "4 5 6px");
-test_valid_value("flex", "7% 8", "8 1 7%");
-test_valid_value("flex", "8 auto", "8 1 auto");
+test_valid_value("flex", "7% 8", "8 7%");
+test_valid_value("flex", "8 auto");
 
 // The following is not yet supported by browsers:
 // test_valid_value("flex", "content");
