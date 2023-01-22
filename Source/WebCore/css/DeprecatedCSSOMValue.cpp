@@ -57,7 +57,7 @@ unsigned short DeprecatedCSSOMValue::cssValueType() const
     case ClassType::Complex:
         return downcast<DeprecatedCSSOMComplexValue>(*this).cssValueType();
     case ClassType::Primitive:
-        return downcast<DeprecatedCSSOMPrimitiveValue>(*this).cssValueType();
+        return CSS_PRIMITIVE_VALUE;
     case ClassType::List:
         return CSS_VALUE_LIST;
     }

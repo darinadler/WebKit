@@ -48,14 +48,14 @@ class CSSToStyleMap {
     WTF_MAKE_FAST_ALLOCATED;
 
 public:
-    CSSToStyleMap(Style::BuilderState&);
+    explicit CSSToStyleMap(Style::BuilderState&);
 
     void mapFillAttachment(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillClip(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillComposite(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillBlendMode(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillOrigin(CSSPropertyID, FillLayer&, const CSSValue&);
-    void mapFillImage(CSSPropertyID, FillLayer&, CSSValue&);
+    void mapFillImage(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillRepeat(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillSize(CSSPropertyID, FillLayer&, const CSSValue&);
     void mapFillXPosition(CSSPropertyID, FillLayer&, const CSSValue&);
@@ -73,19 +73,19 @@ public:
     void mapAnimationTimingFunction(Animation&, const CSSValue&);
     void mapAnimationCompositeOperation(Animation&, const CSSValue&);
 
-    void mapNinePieceImage(CSSValue*, NinePieceImage&);
-    void mapNinePieceImageSlice(CSSValue&, NinePieceImage&);
-    void mapNinePieceImageSlice(CSSBorderImageSliceValue&, NinePieceImage&);
-    void mapNinePieceImageWidth(CSSValue&, NinePieceImage&);
-    void mapNinePieceImageWidth(CSSBorderImageWidthValue&, NinePieceImage&);
-    LengthBox mapNinePieceImageQuad(CSSValue&);
-    void mapNinePieceImageRepeat(CSSValue&, NinePieceImage&);
-    void mapNinePieceImageRepeat(CSSPrimitiveValue&, NinePieceImage&);
+    void mapNinePieceImage(const CSSValue*, NinePieceImage&);
+    void mapNinePieceImageSlice(const CSSValue&, NinePieceImage&);
+    void mapNinePieceImageSlice(const CSSBorderImageSliceValue&, NinePieceImage&);
+    void mapNinePieceImageWidth(const CSSValue&, NinePieceImage&);
+    void mapNinePieceImageWidth(const CSSBorderImageWidthValue&, NinePieceImage&);
+    LengthBox mapNinePieceImageQuad(const CSSValue&);
+    void mapNinePieceImageRepeat(const CSSValue&, NinePieceImage&);
+    void mapNinePieceImageRepeat(const CSSPrimitiveValue&, NinePieceImage&);
 
 private:
     RenderStyle* style() const;
-    RefPtr<StyleImage> styleImage(CSSValue&);
-    LengthBox mapNinePieceImageQuad(Quad&);
+    RefPtr<StyleImage> styleImage(const CSSValue&);
+    LengthBox mapNinePieceImageQuad(const Quad&);
 
     // FIXME: This type can merge into BuilderState.
     Style::BuilderState& m_builderState;

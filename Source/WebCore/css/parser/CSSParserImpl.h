@@ -112,6 +112,7 @@ public:
     CSSTokenizer* tokenizer() const { return m_tokenizer.get(); };
 
 private:
+    using ParsedPropertyVector = Vector<CSSProperty, 256>;
     struct NestingContext {
         // FIXME: Can we build StylePropertySets directly?
         // FIXME: Investigate using a smaller inline buffer
@@ -186,6 +187,7 @@ private:
 
     unsigned m_styleRuleNestingDepth { 0 };
     Vector<NestingContext> m_nestingContextStack { NestingContext { } };
+
     const CSSParserContext& m_context;
 
     RefPtr<StyleSheetContents> m_styleSheet;

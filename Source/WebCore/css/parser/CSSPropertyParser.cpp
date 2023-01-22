@@ -196,7 +196,7 @@ void CSSPropertyParser::addExpandedProperty(CSSPropertyID shorthand, RefPtr<CSSV
         addProperty(longhand, shorthand, value.copyRef(), important, implicit);
 }
 
-bool CSSPropertyParser::parseValue(CSSPropertyID propertyID, bool important, const CSSParserTokenRange& range, const CSSParserContext& context, ParsedPropertyVector& parsedProperties, StyleRuleType ruleType)
+bool CSSPropertyParser::parseValue(CSSPropertyID propertyID, bool important, const CSSParserTokenRange& range, const CSSParserContext& context, Vector<CSSProperty, 256>& parsedProperties, StyleRuleType ruleType)
 {
     int parsedPropertiesSize = parsedProperties.size();
     
@@ -1416,7 +1416,7 @@ bool CSSPropertyParser::consumeShorthandGreedily(const StylePropertyShorthand& s
 {
     ASSERT(shorthand.length() <= 6); // Existing shorthands have at most 6 longhands.
     RefPtr<CSSValue> longhands[6];
-    const CSSPropertyID* shorthandProperties = shorthand.properties();
+    auto shorthandProperties = shorthand.properties();
     do {
         bool foundLonghand = false;
         for (size_t i = 0; !foundLonghand && i < shorthand.length(); ++i) {
@@ -1532,7 +1532,7 @@ bool CSSPropertyParser::consumeBorderShorthand(CSSPropertyID widthProperty, CSSP
 bool CSSPropertyParser::consume2ValueShorthand(const StylePropertyShorthand& shorthand, bool important)
 {
     ASSERT(shorthand.length() == 2);
-    const CSSPropertyID* longhands = shorthand.properties();
+    auto longhands = shorthand.properties();
     RefPtr<CSSValue> start = parseSingleValue(longhands[0], shorthand.id());
     if (!start)
         return false;
@@ -1550,7 +1550,7 @@ bool CSSPropertyParser::consume2ValueShorthand(const StylePropertyShorthand& sho
 bool CSSPropertyParser::consume4ValueShorthand(const StylePropertyShorthand& shorthand, bool important)
 {
     ASSERT(shorthand.length() == 4);
-    const CSSPropertyID* longhands = shorthand.properties();
+    auto longhands = shorthand.properties();
     RefPtr<CSSValue> top = parseSingleValue(longhands[0], shorthand.id());
     if (!top)
         return false;

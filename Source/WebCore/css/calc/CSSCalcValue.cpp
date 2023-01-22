@@ -47,6 +47,7 @@
 #include "CalcExpressionNegation.h"
 #include "CalcExpressionNumber.h"
 #include "CalcExpressionOperation.h"
+#include "CalculationValue.h"
 #include "Logging.h"
 #include "StyleResolver.h"
 #include <wtf/MathExtras.h>
@@ -272,10 +273,10 @@ static RefPtr<CSSCalcExpressionNode> createCSS(const Length& length, const Rende
     return nullptr;
 }
 
-CSSCalcValue::CSSCalcValue(Ref<CSSCalcExpressionNode>&& expression, ShouldClampToNonNegative shouldClampToNonNegative)
+CSSCalcValue::CSSCalcValue(Ref<CSSCalcExpressionNode>&& expression, bool shouldClampToNonNegative)
     : CSSValue(CalculationClass)
     , m_expression(WTFMove(expression))
-    , m_shouldClampToNonNegative(shouldClampToNonNegative == ShouldClampToNonNegative::Yes)
+    , m_shouldClampToNonNegative(shouldClampToNonNegative)
 {
 }
 
@@ -392,7 +393,7 @@ RefPtr<CSSCalcValue> CSSCalcValue::create(CSSValueID function, const CSSParserTo
     auto expression = parser.parseCalc(tokens, function, allowsNegativePercentage);
     if (!expression)
         return nullptr;
-    auto result = adoptRef(new CSSCalcValue(expression.releaseNonNull(), range != ValueRange::All ? ShouldClampToNonNegative::Yes : ShouldClampToNonNegative::No));
+    auto result = adoptRef(new CSSCalcValue(expression.releaseNonNull(), range != ValueRange::All));
     LOG_WITH_STREAM(Calc, stream << "CSSCalcValue::create " << *result);
     return result;
 }
@@ -410,12 +411,12 @@ RefPtr<CSSCalcValue> CSSCalcValue::create(const CalculationValue& value, const R
 
     auto simplifiedExpression = CSSCalcOperationNode::simplify(expression.releaseNonNull());
 
-    auto result = adoptRef(new CSSCalcValue(WTFMove(simplifiedExpression), value.shouldClampToNonNegative() ? ShouldClampToNonNegative::Yes : ShouldClampToNonNegative::No));
+    auto result = adoptRef(new CSSCalcValue(WTFMove(simplifiedExpression), value.shouldClampToNonNegative()));
     LOG_WITH_STREAM(Calc, stream << "CSSCalcValue::create from CalculationValue: " << *result);
     return result;
 }
 
-RefPtr<CSSCalcValue> CSSCalcValue::create(Ref<CSSCalcExpressionNode>&& node, ShouldClampToNonNegative shouldClampToNonNegative)
+Ref<CSSCalcValue> CSSCalcValue::create(Ref<CSSCalcExpressionNode>&& node, bool shouldClampToNonNegative)
 {
     return adoptRef(*new CSSCalcValue(WTFMove(node), shouldClampToNonNegative));
 }

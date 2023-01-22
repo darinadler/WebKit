@@ -37,9 +37,9 @@ namespace WebCore {
 
 static CSSCounterStyleDescriptors::Ranges translateRangeFromStyleProperties(const StyleProperties& properties)
 {
-    auto ranges = properties.getPropertyCSSValue(CSSPropertySystem).get();
+    auto ranges = properties.propertyValue(CSSPropertySystem).get();
     // auto range will return an empty Ranges
-    if (!ranges || !is<CSSValueList>(ranges))
+    if (!is<CSSValueList>(ranges))
         return { };
     auto& list = downcast<CSSValueList>(*ranges);
     CSSCounterStyleDescriptors::Ranges result;
@@ -81,8 +81,8 @@ static String symbolToString(const CSSValue* value)
 
 static CSSCounterStyleDescriptors::Pad translatePadFromStyleProperties(const StyleProperties& properties)
 {
-    auto pad = properties.getPropertyCSSValue(CSSPropertyPad).get();
-    if (!pad || !is<CSSValueList>(pad))
+    auto pad = properties.propertyValue(CSSPropertyPad).get();
+    if (!is<CSSValueList>(pad))
         return CSSCounterStyleDescriptors::Pad();
 
     auto& list = downcast<CSSValueList>(*pad);
@@ -97,8 +97,8 @@ static CSSCounterStyleDescriptors::Pad translatePadFromStyleProperties(const Sty
 
 static CSSCounterStyleDescriptors::NegativeSymbols translateNegativeSymbolsFromStyleProperties(const StyleProperties& properties)
 {
-    auto negative = properties.getPropertyCSSValue(CSSPropertyNegative).get();
-    if (!negative || !is<CSSValueList>(negative))
+    auto negative = properties.propertyValue(CSSPropertyNegative).get();
+    if (!is<CSSValueList>(negative))
         return CSSCounterStyleDescriptors::NegativeSymbols();
 
     auto& list = downcast<CSSValueList>(*negative);
@@ -117,8 +117,8 @@ static CSSCounterStyleDescriptors::NegativeSymbols translateNegativeSymbolsFromS
 
 static Vector<CSSCounterStyleDescriptors::Symbol> translateSymbolsFromStyleProperties(const StyleProperties& properties)
 {
-    auto symbolsValues = properties.getPropertyCSSValue(CSSPropertySymbols).get();
-    if (!symbolsValues || !is<CSSValueList>(symbolsValues))
+    auto symbolsValues = properties.propertyValue(CSSPropertySymbols).get();
+    if (!is<CSSValueList>(symbolsValues))
         return { };
 
     Vector<CSSCounterStyleDescriptors::Symbol> result;
@@ -133,7 +133,7 @@ static Vector<CSSCounterStyleDescriptors::Symbol> translateSymbolsFromStylePrope
 
 static CSSCounterStyleDescriptors::Name translateFallbackNameFromStyleProperties(const StyleProperties& properties)
 {
-    auto fallback = properties.getPropertyCSSValue(CSSPropertyFallback).get();
+    auto fallback = properties.propertyValue(CSSPropertyFallback).get();
     if (!fallback)
         return "decimal"_s;
     return makeAtomString(symbolToString(fallback));
@@ -141,7 +141,7 @@ static CSSCounterStyleDescriptors::Name translateFallbackNameFromStyleProperties
 
 static CSSCounterStyleDescriptors::Symbol translatePrefixFromStyleProperties(const StyleProperties& properties)
 {
-    auto prefix = properties.getPropertyCSSValue(CSSPropertyPrefix).get();
+    auto prefix = properties.propertyValue(CSSPropertyPrefix).get();
     if (!prefix)
         return ""_s;
     return symbolToString(prefix);
@@ -149,7 +149,7 @@ static CSSCounterStyleDescriptors::Symbol translatePrefixFromStyleProperties(con
 
 static CSSCounterStyleDescriptors::Symbol translateSuffixFromStyleProperties(const StyleProperties& properties)
 {
-    auto suffix = properties.getPropertyCSSValue(CSSPropertySuffix).get();
+    auto suffix = properties.propertyValue(CSSPropertySuffix).get();
     // https://www.w3.org/TR/css-counter-styles-3/#counter-style-suffix
     // ("." full stop followed by a space)
     if (!suffix)
@@ -159,7 +159,7 @@ static CSSCounterStyleDescriptors::Symbol translateSuffixFromStyleProperties(con
 
 static std::pair<CSSCounterStyleDescriptors::Name, int> extractDataFromSystemDescriptor(const StyleProperties& properties, CSSCounterStyleDescriptors::System system)
 {
-    auto systemValue = properties.getPropertyCSSValue(CSSPropertySystem).get();
+    auto systemValue = properties.propertyValue(CSSPropertySystem).get();
     // If no value is provided after `fixed`, the first synbol value is implicitly 1 (https://www.w3.org/TR/css-counter-styles-3/#first-symbol-value).
     if (!systemValue || !systemValue->isPrimitiveValue())
         return { "decimal"_s, 1 };
@@ -184,33 +184,29 @@ static std::pair<CSSCounterStyleDescriptors::Name, int> extractDataFromSystemDes
 
 void CSSCounterStyleDescriptors::setExplicitlySetDescriptors(const StyleProperties& properties)
 {
-    auto getPropertyCSSValue = [&](CSSPropertyID id) -> RefPtr<CSSValue> {
-        return properties.getPropertyCSSValue(id);
-    };
-
-    if (getPropertyCSSValue(CSSPropertySystem))
+    if (properties.hasProperty(CSSPropertySystem))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::System);
-    if (getPropertyCSSValue(CSSPropertyNegative))
+    if (properties.hasProperty(CSSPropertyNegative))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Negative);
-    if (getPropertyCSSValue(CSSPropertyPrefix))
+    if (properties.hasProperty(CSSPropertyPrefix))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Prefix);
-    if (getPropertyCSSValue(CSSPropertySuffix))
+    if (properties.hasProperty(CSSPropertySuffix))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Suffix);
-    if (getPropertyCSSValue(CSSPropertyRange))
+    if (properties.hasProperty(CSSPropertyRange))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Range);
-    if (getPropertyCSSValue(CSSPropertyPad))
+    if (properties.hasProperty(CSSPropertyPad))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Pad);
-    if (getPropertyCSSValue(CSSPropertyFallback))
+    if (properties.hasProperty(CSSPropertyFallback))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::Fallback);
-    if (getPropertyCSSValue(CSSPropertyAdditiveSymbols))
+    if (properties.hasProperty(CSSPropertyAdditiveSymbols))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::AdditiveSymbols);
-    if (getPropertyCSSValue(CSSPropertySpeakAs))
+    if (properties.hasProperty(CSSPropertySpeakAs))
         m_explicitlySetDescriptors.add(ExplicitlySetDescriptors::SpeakAs);
 }
 
 CSSCounterStyleDescriptors CSSCounterStyleDescriptors::create(AtomString name, const StyleProperties& properties)
 {
-    auto system = toCounterStyleSystemEnum(properties.getPropertyCSSValue(CSSPropertySystem).get());
+    auto system = toCounterStyleSystemEnum(properties.propertyValue(CSSPropertySystem).get());
     auto systemData = extractDataFromSystemDescriptor(properties, system);
     CSSCounterStyleDescriptors descriptors {
         .m_name = name,

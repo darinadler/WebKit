@@ -185,17 +185,16 @@ public:
         : m_sourceRange(range)
         , m_range(range)
     {
-        const CSSParserToken& token = range.peek();
-        auto functionId = token.functionId();
+        auto functionId = range.peek().functionId();
         if (CSSCalcValue::isCalcFunction(functionId))
-            m_calcValue = CSSCalcValue::create(functionId, consumeFunction(m_range), destinationCategory, valueRange, symbolTable, negativePercentagePolicy == NegativePercentagePolicy::Allow);
+            m_value = CSSCalcValue::create(functionId, consumeFunction(m_range), destinationCategory, valueRange, symbolTable, negativePercentagePolicy == NegativePercentagePolicy::Allow);
     }
 
-    const CSSCalcValue* value() const { return m_calcValue.get(); }
+    const CSSCalcValue* value() const { return m_value.get(); }
 
     RefPtr<CSSPrimitiveValue> consumeValue()
     {
-        if (!m_calcValue)
+        if (!m_value)
             return nullptr;
         m_sourceRange = m_range;
         return CSSPrimitiveValue::create(m_calcValue.releaseNonNull());
@@ -203,21 +202,17 @@ public:
 
     RefPtr<CSSPrimitiveValue> consumeValueIfCategory(CalculationCategory category)
     {
-        if (!m_calcValue)
-            return nullptr;
-
-        if (m_calcValue->category() != category) {
-            LOG_WITH_STREAM(Calc, stream << "CalcParser::consumeValueIfCategory - failing because calc category " << m_calcValue->category() << " does not match requested category " << category);
+        if (m_value && m_value->category() != category) {
+            LOG_WITH_STREAM(Calc, stream << "CalcParser::consumeValueIfCategory - failing because calc category " << m_value->category() << " does not match requested category " << category);
             return nullptr;
         }
-        m_sourceRange = m_range;
-        return CSSPrimitiveValue::create(m_calcValue.releaseNonNull());
+        return consumeValue();
     }
 
 private:
     CSSParserTokenRange& m_sourceRange;
     CSSParserTokenRange m_range;
-    RefPtr<CSSCalcValue> m_calcValue;
+    RefPtr<CSSCalcValue> m_value;
 };
 
 // MARK: - Primitive value consumers for callers that know the token type.
@@ -226,8 +221,7 @@ static RefPtr<CSSCalcValue> consumeCalcRawWithKnownTokenTypeFunction(CSSParserTo
 {
     ASSERT(range.peek().type() == FunctionToken);
 
-    const auto& token = range.peek();
-    auto functionId = token.functionId();
+    auto functionId = range.peek().functionId();
     if (!CSSCalcValue::isCalcFunction(functionId))
         return nullptr;
 

@@ -29,6 +29,7 @@
 
 #include "CSSCalcValue.h"
 #include "CSSToLengthConversionData.h"
+#include "CalculationValue.h"
 #include "ColorInterpolation.h"
 #include "ComputedStyleExtractor.h"
 #include "GeneratedImage.h"

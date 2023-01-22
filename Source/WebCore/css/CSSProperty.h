@@ -21,46 +21,52 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
 #include "CSSValue.h"
-#include "WritingMode.h"
 #include <wtf/RefPtr.h>
 
 namespace WebCore {
 
 class CSSValueList;
 
+enum class TextDirection : bool;
+enum class WritingMode : uint8_t;
+
+enum CSSPropertyID : uint16_t;
+
+bool isInitialValueForLonghand(CSSPropertyID, const CSSValue&);
+
 struct StylePropertyMetadata {
-    StylePropertyMetadata(CSSPropertyID propertyID, bool isSetFromShorthand, int indexInShorthandsVector, bool important, bool implicit, bool inherited)
-        : m_propertyID(propertyID)
-        , m_isSetFromShorthand(isSetFromShorthand)
-        , m_indexInShorthandsVector(indexInShorthandsVector)
-        , m_important(important)
-        , m_implicit(implicit)
-        , m_inherited(inherited)
+    StylePropertyMetadata(CSSPropertyID propertyID, bool wasSetFromShorthand, int indexInShorthandsVector, bool important, bool implicit, bool inherited)
+        : propertyIDInteger(propertyID)
+        , wasSetFromShorthand(wasSetFromShorthand)
+        , indexInShorthandsVector(indexInShorthandsVector)
+        , important(important)
+        , implicit(implicit)
+        , inherited(inherited)
     {
         ASSERT(propertyID != CSSPropertyInvalid);
         ASSERT_WITH_MESSAGE(propertyID < firstShorthandProperty, "unexpected property: %d", propertyID);
     }
 
+    CSSPropertyID propertyID() const { return static_cast<CSSPropertyID>(propertyIDInteger); }
     CSSPropertyID shorthandID() const;
-    
+
     bool operator==(const StylePropertyMetadata& other) const
     {
-        return m_propertyID == other.m_propertyID
-            && m_isSetFromShorthand == other.m_isSetFromShorthand
-            && m_indexInShorthandsVector == other.m_indexInShorthandsVector
-            && m_important == other.m_important
-            && m_implicit == other.m_implicit
-            && m_inherited == other.m_inherited;
+        return propertyIDInteger == other.propertyIDInteger
+            && wasSetFromShorthand == other.wasSetFromShorthand
+            && indexInShorthandsVector == other.indexInShorthandsVector
+            && important == other.important
+            && implicit == other.implicit
+            && inherited == other.inherited;
     }
 
-    uint16_t m_propertyID : 10;
-    uint16_t m_isSetFromShorthand : 1;
-    uint16_t m_indexInShorthandsVector : 2; // If this property was set as part of an ambiguous shorthand, gives the index in the shorthands vector.
-    uint16_t m_important : 1;
-    uint16_t m_implicit : 1; // Whether or not the property was set implicitly as the result of a shorthand.
-    uint16_t m_inherited : 1;
+    uint16_t propertyIDInteger : 10;
+    uint16_t wasSetFromShorthand : 1;
+    uint16_t indexInShorthandsVector : 2; // If this property was set as part of an ambiguous shorthand, gives the index in the shorthands vector.
+    uint16_t important : 1;
+    uint16_t implicit : 1; // Whether or not the property was set implicitly as the result of a shorthand.
+    uint16_t inherited : 1;
 };
 
 class CSSProperty {
@@ -71,10 +77,10 @@ public:
     {
     }
 
-    CSSPropertyID id() const { return static_cast<CSSPropertyID>(m_metadata.m_propertyID); }
-    bool isSetFromShorthand() const { return m_metadata.m_isSetFromShorthand; };
+    CSSPropertyID id() const { return m_metadata.propertyID(); }
+    bool wasSetFromShorthand() const { return m_metadata.wasSetFromShorthand; };
     CSSPropertyID shorthandID() const { return m_metadata.shorthandID(); };
-    bool isImportant() const { return m_metadata.m_important; }
+    bool isImportant() const { return m_metadata.important; }
 
     CSSValue* value() const { return m_value.get(); }
 
@@ -115,13 +121,13 @@ private:
     RefPtr<CSSValue> m_value;
 };
 
-typedef Vector<CSSProperty, 256> ParsedPropertyVector;
-
 } // namespace WebCore
 
 namespace WTF {
-template <> struct VectorTraits<WebCore::CSSProperty> : VectorTraitsBase<false, WebCore::CSSProperty> {
+
+template<> struct VectorTraits<WebCore::CSSProperty> : VectorTraitsBase<false, WebCore::CSSProperty> {
     static const bool canInitializeWithMemset = true;
     static const bool canMoveWithMemcpy = true;
 };
+
 }

@@ -631,8 +631,8 @@ auto KeyframeEffect::getKeyframes(Document& document) -> Vector<ComputedKeyframe
             for (auto& [cssPropertyId, stringValue] : computedKeyframe.styleStrings) {
                 if (cssPropertyId == CSSPropertyCustom)
                     continue;
-                if (auto cssValue = parsedKeyframe.style->getPropertyCSSValue(cssPropertyId))
-                    stringValue = cssValue->cssText();
+                if (auto text = parsedKeyframe.style->propertyAsString(cssPropertyId); !text.isNull())
+                    stringValue = WTFMove(text);
             }
             computedKeyframe.easing = timingFunctionForKeyframeAtIndex(i)->cssText();
             computedKeyframes.append(WTFMove(computedKeyframe));
@@ -701,15 +701,15 @@ auto KeyframeEffect::getKeyframes(Document& document) -> Vector<ComputedKeyframe
         auto addPropertyToKeyframe = [&](CSSPropertyID cssPropertyId) {
             String styleString = emptyString();
             if (keyframeRule) {
-                if (auto cssValue = keyframeRule->properties().getPropertyCSSValue(cssPropertyId)) {
+                if (auto cssValue = keyframeRule->properties().propertyValue(cssPropertyId)) {
                     if (!cssValue->hasVariableReferences())
-                        styleString = keyframeRule->properties().getPropertyValue(cssPropertyId);
+                        styleString = keyframeRule->properties().propertyAsString(cssPropertyId);
                 }
             }
             if (styleString.isEmpty()) {
-                if (auto cssValue = styleProperties->getPropertyCSSValue(cssPropertyId)) {
+                if (auto cssValue = styleProperties->propertyValue(cssPropertyId)) {
                     if (!cssValue->hasVariableReferences())
-                        styleString = styleProperties->getPropertyValue(cssPropertyId);
+                        styleString = styleProperties->propertyAsString(cssPropertyId);
                 }
             }
             if (styleString.isEmpty()) {
@@ -722,15 +722,15 @@ auto KeyframeEffect::getKeyframes(Document& document) -> Vector<ComputedKeyframe
         auto addCustomPropertyToKeyframe = [&](const AtomString& customProperty) {
             String styleString = emptyString();
             if (keyframeRule) {
-                if (auto cssValue = keyframeRule->properties().getCustomPropertyCSSValue(customProperty)) {
+                if (auto cssValue = keyframeRule->properties().customPropertyValue(customProperty)) {
                     if (!cssValue->hasVariableReferences())
-                        styleString = keyframeRule->properties().getCustomPropertyValue(customProperty);
+                        styleString = keyframeRule->properties().customPropertyAsString(customProperty);
                 }
             }
             if (styleString.isEmpty()) {
-                if (auto cssValue = styleProperties->getCustomPropertyCSSValue(customProperty)) {
+                if (auto cssValue = styleProperties->customPropertyValue(customProperty)) {
                     if (!cssValue->hasVariableReferences())
-                        styleString = styleProperties->getCustomPropertyValue(customProperty);
+                        styleString = styleProperties->customPropertyAsString(customProperty);
                 }
             }
             if (styleString.isEmpty()) {

@@ -64,7 +64,8 @@ public:
 
     // CSSPropertyID versions of the CSSOM functions to support bindings and editing.
     // Use the non-virtual methods in the concrete subclasses when possible.
-    virtual String getPropertyValueInternal(CSSPropertyID) = 0;
+<<<<<<< HEAD
+    virtual String getPropertyValueInternal(CSSPropertyID) const = 0;
     virtual ExceptionOr<void> setPropertyInternal(CSSPropertyID, const String& value, bool important) = 0;
 
     virtual Ref<MutableStyleProperties> copyProperties() const = 0;

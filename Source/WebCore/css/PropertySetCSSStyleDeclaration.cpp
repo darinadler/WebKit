@@ -27,6 +27,7 @@
 #include "CSSStyleSheet.h"
 #include "CustomElementReactionQueue.h"
 #include "DOMWindow.h"
+#include "DeprecatedCSSOMValue.h"
 #include "HTMLNames.h"
 #include "InspectorInstrumentation.h"
 #include "JSDOMGlobalObject.h"
@@ -169,7 +170,7 @@ String PropertySetCSSStyleDeclaration::item(unsigned i) const
     if (i >= m_propertySet->propertyCount())
         return String();
 
-    return m_propertySet->propertyAt(i).cssName();
+    return m_propertySet->propertyAt(i).name();
 }
 
 String PropertySetCSSStyleDeclaration::cssText() const
@@ -194,7 +195,7 @@ ExceptionOr<void> PropertySetCSSStyleDeclaration::setCssText(const String& text)
 RefPtr<DeprecatedCSSOMValue> PropertySetCSSStyleDeclaration::getPropertyCSSValue(const String& propertyName)
 {
     if (isCustomPropertyName(propertyName)) {
-        RefPtr<CSSValue> value = m_propertySet->getCustomPropertyCSSValue(propertyName);
+        auto value = m_propertySet->customPropertyValue(propertyName);
         if (!value)
             return nullptr;
         return wrapForDeprecatedCSSOM(value.get());
@@ -203,18 +204,19 @@ RefPtr<DeprecatedCSSOMValue> PropertySetCSSStyleDeclaration::getPropertyCSSValue
     CSSPropertyID propertyID = cssPropertyID(propertyName);
     if (!isExposed(propertyID))
         return nullptr;
+<<<<<<< HEAD
     return wrapForDeprecatedCSSOM(m_propertySet->getPropertyCSSValue(propertyID).get());
+=======
+    return wrapForDeprecatedCSSOM(m_propertySet->propertyValue(propertyID).get());
+>>>>>>> 525765f8975d (start)
 }
 
 String PropertySetCSSStyleDeclaration::getPropertyValue(const String& propertyName)
 {
     if (isCustomPropertyName(propertyName))
-        return m_propertySet->getCustomPropertyValue(propertyName);
+        return m_propertySet->customPropertyAsString(propertyName);
 
-    CSSPropertyID propertyID = cssPropertyID(propertyName);
-    if (!isExposed(propertyID))
-        return String();
-    return getPropertyValueInternal(propertyID);
+    return getPropertyValueInternal(cssPropertyID(propertyName));
 }
 
 String PropertySetCSSStyleDeclaration::getPropertyPriority(const String& propertyName)
@@ -233,12 +235,12 @@ String PropertySetCSSStyleDeclaration::getPropertyShorthand(const String& proper
     CSSPropertyID propertyID = cssPropertyID(propertyName);
     if (!isExposed(propertyID))
         return String();
-    return m_propertySet->getPropertyShorthand(propertyID);
+    return m_propertySet->deprecatedPropertyShorthandName(propertyID);
 }
 
 bool PropertySetCSSStyleDeclaration::isPropertyImplicit(const String& propertyName)
 {
-    return m_propertySet->isPropertyImplicit(cssPropertyID(propertyName));
+    return m_propertySet->deprecatedIsPropertyImplicit(cssPropertyID(propertyName));
 }
 
 ExceptionOr<void> PropertySetCSSStyleDeclaration::setProperty(const String& propertyName, const String& value, const String& priority)
@@ -298,13 +300,12 @@ ExceptionOr<String> PropertySetCSSStyleDeclaration::removeProperty(const String&
     return result;
 }
 
-String PropertySetCSSStyleDeclaration::getPropertyValueInternal(CSSPropertyID propertyID)
+String PropertySetCSSStyleDeclaration::getPropertyValueInternal(CSSPropertyID propertyID) const
 {
     if (!isExposed(propertyID))
         return { };
 
-    auto value = m_propertySet->getPropertyValue(propertyID);
-
+    auto value = m_propertySet->propertyAsString(propertyID);
     if (!value.isEmpty())
         return value;
 

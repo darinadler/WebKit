@@ -230,7 +230,7 @@ ExceptionOr<DOMMatrixReadOnly::AbstractMatrix> DOMMatrixReadOnly::parseStringInt
         return Exception { SyntaxError };
 
     // Convert to TransformOperations. This can fail if a property requires style (i.e., param uses 'ems' or 'exs')
-    auto value = styleDeclaration->getPropertyCSSValue(CSSPropertyTransform);
+    auto value = styleDeclaration->propertyValue(CSSPropertyTransform);
 
     // Check for a "none" or empty transform. In these cases we can use the default identity matrix.
     if (!value || (is<CSSPrimitiveValue>(*value) && downcast<CSSPrimitiveValue>(*value).valueID() == CSSValueNone))

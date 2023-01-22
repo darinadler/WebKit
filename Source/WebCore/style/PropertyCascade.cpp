@@ -225,9 +225,9 @@ bool PropertyCascade::addMatch(const MatchedProperties& matchedProperties, Casca
             continue;
 
         if (propertyID < firstDeferredProperty)
-            set(propertyID, *current.value(), matchedProperties, cascadeLevel);
+            set(propertyID, *current.deprecatedValue(), matchedProperties, cascadeLevel);
         else
-            setDeferred(propertyID, *current.value(), matchedProperties, cascadeLevel);
+            setDeferred(propertyID, *current.deprecatedValue(), matchedProperties, cascadeLevel);
     }
 
     return hasImportantProperties;

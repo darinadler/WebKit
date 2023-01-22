@@ -64,7 +64,7 @@ auto DeclaredStylePropertyMap::entries(ScriptExecutionContext* context) const ->
 
     auto& document = downcast<Document>(*context);
     return map(styleRule->properties(), [&] (auto propertyReference) {
-        return StylePropertyMapEntry { propertyReference.cssName(), reifyValueToVector(RefPtr<CSSValue> { propertyReference.value() }, propertyReference.id(), document) };
+        return StylePropertyMapEntry { propertyReference.name(), reifyValueToVector(RefPtr<CSSValue> { propertyReference.deprecatedValue() }, propertyReference.id(), document) };
     });
 }
 
@@ -73,7 +73,7 @@ RefPtr<CSSValue> DeclaredStylePropertyMap::propertyValue(CSSPropertyID propertyI
     auto* styleRule = this->styleRule();
     if (!styleRule)
         return nullptr;
-    return styleRule->properties().getPropertyCSSValue(propertyID);
+    return styleRule->properties().propertyValue(propertyID);
 }
 
 String DeclaredStylePropertyMap::shorthandPropertySerialization(CSSPropertyID propertyID) const
@@ -81,7 +81,7 @@ String DeclaredStylePropertyMap::shorthandPropertySerialization(CSSPropertyID pr
     auto* styleRule = this->styleRule();
     if (!styleRule)
         return { };
-    return styleRule->properties().getPropertyValue(propertyID);
+    return styleRule->properties().propertyAsString(propertyID);
 }
 
 RefPtr<CSSValue> DeclaredStylePropertyMap::customPropertyValue(const AtomString& propertyName) const
@@ -89,7 +89,7 @@ RefPtr<CSSValue> DeclaredStylePropertyMap::customPropertyValue(const AtomString&
     auto* styleRule = this->styleRule();
     if (!styleRule)
         return nullptr;
-    return styleRule->properties().getCustomPropertyCSSValue(propertyName.string());
+    return styleRule->properties().customPropertyValue(propertyName.string());
 }
 
 bool DeclaredStylePropertyMap::setShorthandProperty(CSSPropertyID propertyID, const String& value)

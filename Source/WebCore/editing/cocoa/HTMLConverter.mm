@@ -550,10 +550,10 @@ RefPtr<CSSValue> HTMLConverterCaches::inlineStylePropertyForElement(Element& ele
 {
     if (propertyId == CSSPropertyInvalid || !is<StyledElement>(element))
         return nullptr;
-    const StyleProperties* properties = downcast<StyledElement>(element).inlineStyle();
+    auto* properties = downcast<StyledElement>(element).inlineStyle();
     if (!properties)
         return nullptr;
-    return properties->getPropertyCSSValue(propertyId);
+    return properties->propertyValue(propertyId);
 }
 
 static bool stringFromCSSValue(CSSValue& value, String& result)

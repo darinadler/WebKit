@@ -2457,6 +2457,7 @@ class GenerateCSSPropertyNames:
             headers=[
                 "CSSProperty.h",
                 "Settings.h",
+                "WritingMode.h",
             ],
             system_headers=[
                 "<string.h>",
@@ -2575,10 +2576,12 @@ class GenerateCSSPropertyNames:
                 if (!nameForCSS)
                     return emptyString();
 
+                bool sawHyphen = false;
                 auto* propertyNamePointer = nameForCSS;
                 auto* nextCharacter = characters;
                 while (char character = *propertyNamePointer++) {
                     if (character == '-') {
+                        sawHyphen = true;
                         char nextCharacter = *propertyNamePointer++;
                         if (!nextCharacter)
                             break;
@@ -2586,6 +2589,8 @@ class GenerateCSSPropertyNames:
                     }
                     *nextCharacter++ = character;
                 }
+                if (!sawHyphen)
+                    return nameString(id);
                 unsigned length = nextCharacter - characters;
                 return { characters, length };
             }
@@ -3736,7 +3741,7 @@ class GenerateStylePropertyShorthandFunctions:
             to.write(f"StylePropertyShorthand {property.id_without_prefix_with_lowercase_first_letter}Shorthand()")
             to.write(f"{{")
             with to.indent():
-                to.write(f"static const CSSPropertyID {property.id_without_prefix_with_lowercase_first_letter}Properties[] = {{")
+                to.write(f"static constexpr CSSPropertyID {property.id_without_prefix_with_lowercase_first_letter}Properties[] = {{")
 
                 with to.indent():
                     shorthand_to_longhand_count[property] = 0

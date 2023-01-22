@@ -56,17 +56,22 @@
 
 namespace WebCore {
 
-DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleProperties);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ImmutableStyleProperties);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MutableStyleProperties);
 
 constexpr unsigned maxShorthandLength = 17; // FIXME: Generate this from CSSProperties.json.
 constexpr unsigned maxShorthandsForLonghand = 4; // FIXME: Generate this from CSSProperties.json and use it for StylePropertyShorthandVector too.
 
-static size_t sizeForImmutableStylePropertiesWithPropertyCount(unsigned count)
+static constexpr size_t sizeForImmutableStylePropertiesWithPropertyCount(unsigned count)
 {
     return sizeof(ImmutableStyleProperties) - sizeof(void*) + sizeof(StylePropertyMetadata) * count + sizeof(PackedPtr<const CSSValue>) * count;
 }
+
+// See the function above if you need to update this.
+struct SameSizeAsStyleProperties : public RefCounted<SameSizeAsStyleProperties> {
+    unsigned bitfield;
+};
+static_assert(sizeof(StyleProperties) == sizeof(SameSizeAsStyleProperties), "style property set should stay small");
 
 static bool isValueIDIncludingList(const CSSValue& value, CSSValueID id)
 {
@@ -80,39 +85,38 @@ static bool isValueIDIncludingList(const CSSValue& value, CSSValueID id)
     return isValueID(value, id);
 }
 
-Ref<ImmutableStyleProperties> ImmutableStyleProperties::create(const CSSProperty* properties, unsigned count, CSSParserMode cssParserMode)
+Ref<ImmutableStyleProperties> ImmutableStyleProperties::create(Span<const CSSProperty> properties, CSSParserMode mode)
 {
-    void* slot = ImmutableStylePropertiesMalloc::malloc(sizeForImmutableStylePropertiesWithPropertyCount(count));
-    return adoptRef(*new (NotNull, slot) ImmutableStyleProperties(properties, count, cssParserMode));
+    void* slot = ImmutableStylePropertiesMalloc::malloc(sizeForImmutableStylePropertiesWithPropertyCount(properties.size()));
+    return adoptRef(*new (NotNull, slot) ImmutableStyleProperties(properties, mode));
 }
 
 Ref<ImmutableStyleProperties> StyleProperties::immutableCopyIfNeeded() const
 {
     if (is<ImmutableStyleProperties>(*this))
         return downcast<ImmutableStyleProperties>(const_cast<StyleProperties&>(*this));
-    const MutableStyleProperties& mutableThis = downcast<MutableStyleProperties>(*this);
-    return ImmutableStyleProperties::create(mutableThis.m_propertyVector.data(), mutableThis.m_propertyVector.size(), cssParserMode());
+    return ImmutableStyleProperties::create(downcast<MutableStyleProperties>(*this).m_propertyVector.span(), cssParserMode());
 }
 
 MutableStyleProperties::MutableStyleProperties(CSSParserMode cssParserMode)
-    : StyleProperties(cssParserMode, MutablePropertiesType)
+    : StyleProperties(cssParserMode, Mutable)
 {
 }
 
-MutableStyleProperties::MutableStyleProperties(Vector<CSSProperty>&& properties)
-    : StyleProperties(HTMLStandardMode, MutablePropertiesType)
+MutableStyleProperties::MutableStyleProperties(PropertyVector&& properties)
+    : StyleProperties(HTMLStandardMode, Mutable)
     , m_propertyVector(WTFMove(properties))
 {
 }
 
 MutableStyleProperties::~MutableStyleProperties() = default;
 
-ImmutableStyleProperties::ImmutableStyleProperties(const CSSProperty* properties, unsigned length, CSSParserMode cssParserMode)
-    : StyleProperties(cssParserMode, length)
+ImmutableStyleProperties::ImmutableStyleProperties(Span<const CSSProperty> properties, CSSParserMode mode)
+    : StyleProperties(mode, properties.size())
 {
-    StylePropertyMetadata* metadataArray = const_cast<StylePropertyMetadata*>(this->metadataArray());
-    PackedPtr<CSSValue>* valueArray = bitwise_cast<PackedPtr<CSSValue>*>(this->valueArray());
-    for (unsigned i = 0; i < length; ++i) {
+    auto* metadataArray = const_cast<StylePropertyMetadata*>(this->metadataArray());
+    auto* valueArray = bitwise_cast<PackedPtr<const CSSValue>*>(this->valueArray());
+    for (unsigned i = 0; i < properties.size(); ++i) {
         metadataArray[i] = properties[i].metadata();
         auto* value = properties[i].value();
         valueArray[i] = value;
@@ -122,23 +126,23 @@ ImmutableStyleProperties::ImmutableStyleProperties(const CSSProperty* properties
 
 ImmutableStyleProperties::~ImmutableStyleProperties()
 {
-    PackedPtr<CSSValue>* valueArray = bitwise_cast<PackedPtr<CSSValue>*>(this->valueArray());
-    for (unsigned i = 0; i < m_arraySize; ++i)
+    auto* valueArray = bitwise_cast<PackedPtr<const CSSValue>*>(this->valueArray());
+    for (unsigned i = 0; i < propertyCount(); ++i)
         valueArray[i]->deref();
 }
 
 MutableStyleProperties::MutableStyleProperties(const StyleProperties& other)
-    : StyleProperties(other.cssParserMode(), MutablePropertiesType)
+    : StyleProperties(other.cssParserMode(), Mutable)
 {
     if (is<MutableStyleProperties>(other))
         m_propertyVector = downcast<MutableStyleProperties>(other).m_propertyVector;
     else
-        m_propertyVector = map(downcast<ImmutableStyleProperties>(other), [] (auto property) { return property.toCSSProperty(); });
+        m_propertyVector = map(downcast<ImmutableStyleProperties>(other), [] (auto property) { return property.deprecatedCSSProperty(); });
 }
 
 static inline CSSValueID valueIDExpandingInitialValuePlaceholder(CSSPropertyID property, const CSSValue& value)
 {
-    return value.isImplicitInitialValue() ? initialValueIDForLonghand(property) : valueID(value);
+    return value.isInitialValuePlaceholder() ? initialValueIDForLonghand(property) : valueID(value);
 }
 
 static inline std::optional<CSSValueID> valueIDExpandingInitialValuePlaceholder(CSSPropertyID property, const CSSValue* value)
@@ -162,6 +166,19 @@ static String serializeLonghandValue(CSSPropertyID property, const CSSValue& val
             return makeString(downcast<CSSPrimitiveValue>(value).doubleValue() / 100);
         FALLTHROUGH;
     default:
+        // Special case for values that may have come from background and mask shorthands.
+        // Those are comma-separated lists that may contain initial value placeholders.
+        // Other lists won't have any initial value placeholders; it's harmless to use this code path for them.
+        if (value.isBaseValueList()) {
+            auto& list = downcast<CSSValueList>(value);
+            if (list.separator() == CSSValueList::CommaSeparator) {
+                StringBuilder result;
+                auto separator = ""_s;
+                for (auto& individualValue : downcast<CSSValueList>(value))
+                    result.append(std::exchange(separator, ", "_s), textExpandingInitialValuePlaceholder(property, individualValue));
+                return result.toString();
+            }
+        }
         return value.isImplicitInitialValue() ? initialValueTextForLonghand(property) : value.cssText();
     }
 }
@@ -334,7 +351,7 @@ bool ShorthandSerializer::commonSerializationChecks(const StyleProperties& prope
     return false;
 }
 
-String StyleProperties::getPropertyValue(CSSPropertyID propertyID) const
+String StyleProperties::propertyAsString(CSSPropertyID propertyID) const
 {
     if (auto value = getPropertyCSSValue(propertyID))
         return serializeLonghandValue(propertyID, *value);
@@ -515,7 +532,7 @@ String ShorthandSerializer::serialize()
 
 std::optional<Color> StyleProperties::propertyAsColor(CSSPropertyID property) const
 {
-    auto colorValue = getPropertyCSSValue(property);
+    auto colorValue = propertyValue(property);
     if (!is<CSSPrimitiveValue>(colorValue))
         return std::nullopt;
 
@@ -525,13 +542,12 @@ std::optional<Color> StyleProperties::propertyAsColor(CSSPropertyID property) co
 
 std::optional<CSSValueID> StyleProperties::propertyAsValueID(CSSPropertyID property) const
 {
-    return valueIDExpandingInitialValuePlaceholder(property, getPropertyCSSValue(property).get());
+    return valueIDExpandingInitialValuePlaceholder(property, propertyValue(property).get());
 }
 
-String StyleProperties::getCustomPropertyValue(const String& propertyName) const
+String StyleProperties::customPropertyAsString(StringView propertyName) const
 {
-    RefPtr<CSSValue> value = getCustomPropertyCSSValue(propertyName);
-    if (value)
+    if (auto value = customPropertyValue(propertyName))
         return value->cssText();
     return String();
 }
@@ -704,13 +720,7 @@ String ShorthandSerializer::serializeQuad() const
     auto right = serializeLonghandValue(1);
     auto bottom = serializeLonghandValue(2);
     auto left = serializeLonghandValue(3);
-    if (left != right)
-        return makeString(top, ' ', right, ' ', bottom, ' ', left);
-    if (bottom != top)
-        return makeString(top, ' ', right, ' ', bottom);
-    if (right != top)
-        return makeString(top, ' ', right);
-    return top;
+    return Quad::generateCSSString(WTFMove(top), right, bottom, left);
 }
 
 class LayerValues {
@@ -721,7 +731,7 @@ public:
         ASSERT(m_shorthand.length() <= maxShorthandLength);
     }
 
-    void set(unsigned index, CSSValue* value, bool skipSerializing = false)
+    void set(unsigned index, const CSSValue* value, bool skipSerializing = false)
     {
         ASSERT(index < m_shorthand.length());
         m_skipSerializing[index] = skipSerializing
@@ -795,7 +805,7 @@ public:
 private:
     const StylePropertyShorthand& m_shorthand;
     bool m_skipSerializing[maxShorthandLength] { };
-    RefPtr<CSSValue> m_values[maxShorthandLength];
+    RefPtr<const CSSValue> m_values[maxShorthandLength];
 };
 
 String ShorthandSerializer::serializeLayered() const
@@ -1039,7 +1049,7 @@ static bool isCustomIdentValue(const CSSValue& value)
     return is<CSSPrimitiveValue>(value) && downcast<CSSPrimitiveValue>(value).isCustomIdent();
 }
 
-static bool canOmitTrailingGridAreaValue(CSSValue& value, CSSValue& trailing)
+static bool canOmitTrailingGridAreaValue(const CSSValue& value, const CSSValue& trailing)
 {
     if (isCustomIdentValue(value))
         return isCustomIdentValue(trailing) && value.cssText() == trailing.cssText();
@@ -1295,13 +1305,13 @@ bool ShorthandSerializer::subsequentLonghandsHaveInitialValues(unsigned startInd
     return true;
 }
 
-RefPtr<CSSValue> StyleProperties::getPropertyCSSValue(CSSPropertyID propertyID) const
+RefPtr<CSSValue> StyleProperties::propertyValue(CSSPropertyID propertyID) const
 {
     int foundPropertyIndex = findPropertyIndex(propertyID);
     if (foundPropertyIndex == -1)
         return nullptr;
     auto property = propertyAt(foundPropertyIndex);
-    auto value = property.value();
+    auto value = property.deprecatedValue();
     // System fonts are represented as CSSPrimitiveValue for various font subproperties, but these must serialize as the empty string.
     // It might be better to implement this as a special CSSValue type instead of turning them into null here.
     if (property.shorthandID() == CSSPropertyFont && CSSPropertyParserHelpers::isSystemFontShorthand(valueID(value)))
@@ -1309,12 +1319,17 @@ RefPtr<CSSValue> StyleProperties::getPropertyCSSValue(CSSPropertyID propertyID) 
     return value;
 }
 
-RefPtr<CSSValue> StyleProperties::getCustomPropertyCSSValue(const String& propertyName) const
+bool StyleProperties::hasProperty(CSSPropertyID propertyID) const
+{
+    return findPropertyIndex(propertyID) != -1;
+}
+
+RefPtr<CSSValue> StyleProperties::customPropertyValue(StringView propertyName) const
 {
     int foundPropertyIndex = findCustomPropertyIndex(propertyName);
     if (foundPropertyIndex == -1)
         return nullptr;
-    return propertyAt(foundPropertyIndex).value();
+    return propertyAt(foundPropertyIndex).deprecatedValue();
 }
 
 bool MutableStyleProperties::removeShorthandProperty(CSSPropertyID propertyID, String* returnText)
@@ -1323,8 +1338,8 @@ bool MutableStyleProperties::removeShorthandProperty(CSSPropertyID propertyID, S
     if (!shorthand.length())
         return false;
     if (returnText)
-        *returnText = getPropertyValue(propertyID);
-    return removePropertiesInSet(shorthand.properties(), shorthand.length());
+        *returnText = propertyAsString(propertyID);
+    return removePropertiesInSet(shorthand.properties());
 }
 
 bool MutableStyleProperties::removePropertyAtIndex(int index, String* returnText)
@@ -1374,15 +1389,13 @@ bool StyleProperties::propertyIsImportant(CSSPropertyID propertyID) const
     return true;
 }
 
-bool StyleProperties::customPropertyIsImportant(const String& propertyName) const
+bool StyleProperties::customPropertyIsImportant(StringView propertyName) const
 {
     int foundPropertyIndex = findCustomPropertyIndex(propertyName);
-    if (foundPropertyIndex != -1)
-        return propertyAt(foundPropertyIndex).isImportant();
-    return false;
+    return foundPropertyIndex != -1 && propertyAt(foundPropertyIndex).isImportant();
 }
 
-String StyleProperties::getPropertyShorthand(CSSPropertyID propertyID) const
+String StyleProperties::deprecatedPropertyShorthandName(CSSPropertyID propertyID) const
 {
     int foundPropertyIndex = findPropertyIndex(propertyID);
     if (foundPropertyIndex == -1)
@@ -1390,12 +1403,10 @@ String StyleProperties::getPropertyShorthand(CSSPropertyID propertyID) const
     return nameString(propertyAt(foundPropertyIndex).shorthandID());
 }
 
-bool StyleProperties::isPropertyImplicit(CSSPropertyID propertyID) const
+bool StyleProperties::deprecatedIsPropertyImplicit(CSSPropertyID propertyID) const
 {
     int foundPropertyIndex = findPropertyIndex(propertyID);
-    if (foundPropertyIndex == -1)
-        return false;
-    return propertyAt(foundPropertyIndex).isImplicit();
+    return foundPropertyIndex != -1 && propertyAt(foundPropertyIndex).deprecatedIsImplicit();
 }
 
 bool MutableStyleProperties::setProperty(CSSPropertyID propertyID, const String& value, bool important, CSSParserContext parserContext, bool* didFailParsing)
@@ -1446,13 +1457,13 @@ bool MutableStyleProperties::setCustomProperty(const String& propertyName, const
 
 void MutableStyleProperties::setProperty(CSSPropertyID propertyID, RefPtr<CSSValue>&& value, bool important)
 {
-    StylePropertyShorthand shorthand = shorthandForProperty(propertyID);
+    auto shorthand = shorthandForProperty(propertyID);
     if (!shorthand.length()) {
         setProperty(CSSProperty(propertyID, WTFMove(value), important));
         return;
     }
 
-    removePropertiesInSet(shorthand.properties(), shorthand.length());
+    removePropertiesInSet(shorthand.properties());
 
     for (auto longhand : shorthand)
         m_propertyVector.append(CSSProperty(longhand, value.copyRef(), important));
@@ -1523,15 +1534,14 @@ bool MutableStyleProperties::parseDeclaration(const String& styleDeclaration, CS
     return oldProperties != m_propertyVector;
 }
 
-bool MutableStyleProperties::addParsedProperties(const ParsedPropertyVector& properties)
+bool MutableStyleProperties::addParsedProperties(Span<const CSSProperty> properties)
 {
     bool anyChanged = false;
     m_propertyVector.reserveCapacity(m_propertyVector.size() + properties.size());
-    for (const auto& property : properties) {
+    for (auto& property : properties) {
         if (addParsedProperty(property))
             anyChanged = true;
     }
-
     return anyChanged;
 }
 
@@ -1634,7 +1644,7 @@ StringBuilder StyleProperties::asTextInternal() const
     std::bitset<shorthandPropertyCount> shorthandPropertyUsed;
     std::bitset<shorthandPropertyCount> shorthandPropertyAppeared;
 
-    unsigned numDecls = 0;
+    auto separator = "";
     for (auto property : *this) {
         auto propertyID = property.id();
         ASSERT(isLonghand(propertyID) || propertyID == CSSPropertyCustom);
@@ -1665,7 +1675,7 @@ StringBuilder StyleProperties::asTextInternal() const
                 continue;
             shorthandPropertyAppeared.set(shorthandPropertyIndex);
 
-            value = getPropertyValue(shorthandPropertyID);
+            value = propertyAsString(shorthandPropertyID);
             if (!value.isNull()) {
                 propertyID = shorthandPropertyID;
                 shorthandPropertyUsed.set(shorthandPropertyIndex);
@@ -1675,21 +1685,19 @@ StringBuilder StyleProperties::asTextInternal() const
         if (alreadyUsedShorthand)
             continue;
 
+        String name;
+        if (propertyID == CSSPropertyCustom)
+            name = downcast<CSSCustomPropertyValue>(*property.value()).name();
+        else
+            name = nameString(propertyID);
+
         if (value.isNull())
             value = serializeLonghandValue(propertyID, *property.value());
 
-        if (numDecls++)
-            result.append(' ');
-
-        if (propertyID == CSSPropertyCustom)
-            result.append(downcast<CSSCustomPropertyValue>(*property.value()).name());
-        else
-            result.append(nameLiteral(propertyID));
-
-        result.append(": ", value, property.isImportant() ? " !important" : "", ';');
+        result.append(separator, name, ": ", value, property.isImportant() ? " !important" : "", ';');
+        separator = " ";
     }
 
-    ASSERT(!numDecls ^ !result.isEmpty());
     return result;
 }
 
@@ -1701,7 +1709,7 @@ bool StyleProperties::hasCSSOMWrapper() const
 void MutableStyleProperties::mergeAndOverrideOnConflict(const StyleProperties& other)
 {
     for (auto property : other)
-        addParsedProperty(property.toCSSProperty());
+        addParsedProperty(property.deprecatedCSSProperty());
 }
 
 bool StyleProperties::traverseSubresources(const Function<bool(const CachedResource&)>& handler) const
@@ -1713,116 +1721,101 @@ bool StyleProperties::traverseSubresources(const Function<bool(const CachedResou
     return false;
 }
 
-// This is the list of properties we want to copy in the copyBlockProperties() function.
-// It is the list of CSS properties that apply specially to block-level elements.
-static const CSSPropertyID blockProperties[] = {
-    CSSPropertyOrphans,
-    CSSPropertyOverflow, // This can be also be applied to replaced elements
-    CSSPropertyColumnCount,
-    CSSPropertyColumnGap,
-    CSSPropertyRowGap,
-    CSSPropertyColumnRuleColor,
-    CSSPropertyColumnRuleStyle,
-    CSSPropertyColumnRuleWidth,
-    CSSPropertyWebkitColumnBreakBefore,
-    CSSPropertyWebkitColumnBreakAfter,
-    CSSPropertyWebkitColumnBreakInside,
-    CSSPropertyColumnWidth,
-    CSSPropertyPageBreakAfter,
-    CSSPropertyPageBreakBefore,
-    CSSPropertyPageBreakInside,
-    CSSPropertyTextAlign,
-    CSSPropertyTextAlignLast,
-    CSSPropertyTextJustify,
-    CSSPropertyTextIndent,
-    CSSPropertyWidows
-};
-
 void MutableStyleProperties::clear()
 {
     m_propertyVector.clear();
 }
 
-const unsigned numBlockProperties = std::size(blockProperties);
+// This is the list of properties affected by the copyBlockProperties() and removeBlockProperties functions.
+// It is the list of CSS properties that apply specially to block-level elements.
+static constexpr CSSPropertyID blockProperties[] = {
+    CSSPropertyColumnCount,
+    CSSPropertyColumnGap,
+    CSSPropertyColumnRuleColor,
+    CSSPropertyColumnRuleStyle,
+    CSSPropertyColumnRuleWidth,
+    CSSPropertyColumnWidth,
+    CSSPropertyOrphans,
+    CSSPropertyOverflow, // This can be also be applied to replaced elements.
+    CSSPropertyPageBreakAfter,
+    CSSPropertyPageBreakBefore,
+    CSSPropertyPageBreakInside,
+    CSSPropertyRowGap,
+    CSSPropertyTextAlign,
+    CSSPropertyTextAlignLast,
+    CSSPropertyTextIndent,
+    CSSPropertyTextJustify,
+    CSSPropertyWebkitColumnBreakAfter,
+    CSSPropertyWebkitColumnBreakBefore,
+    CSSPropertyWebkitColumnBreakInside,
+    CSSPropertyWidows,
+};
 
 Ref<MutableStyleProperties> StyleProperties::copyBlockProperties() const
 {
-    return copyPropertiesInSet(blockProperties, numBlockProperties);
+    return copyPropertiesInSet(blockProperties);
 }
 
 void MutableStyleProperties::removeBlockProperties()
 {
-    removePropertiesInSet(blockProperties, numBlockProperties);
+    removePropertiesInSet(blockProperties);
 }
 
-bool MutableStyleProperties::removePropertiesInSet(const CSSPropertyID* set, unsigned length)
+bool MutableStyleProperties::removePropertiesInSet(Span<const CSSPropertyID> properties)
 {
     if (m_propertyVector.isEmpty())
         return false;
 
-    // FIXME: This is always used with static sets and in that case constructing the hash repeatedly is pretty pointless.
-    HashSet<CSSPropertyID> toRemove;
-    toRemove.add(set, set + length);
-
-    return m_propertyVector.removeAllMatching([&toRemove] (const CSSProperty& property) {
-        return toRemove.contains(property.id());
+    // FIXME: The sets passed in are always known at compile time: constructing a hash table each time is unnecessarily expensive.
+    // FIXME: The sets passed in are relatively small. It's possible a linear or binary search instead would be fast enough.
+    HashSet<CSSPropertyID> set;
+    set.add(properties.begin(), properties.end());
+    return m_propertyVector.removeAllMatching([&set] (const CSSProperty& property) {
+        return set.contains(property.id());
     }) > 0;
 }
 
 int ImmutableStyleProperties::findPropertyIndex(CSSPropertyID propertyID) const
 {
-    // Convert here propertyID into an uint16_t to compare it with the metadata's m_propertyID to avoid
-    // the compiler converting it to an int multiple times in the loop.
+    // Convert to the underlying integer type here for better loop efficiency in some compilers.
     uint16_t id = static_cast<uint16_t>(propertyID);
-    for (int n = m_arraySize - 1 ; n >= 0; --n) {
-        if (metadataArray()[n].m_propertyID == id)
+    for (int n = propertyCount() - 1 ; n >= 0; --n) {
+        if (metadataArray()[n].propertyIDInteger == id)
             return n;
     }
-
     return -1;
 }
 
 int MutableStyleProperties::findPropertyIndex(CSSPropertyID propertyID) const
 {
-    // Convert here propertyID into an uint16_t to compare it with the metadata's m_propertyID to avoid
-    // the compiler converting it to an int multiple times in the loop.
+    // Convert to the underlying integer type here for better loop efficiency in some compilers.
     uint16_t id = static_cast<uint16_t>(propertyID);
     for (int n = m_propertyVector.size() - 1 ; n >= 0; --n) {
-        if (m_propertyVector.at(n).metadata().m_propertyID == id)
+        if (m_propertyVector[n].metadata().propertyIDInteger == id)
             return n;
     }
-
     return -1;
 }
 
 int ImmutableStyleProperties::findCustomPropertyIndex(StringView propertyName) const
 {
-    for (int n = m_arraySize - 1 ; n >= 0; --n) {
-        if (metadataArray()[n].m_propertyID == CSSPropertyCustom) {
-            // We found a custom property. See if the name matches.
-            auto* value = valueArray()[n].get();
-            if (!value)
-                continue;
-            if (downcast<CSSCustomPropertyValue>(*value).name() == propertyName)
+    for (int n = propertyCount() - 1 ; n >= 0; --n) {
+        if (metadataArray()[n].propertyIDInteger == CSSPropertyCustom) {
+            if (downcast<CSSCustomPropertyValue>(*valueArray()[n]).name() == propertyName)
                 return n;
         }
     }
-
     return -1;
 }
 
 int MutableStyleProperties::findCustomPropertyIndex(StringView propertyName) const
 {
     for (int n = m_propertyVector.size() - 1 ; n >= 0; --n) {
-        if (m_propertyVector.at(n).metadata().m_propertyID == CSSPropertyCustom) {
-            // We found a custom property. See if the name matches.
-            if (!m_propertyVector.at(n).value())
-                continue;
-            if (downcast<CSSCustomPropertyValue>(*m_propertyVector.at(n).value()).name() == propertyName)
+        if (m_propertyVector[n].metadata().propertyIDInteger == CSSPropertyCustom) {
+            if (downcast<CSSCustomPropertyValue>(*m_propertyVector[n].value()).name() == propertyName)
                 return n;
         }
     }
-
     return -1;
 }
 
@@ -1831,7 +1824,7 @@ CSSProperty* MutableStyleProperties::findCSSPropertyWithID(CSSPropertyID propert
     int foundPropertyIndex = findPropertyIndex(propertyID);
     if (foundPropertyIndex == -1)
         return nullptr;
-    return &m_propertyVector.at(foundPropertyIndex);
+    return &m_propertyVector[foundPropertyIndex];
 }
 
 CSSProperty* MutableStyleProperties::findCustomCSSPropertyWithName(const String& propertyName)
@@ -1839,15 +1832,24 @@ CSSProperty* MutableStyleProperties::findCustomCSSPropertyWithName(const String&
     int foundPropertyIndex = findCustomPropertyIndex(propertyName);
     if (foundPropertyIndex == -1)
         return nullptr;
-    return &m_propertyVector.at(foundPropertyIndex);
+    return &m_propertyVector[foundPropertyIndex];
 }
 
-bool StyleProperties::propertyMatches(CSSPropertyID propertyID, const CSSValue* propertyValue) const
+bool StyleProperties::propertyMatches(CSSPropertyID propertyID, const CSSValue& expectedValue) const
 {
-    int foundPropertyIndex = findPropertyIndex(propertyID);
-    if (foundPropertyIndex == -1)
+    auto value = propertyValue(propertyID);
+    if (!value)
         return false;
-    return propertyAt(foundPropertyIndex).value()->equals(*propertyValue);
+    if (value->isInitialValuePlaceholder())
+        return isInitialValueForLonghand(propertyID, expectedValue);
+    if (expectedValue.isInitialValuePlaceholder())
+        return false;
+    return value->equals(expectedValue);
+}
+
+bool StyleProperties::propertyMatches(CSSPropertyID propertyID, CSSValueID expectedValue) const
+{
+    return propertyAsValueID(propertyID) == expectedValue;
 }
 
 Ref<MutableStyleProperties> StyleProperties::mutableCopy() const
@@ -1855,21 +1857,16 @@ Ref<MutableStyleProperties> StyleProperties::mutableCopy() const
     return adoptRef(*new MutableStyleProperties(*this));
 }
 
-Ref<MutableStyleProperties> StyleProperties::copyPropertiesInSet(const CSSPropertyID* set, unsigned length) const
+Ref<MutableStyleProperties> StyleProperties::copyPropertiesInSet(Span<const CSSPropertyID> set) const
 {
-    Vector<CSSProperty> list;
-    list.reserveInitialCapacity(length);
-    for (unsigned i = 0; i < length; ++i) {
-        if (auto value = getPropertyCSSValue(set[i]))
-            list.uncheckedAppend(CSSProperty(set[i], WTFMove(value), false));
+    MutableStyleProperties::PropertyVector vector;
+    vector.reserveInitialCapacity(set.size());
+    for (auto property : set) {
+        if (auto value = propertyValue(property))
+            vector.uncheckedAppend(CSSProperty(property, WTFMove(value), false));
     }
-    list.shrinkToFit();
-    return MutableStyleProperties::create(WTFMove(list));
-}
-
-PropertySetCSSStyleDeclaration* MutableStyleProperties::cssStyleDeclaration()
-{
-    return m_cssomWrapper.get();
+    vector.shrinkToFit();
+    return MutableStyleProperties::create(WTFMove(vector));
 }
 
 CSSStyleDeclaration& MutableStyleProperties::ensureCSSStyleDeclaration()
@@ -1899,35 +1896,22 @@ unsigned StyleProperties::averageSizeInBytes()
     return sizeForImmutableStylePropertiesWithPropertyCount(4);
 }
 
-// See the function above if you need to update this.
-struct SameSizeAsStyleProperties : public RefCounted<SameSizeAsStyleProperties> {
-    unsigned bitfield;
-};
-static_assert(sizeof(StyleProperties) == sizeof(SameSizeAsStyleProperties), "style property set should stay small");
-
-#ifndef NDEBUG
-void StyleProperties::showStyle()
+Ref<MutableStyleProperties> MutableStyleProperties::create()
 {
-    fprintf(stderr, "%s\n", asText().ascii().data());
-}
-#endif
-
-Ref<MutableStyleProperties> MutableStyleProperties::create(CSSParserMode cssParserMode)
-{
-    return adoptRef(*new MutableStyleProperties(cssParserMode));
+    return adoptRef(*new MutableStyleProperties(HTMLQuirksMode));
 }
 
-Ref<MutableStyleProperties> MutableStyleProperties::create(Vector<CSSProperty>&& properties)
+Ref<MutableStyleProperties> MutableStyleProperties::create(CSSParserMode mode)
+{
+    return adoptRef(*new MutableStyleProperties(mode));
+}
+
+Ref<MutableStyleProperties> MutableStyleProperties::create(PropertyVector&& properties)
 {
     return adoptRef(*new MutableStyleProperties(WTFMove(properties)));
 }
 
-Ref<MutableStyleProperties> MutableStyleProperties::createEmpty()
-{
-    return adoptRef(*new MutableStyleProperties({ }));
-}
-
-String StyleProperties::PropertyReference::cssName() const
+String StyleProperties::PropertyReference::name() const
 {
     if (id() == CSSPropertyCustom)
         return downcast<CSSCustomPropertyValue>(*value()).name();
@@ -1936,7 +1920,16 @@ String StyleProperties::PropertyReference::cssName() const
 
 String StyleProperties::PropertyReference::cssText() const
 {
-    return makeString(cssName(), ": ", serializeLonghandValue(id(), *m_value), isImportant() ? " !important;" : ";");
+    return makeString(name(), ": ", serializeLonghandValue(id(), *m_value), isImportant() ? " !important;" : ";");
 }
+
+#ifndef NDEBUG
+
+void StyleProperties::showStyle()
+{
+    fprintf(stderr, "%s\n", asText().ascii().data());
+}
+
+#endif
 
 } // namespace WebCore

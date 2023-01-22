@@ -34,6 +34,7 @@
 #include "CSSBasicShapes.h"
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSValuePool.h"
+#include "CalculationValue.h"
 #include "Pair.h"
 #include "RenderStyle.h"
 #include "SVGPathByteStream.h"

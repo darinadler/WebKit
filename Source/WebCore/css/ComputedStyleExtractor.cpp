@@ -2834,6 +2834,11 @@ RefPtr<CSSValue> ComputedStyleExtractor::propertyValue(CSSPropertyID propertyID,
     return valueForPropertyInStyle(*style, propertyID, valueType == PropertyValueType::Resolved ? styledRenderer() : nullptr, valueType);
 }
 
+bool ComputedStyleExtractor::hasProperty(CSSPropertyID propertyID)
+{
+    return propertyValue(propertyID);
+}
+
 RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderStyle& style, CSSPropertyID propertyID, RenderElement* renderer, PropertyValueType valueType)
 {
     auto& cssValuePool = CSSValuePool::singleton();
@@ -4178,11 +4183,11 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyQuotes:
         return valueForQuotes(style.quotes());
 
-    /* Unimplemented CSS 3 properties (including CSS3 shorthand properties) */
+    // Unimplemented CSS 3 properties (including CSS3 shorthand properties).
     case CSSPropertyAll:
         return nullptr;
 
-    /* Directional properties are resolved by resolveDirectionAwareProperty() before the switch. */
+    // Directional properties are resolved by resolveDirectionAwareProperty() before the switch.
     case CSSPropertyBorderBlockEndColor:
     case CSSPropertyBorderBlockEndStyle:
     case CSSPropertyBorderBlockEndWidth:
@@ -4263,7 +4268,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertySyntax:
         return nullptr;
 
-    /* Unimplemented @font-face properties */
+    // Unimplemented @font-face properties.
     case CSSPropertySrc:
     case CSSPropertyUnicodeRange:
     case CSSPropertyFontDisplay:
@@ -4274,12 +4279,12 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyOverrideColors:
         return nullptr;
 
-    /* Other unimplemented properties */
+    // Other unimplemented properties.
     case CSSPropertyPage: // for @page
     case CSSPropertySize: // for @page
         return nullptr;
 
-    /* Unimplemented -webkit- properties */
+    // Unimplemented -webkit- properties.
     case CSSPropertyWebkitMask:
     case CSSPropertyPerspectiveOriginX:
     case CSSPropertyPerspectiveOriginY:
@@ -4328,22 +4333,22 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     return nullptr;
 }
 
-bool ComputedStyleExtractor::propertyMatches(CSSPropertyID propertyID, const CSSValue* value)
+bool ComputedStyleExtractor::propertyMatches(CSSPropertyID propertyID, const CSSValue& value)
 {
     if (!m_element)
         return false;
-    if (propertyID == CSSPropertyFontSize && is<CSSPrimitiveValue>(*value)) {
+    if (propertyID == CSSPropertyFontSize && is<CSSPrimitiveValue>(value)) {
         m_element->document().updateLayoutIgnorePendingStylesheets();
         if (auto* style = m_element->computedStyle(m_pseudoElementSpecifier)) {
             if (CSSValueID sizeIdentifier = style->fontDescription().keywordSizeAsIdentifier()) {
-                auto& primitiveValue = downcast<CSSPrimitiveValue>(*value);
+                auto& primitiveValue = downcast<CSSPrimitiveValue>(value);
                 if (primitiveValue.isValueID() && primitiveValue.valueID() == sizeIdentifier)
                     return true;
             }
         }
     }
-    RefPtr<CSSValue> computedValue = propertyValue(propertyID);
-    return computedValue && value && computedValue->equals(*value);
+    auto computedValue = propertyValue(propertyID);
+    return computedValue && computedValue->equals(value);
 }
 
 Ref<CSSValueList> ComputedStyleExtractor::getCSSPropertyValuesForShorthandProperties(const StylePropertyShorthand& shorthand)
@@ -4412,16 +4417,16 @@ Ref<CSSValueList> ComputedStyleExtractor::getCSSPropertyValuesForGridShorthand(c
     return list;
 }
 
-Ref<MutableStyleProperties> ComputedStyleExtractor::copyPropertiesInSet(const CSSPropertyID* set, unsigned length)
+Ref<MutableStyleProperties> ComputedStyleExtractor::copyPropertiesInSet(Span<const CSSPropertyID> set)
 {
-    Vector<CSSProperty> list;
-    list.reserveInitialCapacity(length);
-    for (unsigned i = 0; i < length; ++i) {
-        if (auto value = propertyValue(set[i]))
-            list.uncheckedAppend(CSSProperty(set[i], WTFMove(value), false));
+    Vector<CSSProperty> vector;
+    vector.reserveInitialCapacity(set.size());
+    for (auto property : set) {
+        if (auto value = propertyValue(property))
+            vector.uncheckedAppend(CSSProperty(property, WTFMove(value), false));
     }
-    list.shrinkToFit();
-    return MutableStyleProperties::create(WTFMove(list));
+    vector.shrinkToFit();
+    return MutableStyleProperties::create(vector.span());
 }
 
 Ref<MutableStyleProperties> ComputedStyleExtractor::copyProperties()
@@ -4431,7 +4436,7 @@ Ref<MutableStyleProperties> ComputedStyleExtractor::copyProperties()
         if (!value)
             return std::nullopt;
         return { { property, WTFMove(value) } };
-    }));
+    }).span());
 }
 
 size_t ComputedStyleExtractor::getLayerCount(CSSPropertyID property)

@@ -165,10 +165,10 @@ static String inputEventDataForEditingStyleAndAction(const StyleProperties* styl
 
     switch (action) {
     case EditAction::SetColor:
-        return style->getPropertyValue(CSSPropertyColor);
+        return style->propertyAsString(CSSPropertyColor);
     case EditAction::SetInlineWritingDirection:
     case EditAction::SetBlockWritingDirection:
-        return style->getPropertyValue(CSSPropertyDirection);
+        return style->propertyAsString(CSSPropertyDirection);
     default:
         return { };
     }
@@ -1092,7 +1092,7 @@ String Editor::selectionStartCSSPropertyValue(CSSPropertyID propertyID)
 
     if (propertyID == CSSPropertyFontSize)
         return String::number(selectionStyle->legacyFontSize(document()));
-    return selectionStyle->style()->getPropertyValue(propertyID);
+    return selectionStyle->style()->propertyAsString(propertyID);
 }
 
 void Editor::indent()
@@ -4170,12 +4170,11 @@ FontAttributes Editor::fontAttributesAtSelectionStart()
 
     RefPtr typingStyle { m_document.selection().typingStyle() };
     if (typingStyle && typingStyle->style()) {
-        auto value = typingStyle->style()->getPropertyCSSValue(CSSPropertyWebkitTextDecorationsInEffect);
-        if (value && value->isValueList()) {
-            auto& valueList = downcast<CSSValueList>(*value);
-            if (valueList.hasValue(CSSValueLineThrough))
+        auto value = typingStyle->style()->propertyValue(CSSPropertyWebkitTextDecorationsInEffect);
+        if (auto valueList = dynamicDowncast<CSSValueList>(value.get())) {
+            if (valueList->hasValue(CSSValueLineThrough))
                 attributes.hasStrikeThrough = true;
-            if (valueList.hasValue(CSSValueUnderline))
+            if (valueList->hasValue(CSSValueUnderline))
                 attributes.hasUnderline = true;
         }
     } else {

@@ -29,6 +29,7 @@
 #if PLATFORM(MAC)
 
 #import "Blob.h"
+#import "CSSMarkup.h"
 #import "CSSPrimitiveValueMappings.h"
 #import "CSSValuePool.h"
 #import "Color.h"
@@ -121,9 +122,7 @@ void Editor::platformPasteFont()
     style->setProperty(CSSPropertyBackgroundColor, CSSValuePool::singleton().createColorValue(backgroundColor));
 
     if (NSFont *font = dynamic_objc_cast<NSFont>([fontAttributes objectForKey:NSFontAttributeName])) {
-        // FIXME: Need more sophisticated escaping code if we want to handle family names
-        // with characters like single quote or backslash in their names.
-        style->setProperty(CSSPropertyFontFamily, [NSString stringWithFormat:@"'%@'", [font familyName]]);
+        style->setProperty(CSSPropertyFontFamily, serializeString([font familyName]));
         style->setProperty(CSSPropertyFontSize, CSSPrimitiveValue::create([font pointSize], CSSUnitType::CSS_PX));
         // FIXME: Map to the entire range of CSS weight values.
         style->setProperty(CSSPropertyFontWeight, ([NSFontManager.sharedFontManager weightOfFont:font] >= 7) ? CSSValueBold : CSSValueNormal);

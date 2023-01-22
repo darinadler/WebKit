@@ -175,14 +175,14 @@ void CSSFontSelector::addFontFaceRule(StyleRuleFontFace& fontFaceRule, bool isIn
     }
 
     const StyleProperties& style = fontFaceRule.properties();
-    RefPtr<CSSValue> fontFamily = style.getPropertyCSSValue(CSSPropertyFontFamily);
-    RefPtr<CSSValue> fontStyle = style.getPropertyCSSValue(CSSPropertyFontStyle);
-    RefPtr<CSSValue> fontWeight = style.getPropertyCSSValue(CSSPropertyFontWeight);
-    RefPtr<CSSValue> fontStretch = style.getPropertyCSSValue(CSSPropertyFontStretch);
-    RefPtr<CSSValue> src = style.getPropertyCSSValue(CSSPropertySrc);
-    RefPtr<CSSValue> unicodeRange = style.getPropertyCSSValue(CSSPropertyUnicodeRange);
-    RefPtr<CSSValue> featureSettings = style.getPropertyCSSValue(CSSPropertyFontFeatureSettings);
-    RefPtr<CSSValue> display = style.getPropertyCSSValue(CSSPropertyFontDisplay);
+    auto fontFamily = style.propertyValue(CSSPropertyFontFamily);
+    auto fontStyle = style.propertyValue(CSSPropertyFontStyle);
+    auto fontWeight = style.propertyValue(CSSPropertyFontWeight);
+    auto fontStretch = style.propertyValue(CSSPropertyFontStretch);
+    auto src = style.propertyValue(CSSPropertySrc);
+    auto unicodeRange = style.propertyValue(CSSPropertyUnicodeRange);
+    auto featureSettings = style.propertyValue(CSSPropertyFontFeatureSettings);
+    auto display = style.propertyValue(CSSPropertyFontDisplay);
     if (!is<CSSValueList>(fontFamily) || !is<CSSValueList>(src) || (unicodeRange && !is<CSSValueList>(*unicodeRange)))
         return;
 

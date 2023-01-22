@@ -47,6 +47,7 @@
 #include "CSSSubgridValue.h"
 #include "CalcExpressionLength.h"
 #include "CalcExpressionOperation.h"
+#include "CalculationValue.h"
 #include "FontPalette.h"
 #include "FontSelectionValueInlines.h"
 #include "Frame.h"

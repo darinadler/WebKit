@@ -359,7 +359,7 @@ Vector<Ref<StyleRuleKeyframe>> Resolver::keyframeRulesForName(const AtomString& 
         return { };
 
     auto compositeOperationForKeyframe = [](Ref<StyleRuleKeyframe> keyframe) -> CompositeOperation {
-        if (auto compositeOperationCSSValue = keyframe->properties().getPropertyCSSValue(CSSPropertyAnimationComposition)) {
+        if (auto compositeOperationCSSValue = keyframe->properties().propertyValue(CSSPropertyAnimationComposition)) {
             if (auto compositeOperation = toCompositeOperation(*compositeOperationCSSValue))
                 return *compositeOperation;
         }
@@ -367,7 +367,7 @@ Vector<Ref<StyleRuleKeyframe>> Resolver::keyframeRulesForName(const AtomString& 
     };
 
     auto timingFunctionForKeyframe = [](Ref<StyleRuleKeyframe> keyframe) -> RefPtr<const TimingFunction> {
-        if (auto timingFunctionCSSValue = keyframe->properties().getPropertyCSSValue(CSSPropertyAnimationTimingFunction)) {
+        if (auto timingFunctionCSSValue = keyframe->properties().propertyValue(CSSPropertyAnimationTimingFunction)) {
             if (auto timingFunction = TimingFunction::createFromCSSValue(*timingFunctionCSSValue))
                 return timingFunction;
         }
@@ -448,9 +448,9 @@ void Resolver::keyframeStylesForAnimation(const Element& element, const RenderSt
             keyframeValue.setKey(key);
             if (!containsCSSVariableReferences)
                 containsCSSVariableReferences = keyframeRule->containsCSSVariableReferences();
-            if (auto timingFunctionCSSValue = keyframeRule->properties().getPropertyCSSValue(CSSPropertyAnimationTimingFunction))
+            if (auto timingFunctionCSSValue = keyframeRule->properties().propertyValue(CSSPropertyAnimationTimingFunction))
                 keyframeValue.setTimingFunction(TimingFunction::createFromCSSValue(*timingFunctionCSSValue.get()));
-            if (auto compositeOperationCSSValue = keyframeRule->properties().getPropertyCSSValue(CSSPropertyAnimationComposition)) {
+            if (auto compositeOperationCSSValue = keyframeRule->properties().propertyValue(CSSPropertyAnimationComposition)) {
                 if (auto compositeOperation = toCompositeOperation(*compositeOperationCSSValue))
                     keyframeValue.setCompositeOperation(*compositeOperation);
             }

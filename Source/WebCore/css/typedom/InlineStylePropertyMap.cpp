@@ -46,21 +46,21 @@ InlineStylePropertyMap::InlineStylePropertyMap(StyledElement& element)
 RefPtr<CSSValue> InlineStylePropertyMap::propertyValue(CSSPropertyID propertyID) const
 {
     if (auto* inlineStyle = m_element ? m_element->inlineStyle() : nullptr)
-        return inlineStyle->getPropertyCSSValue(propertyID);
+        return inlineStyle->propertyValue(propertyID);
     return nullptr;
 }
 
 String InlineStylePropertyMap::shorthandPropertySerialization(CSSPropertyID propertyID) const
 {
     if (auto* inlineStyle = m_element ? m_element->inlineStyle() : nullptr)
-        return inlineStyle->getPropertyValue(propertyID);
+        return inlineStyle->propertyAsString(propertyID);
     return String();
 }
 
 RefPtr<CSSValue> InlineStylePropertyMap::customPropertyValue(const AtomString& property) const
 {
     if (auto* inlineStyle = m_element ? m_element->inlineStyle() : nullptr)
-        return inlineStyle->getCustomPropertyCSSValue(property.string());
+        return inlineStyle->customPropertyValue(property.string());
     return nullptr;
 }
 
@@ -81,7 +81,7 @@ auto InlineStylePropertyMap::entries(ScriptExecutionContext* context) const -> V
 
     auto& document = downcast<Document>(*context);
     return map(*inlineStyle, [&document] (auto property) {
-        return StylePropertyMapEntry(property.cssName(), reifyValueToVector(RefPtr<CSSValue> { property.value() }, property.id(), document));
+        return StylePropertyMapEntry(property.name(), reifyValueToVector(RefPtr<CSSValue> { property.deprecatedValue() }, property.id(), document));
     });
 }
 

@@ -28,15 +28,15 @@ namespace WebCore {
 
 class RectBase {
 public:
-    CSSPrimitiveValue* top() const { return m_top.get(); }
-    CSSPrimitiveValue* right() const { return m_right.get(); }
-    CSSPrimitiveValue* bottom() const { return m_bottom.get(); }
-    CSSPrimitiveValue* left() const { return m_left.get(); }
+    const CSSPrimitiveValue* top() const { return m_top.get(); }
+    const CSSPrimitiveValue* right() const { return m_right.get(); }
+    const CSSPrimitiveValue* bottom() const { return m_bottom.get(); }
+    const CSSPrimitiveValue* left() const { return m_left.get(); }
 
-    void setTop(RefPtr<CSSPrimitiveValue>&& top) { m_top = WTFMove(top); }
-    void setRight(RefPtr<CSSPrimitiveValue>&& right) { m_right = WTFMove(right); }
-    void setBottom(RefPtr<CSSPrimitiveValue>&& bottom) { m_bottom = WTFMove(bottom); }
-    void setLeft(RefPtr<CSSPrimitiveValue>&& left) { m_left = WTFMove(left); }
+    void setTop(RefPtr<const CSSPrimitiveValue>&& top) { m_top = WTFMove(top); }
+    void setRight(RefPtr<const CSSPrimitiveValue>&& right) { m_right = WTFMove(right); }
+    void setBottom(RefPtr<const CSSPrimitiveValue>&& bottom) { m_bottom = WTFMove(bottom); }
+    void setLeft(RefPtr<const CSSPrimitiveValue>&& left) { m_left = WTFMove(left); }
 
     bool equals(const RectBase& other) const
     {
@@ -51,10 +51,10 @@ protected:
     ~RectBase() = default;
 
 private:
-    RefPtr<CSSPrimitiveValue> m_top;
-    RefPtr<CSSPrimitiveValue> m_right;
-    RefPtr<CSSPrimitiveValue> m_bottom;
-    RefPtr<CSSPrimitiveValue> m_left;
+    RefPtr<const CSSPrimitiveValue> m_top;
+    RefPtr<const CSSPrimitiveValue> m_right;
+    RefPtr<const CSSPrimitiveValue> m_bottom;
+    RefPtr<const CSSPrimitiveValue> m_left;
 };
 
 class Rect final : public RectBase, public RefCounted<Rect> {
@@ -83,28 +83,19 @@ public:
         return generateCSSString(top()->cssText(), right()->cssText(), bottom()->cssText(), left()->cssText());
     }
 
+    static String generateCSSString(String&& top, const String& right, const String& bottom, const String& left)
+    {
+        if (left != right)
+            return makeString(top, ' ', right, ' ', bottom, ' ', left);
+        if (bottom != top)
+            return makeString(top, ' ', right, ' ', bottom);
+        if (right != top)
+            return makeString(top, ' ', right);
+        return WTFMove(top);
+    }
+
 private:
     Quad() = default;
-    static String generateCSSString(const String& top, const String& right, const String& bottom, const String& left)
-    {
-        StringBuilder result;
-        // reserve space for the four strings, plus three space separator characters.
-        result.reserveCapacity(top.length() + right.length() + bottom.length() + left.length() + 3);
-        result.append(top);
-        if (right != top || bottom != top || left != top) {
-            result.append(' ');
-            result.append(right);
-            if (bottom != top || right != left) {
-                result.append(' ');
-                result.append(bottom);
-                if (left != right) {
-                    result.append(' ');
-                    result.append(left);
-                }
-            }
-        }
-        return result.toString();
-    }
 };
 
 } // namespace WebCore

@@ -147,7 +147,7 @@ ExceptionOr<RefPtr<TimingFunction>> TimingFunction::createFromCSSText(const Stri
 {
     auto properties = MutableStyleProperties::create();
     properties->parseDeclaration(makeString("animation-timing-function:", cssText), CSSParserContext(HTMLStandardMode));
-    if (auto value = properties->getPropertyCSSValue(CSSPropertyAnimationTimingFunction)) {
+    if (auto value = properties->propertyValue(CSSPropertyAnimationTimingFunction)) {
         if (auto function = createFromCSSValue(*value))
             return function;
     }

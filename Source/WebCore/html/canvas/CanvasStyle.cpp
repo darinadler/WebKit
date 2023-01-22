@@ -77,7 +77,7 @@ Color currentColor(CanvasBase& canvasBase)
     auto& canvas = downcast<HTMLCanvasElement>(canvasBase);
     if (!canvas.isConnected() || !canvas.inlineStyle())
         return Color::black;
-    Color color = CSSParser::parseColorWithoutContext(canvas.inlineStyle()->getPropertyValue(CSSPropertyColor));
+    Color color = CSSParser::parseColorWithoutContext(canvas.inlineStyle()->propertyAsString(CSSPropertyColor));
     if (!color.isValid())
         return Color::black;
     return color;

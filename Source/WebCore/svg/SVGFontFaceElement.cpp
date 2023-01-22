@@ -73,20 +73,18 @@ Ref<SVGFontFaceElement> SVGFontFaceElement::create(const QualifiedName& tagName,
 
 void SVGFontFaceElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {    
-    CSSPropertyID propertyId = cssPropertyIdForSVGAttributeName(name);
-    if (propertyId > 0) {
+    auto property = cssPropertyIdForSVGAttributeName(name);
+    if (property != CSSValueInvalid) {
         // FIXME: Parse using the @font-face descriptor grammars, not the property grammars.
         auto& properties = m_fontFaceRule->mutableProperties();
-        bool valueChanged = properties.setProperty(propertyId, value);
+        bool valueChanged = properties.setProperty(property, value);
 
         if (valueChanged) {
             // The above parser is designed for the font-face properties, not descriptors, and the properties accept the global keywords, but descriptors don't.
             // Rather than invasively modifying the parser for the properties to have a special mode, we can simply detect the error condition after-the-fact and
             // avoid it explicitly.
-            if (auto parsedValue = properties.propertyAsValueID(propertyId)) {
-                if (isCSSWideKeyword(*parsedValue))
-                    properties.removeProperty(propertyId);
-            }
+            if (auto parsedValue = properties.propertyAsValueID(property); isCSSWideKeyword(parsedValue.value_or(CSSValueInvalid)))
+                properties.removeProperty(property);
         }
 
         rebuildFontFace();
@@ -248,7 +246,7 @@ int SVGFontFaceElement::descent() const
 
 String SVGFontFaceElement::fontFamily() const
 {
-    return m_fontFaceRule->properties().getPropertyValue(CSSPropertyFontFamily);
+    return m_fontFaceRule->properties().propertyAsString(CSSPropertyFontFamily);
 }
 
 SVGFontElement* SVGFontFaceElement::associatedFontElement() const
@@ -290,7 +288,7 @@ void SVGFontFaceElement::rebuildFontFace()
 
     if (describesParentFont) {    
         // Traverse parsed CSS values and associate CSSFontFaceSrcLocalValue elements with ourselves.
-        if (auto* srcList = downcast<CSSValueList>(m_fontFaceRule->properties().getPropertyCSSValue(CSSPropertySrc).get())) {
+        if (auto* srcList = downcast<CSSValueList>(m_fontFaceRule->properties().propertyValue(CSSPropertySrc).get())) {
             for (auto& item : *srcList)
                 downcast<CSSFontFaceSrcLocalValue>(item.get()).setSVGFontFaceElement(*this);
         }

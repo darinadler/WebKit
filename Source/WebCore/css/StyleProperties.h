@@ -21,12 +21,8 @@
 
 #pragma once
 
-#include "CSSParserContext.h"
-#include "CSSParserTokenRange.h"
 #include "CSSProperty.h"
-#include "CSSValueKeywords.h"
 #include <memory>
-#include <wtf/Function.h>
 #include <wtf/TypeCasts.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
@@ -41,18 +37,15 @@ class MutableStyleProperties;
 class PropertySetCSSStyleDeclaration;
 class StyledElement;
 class StylePropertyShorthand;
-class StyleSheetContents;
 
-enum StylePropertiesType { ImmutablePropertiesType, MutablePropertiesType };
+struct CSSParserContext;
 
-DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleProperties);
+enum CSSValueID : uint16_t;
+enum CSSParserMode : uint8_t;
+
 class StyleProperties : public RefCounted<StyleProperties> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleProperties);
-    friend class PropertyReference;
 public:
-    // Override RefCounted's deref() to ensure operator delete is called on
-    // the appropriate subclass type.
-    void deref() const;
+    void operator delete(StyleProperties*, std::destroying_delete_t);
 
     class PropertyReference {
     public:
@@ -61,30 +54,29 @@ public:
             , m_value(value)
         { }
 
-        CSSPropertyID id() const { return static_cast<CSSPropertyID>(m_metadata.m_propertyID); }
+        CSSPropertyID id() const { return m_metadata.propertyID(); }
         CSSPropertyID shorthandID() const { return m_metadata.shorthandID(); }
 
-        bool isImportant() const { return m_metadata.m_important; }
-        bool isInherited() const { return m_metadata.m_inherited; }
-        bool isImplicit() const { return m_metadata.m_implicit; }
+        bool isImportant() const { return m_metadata.important; }
+        bool isInherited() const { return m_metadata.inherited; }
 
-        String cssName() const;
+        String name() const;
         String cssText() const;
 
         const CSSValue* value() const { return m_value; }
-        // FIXME: We should try to remove this mutable overload.
-        CSSValue* value() { return const_cast<CSSValue*>(m_value); }
 
-        // FIXME: Remove this.
-        CSSProperty toCSSProperty() const { return CSSProperty(id(), const_cast<CSSValue*>(m_value), isImportant(), m_metadata.m_isSetFromShorthand, m_metadata.m_indexInShorthandsVector, isImplicit()); }
+        bool deprecatedIsImplicit() const { return m_metadata.implicit; }
+        bool deprecatedWasSetFromShorthand() const { return m_metadata.wasSetFromShorthand; }
+
+        CSSValue* deprecatedValue() { return const_cast<CSSValue*>(m_value); }
+        CSSProperty deprecatedCSSProperty() const { return CSSProperty(id(), const_cast<PropertyReference*>(this)->deprecatedValue(), m_metadata.important, m_metadata.wasSetFromShorthand, m_metadata.indexInShorthandsVector, m_metadata.implicit); }
 
     private:
         const StylePropertyMetadata& m_metadata;
         const CSSValue* m_value;
     };
 
-    template<typename T>
-    struct Iterator {
+    template<typename T> struct Iterator {
         using iterator_category = std::forward_iterator_tag;
         using value_type = PropertyReference;
         using difference_type = ptrdiff_t;
@@ -106,8 +98,6 @@ public:
         unsigned index { 0 };
     };
 
-    StylePropertiesType type() const { return static_cast<StylePropertiesType>(m_type); }
-
     unsigned propertyCount() const;
     bool isEmpty() const { return !propertyCount(); }
     PropertyReference propertyAt(unsigned) const;
@@ -116,19 +106,23 @@ public:
     static constexpr std::nullptr_t end() { return nullptr; }
     unsigned size() const { return propertyCount(); }
 
-    WEBCORE_EXPORT RefPtr<CSSValue> getPropertyCSSValue(CSSPropertyID) const;
-    WEBCORE_EXPORT String getPropertyValue(CSSPropertyID) const;
+    bool hasProperty(CSSPropertyID) const;
+    WEBCORE_EXPORT RefPtr<CSSValue> propertyValue(CSSPropertyID) const;
+    RefPtr<CSSValue> customPropertyValue(StringView customPropertyName) const;
+
+    // FIXME: Why call it "string" when it's a single property, but "text" when it's all properties?
+    // FIXME: Maybe use the word "serialize" in these function names.
+    WEBCORE_EXPORT String propertyAsString(CSSPropertyID) const;
+    String customPropertyAsString(StringView customPropertyName) const;
 
     WEBCORE_EXPORT std::optional<Color> propertyAsColor(CSSPropertyID) const;
     WEBCORE_EXPORT std::optional<CSSValueID> propertyAsValueID(CSSPropertyID) const;
 
     bool propertyIsImportant(CSSPropertyID) const;
-    String getPropertyShorthand(CSSPropertyID) const;
-    bool isPropertyImplicit(CSSPropertyID) const;
+    bool customPropertyIsImportant(StringView customPropertyName) const;
 
-    RefPtr<CSSValue> getCustomPropertyCSSValue(const String& propertyName) const;
-    String getCustomPropertyValue(const String& propertyName) const;
-    bool customPropertyIsImportant(const String& propertyName) const;
+    String deprecatedPropertyShorthandName(CSSPropertyID) const;
+    bool deprecatedIsPropertyImplicit(CSSPropertyID) const;
 
     Ref<MutableStyleProperties> copyBlockProperties() const;
 
@@ -137,31 +131,35 @@ public:
     WEBCORE_EXPORT Ref<MutableStyleProperties> mutableCopy() const;
     Ref<ImmutableStyleProperties> immutableCopyIfNeeded() const;
 
-    Ref<MutableStyleProperties> copyPropertiesInSet(const CSSPropertyID* set, unsigned length) const;
-    
+    Ref<MutableStyleProperties> copyPropertiesInSet(Span<const CSSPropertyID>) const;
+
+    // FIXME: Why call it "string" when it's a single property, but "text" when it's all properties?
+    // FIXME: Maybe use the word "serialize" in these function names.
     String asText() const;
     AtomString asTextAtom() const;
 
     bool hasCSSOMWrapper() const;
-    bool isMutable() const { return type() == MutablePropertiesType; }
+    bool isMutable() const { return m_isMutable; }
 
     bool traverseSubresources(const Function<bool(const CachedResource&)>& handler) const;
 
     static unsigned averageSizeInBytes();
 
+    bool propertyMatches(CSSPropertyID, const CSSValue&) const;
+    bool propertyMatches(CSSPropertyID, CSSValueID) const;
+
 #ifndef NDEBUG
     void showStyle();
 #endif
-
-    bool propertyMatches(CSSPropertyID, const CSSValue*) const;
 
     int findPropertyIndex(CSSPropertyID) const;
     int findCustomPropertyIndex(StringView propertyName) const;
 
 protected:
-    StyleProperties(CSSParserMode mode, StylePropertiesType type)
+    enum Mutability : bool { Immutable, Mutable };
+    StyleProperties(CSSParserMode mode, Mutability mutability)
         : m_cssParserMode(mode)
-        , m_type(type)
+        , m_isMutable(mutability != Immutable)
     { }
 
     StyleProperties(CSSParserMode mode, unsigned immutableArraySize)
@@ -170,12 +168,14 @@ protected:
         , m_arraySize(immutableArraySize)
     { }
 
-    unsigned m_cssParserMode : 3;
-    mutable unsigned m_type : 2;
-    unsigned m_arraySize : 27 { 0 };
+    unsigned immutablePropertyCount() const { return m_immutablePropertyCount; }
 
 private:
     StringBuilder asTextInternal() const;
+
+    unsigned m_cssParserMode : 3 { 0 };
+    unsigned m_isMutable : 1 { false };
+    unsigned m_immutablePropertyCount : 28 { 0 };
 };
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(ImmutableStyleProperties);
@@ -183,9 +183,9 @@ class ImmutableStyleProperties final : public StyleProperties {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(ImmutableStyleProperties);
 public:
     WEBCORE_EXPORT ~ImmutableStyleProperties();
-    static Ref<ImmutableStyleProperties> create(const CSSProperty* properties, unsigned count, CSSParserMode);
+    static Ref<ImmutableStyleProperties> create(Span<const CSSProperty>, CSSParserMode);
 
-    unsigned propertyCount() const { return m_arraySize; }
+    unsigned propertyCount() const { return immutablePropertyCount(); }
     bool isEmpty() const { return !propertyCount(); }
     PropertyReference propertyAt(unsigned index) const;
 
@@ -201,26 +201,17 @@ public:
 private:
     PackedPtr<const CSSValue>* valueArray() const;
     const StylePropertyMetadata* metadataArray() const;
-    ImmutableStyleProperties(const CSSProperty*, unsigned count, CSSParserMode);
+    ImmutableStyleProperties(Span<const CSSProperty>, CSSParserMode);
 };
-
-inline PackedPtr<const CSSValue>* ImmutableStyleProperties::valueArray() const
-{
-    return bitwise_cast<PackedPtr<const CSSValue>*>(bitwise_cast<const uint8_t*>(metadataArray()) + (m_arraySize * sizeof(StylePropertyMetadata)));
-}
-
-inline const StylePropertyMetadata* ImmutableStyleProperties::metadataArray() const
-{
-    return reinterpret_cast<const StylePropertyMetadata*>(const_cast<const void**>((&(this->m_storage))));
-}
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MutableStyleProperties);
 class MutableStyleProperties final : public StyleProperties {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(MutableStyleProperties);
 public:
-    WEBCORE_EXPORT static Ref<MutableStyleProperties> create(CSSParserMode = HTMLQuirksMode);
-    static Ref<MutableStyleProperties> create(Vector<CSSProperty>&&);
-    static Ref<MutableStyleProperties> createEmpty();
+    WEBCORE_EXPORT static Ref<MutableStyleProperties> create();
+    WEBCORE_EXPORT static Ref<MutableStyleProperties> create(CSSParserMode);
+    using PropertyVector = Vector<CSSProperty, 4>;
+    static Ref<MutableStyleProperties> create(PropertyVector&&);
 
     WEBCORE_EXPORT ~MutableStyleProperties();
 
@@ -232,9 +223,9 @@ public:
     static constexpr std::nullptr_t end() { return nullptr; }
     unsigned size() const { return propertyCount(); }
 
-    PropertySetCSSStyleDeclaration* cssStyleDeclaration();
+    PropertySetCSSStyleDeclaration* cssStyleDeclaration() { return m_cssomWrapper.get(); }
 
-    bool addParsedProperties(const ParsedPropertyVector&);
+    bool addParsedProperties(Span<const CSSProperty>);
     bool addParsedProperty(const CSSProperty&);
 
     // These expand shorthand properties into multiple properties.
@@ -248,7 +239,7 @@ public:
 
     bool removeProperty(CSSPropertyID, String* returnText = nullptr);
     void removeBlockProperties();
-    bool removePropertiesInSet(const CSSPropertyID* set, unsigned length);
+    bool removePropertiesInSet(Span<const CSSPropertyID>);
 
     void mergeAndOverrideOnConflict(const StyleProperties&);
 
@@ -261,8 +252,6 @@ public:
     int findPropertyIndex(CSSPropertyID) const;
     int findCustomPropertyIndex(StringView propertyName) const;
     
-    Vector<CSSProperty, 4> m_propertyVector;
-
     // Methods for querying and altering CSS custom properties.
     bool setCustomProperty(const String& propertyName, const String& value, bool important, CSSParserContext);
     bool removeCustomProperty(const String& propertyName, String* returnText = nullptr);
@@ -270,17 +259,29 @@ public:
 private:
     explicit MutableStyleProperties(CSSParserMode);
     explicit MutableStyleProperties(const StyleProperties&);
-    MutableStyleProperties(Vector<CSSProperty>&&);
+    explicit MutableStyleProperties(PropertyVector&&);
 
     bool removeShorthandProperty(CSSPropertyID, String* returnText = nullptr);
     bool removePropertyAtIndex(int index, String* returnText);
     CSSProperty* findCSSPropertyWithID(CSSPropertyID);
     CSSProperty* findCustomCSSPropertyWithName(const String&);
-    std::unique_ptr<PropertySetCSSStyleDeclaration> m_cssomWrapper;
     bool canUpdateInPlace(const CSSProperty&, CSSProperty* toReplace) const;
 
     friend class StyleProperties;
+
+    PropertyVector m_propertyVector;
+    std::unique_ptr<PropertySetCSSStyleDeclaration> m_cssomWrapper;
 };
+
+inline PackedPtr<const CSSValue>* ImmutableStyleProperties::valueArray() const
+{
+    return bitwise_cast<PackedPtr<const CSSValue>*>(metadataArray() + propertyCount());
+}
+
+inline const StylePropertyMetadata* ImmutableStyleProperties::metadataArray() const
+{
+    return reinterpret_cast<const StylePropertyMetadata*>(&m_storage);
+}
 
 inline ImmutableStyleProperties::PropertyReference ImmutableStyleProperties::propertyAt(unsigned index) const
 {
@@ -289,7 +290,7 @@ inline ImmutableStyleProperties::PropertyReference ImmutableStyleProperties::pro
 
 inline MutableStyleProperties::PropertyReference MutableStyleProperties::propertyAt(unsigned index) const
 {
-    const CSSProperty& property = m_propertyVector[index];
+    auto& property = m_propertyVector[index];
     return PropertyReference(property.metadata(), property.value());
 }
 
@@ -307,17 +308,15 @@ inline unsigned StyleProperties::propertyCount() const
     return downcast<ImmutableStyleProperties>(*this).propertyCount();
 }
 
-inline void StyleProperties::deref() const
+inline void StyleProperties::operator delete(StyleProperties* value, std::destroying_delete_t)
 {
-    if (!derefBase())
-        return;
-
-    if (is<MutableStyleProperties>(*this))
-        delete downcast<MutableStyleProperties>(this);
-    else if (is<ImmutableStyleProperties>(*this))
-        delete downcast<ImmutableStyleProperties>(this);
-    else
-        RELEASE_ASSERT_NOT_REACHED();
+    if (auto* mutableValue = dynamicDowncast<MutableStyleProperties>(*value)) {
+        std::destroy_at(mutableValue);
+        MutableStyleProperties::freeAfterDestruction(value);
+    } else {
+        std::destroy_at(&downcast<ImmutableStyleProperties>(*value));
+        ImmutableStyleProperties::freeAfterDestruction(value);
+    }
 }
 
 inline int StyleProperties::findPropertyIndex(CSSPropertyID propertyID) const
@@ -337,10 +336,9 @@ inline int StyleProperties::findCustomPropertyIndex(StringView propertyName) con
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::MutableStyleProperties)
-    static bool isType(const WebCore::StyleProperties& set) { return set.type() == WebCore::MutablePropertiesType; }
+    static bool isType(const WebCore::StyleProperties& set) { return set.isMutable(); }
 SPECIALIZE_TYPE_TRAITS_END()
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ImmutableStyleProperties)
-    static bool isType(const WebCore::StyleProperties& set) { return set.type() == WebCore::ImmutablePropertiesType; }
+    static bool isType(const WebCore::StyleProperties& set) { return !set.isMutable(); }
 SPECIALIZE_TYPE_TRAITS_END()
-

@@ -71,7 +71,7 @@ RenderStyle* CSSToStyleMap::style() const
     return &m_builderState.style();
 }
 
-RefPtr<StyleImage> CSSToStyleMap::styleImage(CSSValue& value)
+RefPtr<StyleImage> CSSToStyleMap::styleImage(const CSSValue& value)
 {
     return m_builderState.createStyleImage(value);
 }
@@ -153,7 +153,7 @@ void CSSToStyleMap::mapFillOrigin(CSSPropertyID propertyID, FillLayer& layer, co
     layer.setOrigin(downcast<CSSPrimitiveValue>(value));
 }
 
-void CSSToStyleMap::mapFillImage(CSSPropertyID propertyID, FillLayer& layer, CSSValue& value)
+void CSSToStyleMap::mapFillImage(CSSPropertyID propertyID, FillLayer& layer, const CSSValue& value)
 {
     if (treatAsInitialValue(value, propertyID)) {
         layer.setImage(FillLayer::initialFillImage(layer.type()));
@@ -473,14 +473,14 @@ void CSSToStyleMap::mapAnimationCompositeOperation(Animation& animation, const C
         animation.setCompositeOperation(*compositeOperation);
 }
 
-void CSSToStyleMap::mapNinePieceImage(CSSValue* value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImage(const CSSValue* value, NinePieceImage& image)
 {
     // If we're not a value list, then we are "none" and don't need to alter the empty image at all.
     if (!is<CSSValueList>(value))
         return;
 
     // Retrieve the border image value.
-    CSSValueList& borderImage = downcast<CSSValueList>(*value);
+    auto& borderImage = downcast<CSSValueList>(*value);
 
     for (auto& current : borderImage) {
         if (current->isImage())
@@ -506,7 +506,7 @@ void CSSToStyleMap::mapNinePieceImage(CSSValue* value, NinePieceImage& image)
     }
 }
 
-void CSSToStyleMap::mapNinePieceImageSlice(CSSValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageSlice(const CSSValue& value, NinePieceImage& image)
 {
     if (!is<CSSBorderImageSliceValue>(value))
         return;
@@ -514,11 +514,11 @@ void CSSToStyleMap::mapNinePieceImageSlice(CSSValue& value, NinePieceImage& imag
     mapNinePieceImageSlice(downcast<CSSBorderImageSliceValue>(value), image);
 }
 
-void CSSToStyleMap::mapNinePieceImageSlice(CSSBorderImageSliceValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageSlice(const CSSBorderImageSliceValue& value, NinePieceImage& image)
 {
     // Set up a length box to represent our image slices.
     LengthBox box;
-    Quad& slices = value.slices();
+    auto& slices = value.slices();
     if (slices.top()->isPercentage())
         box.top() = Length(slices.top()->doubleValue(), LengthType::Percent);
     else
@@ -541,7 +541,7 @@ void CSSToStyleMap::mapNinePieceImageSlice(CSSBorderImageSliceValue& value, Nine
     image.setFill(value.m_fill);
 }
 
-void CSSToStyleMap::mapNinePieceImageWidth(CSSValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageWidth(const CSSValue& value, NinePieceImage& image)
 {
     if (!is<CSSBorderImageWidthValue>(value))
         return;
@@ -549,7 +549,7 @@ void CSSToStyleMap::mapNinePieceImageWidth(CSSValue& value, NinePieceImage& imag
     return mapNinePieceImageWidth(downcast<CSSBorderImageWidthValue>(value), image);
 }
 
-void CSSToStyleMap::mapNinePieceImageWidth(CSSBorderImageWidthValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageWidth(const CSSBorderImageWidthValue& value, NinePieceImage& image)
 {
     if (!is<CSSBorderImageWidthValue>(value))
         return;
@@ -558,7 +558,7 @@ void CSSToStyleMap::mapNinePieceImageWidth(CSSBorderImageWidthValue& value, Nine
     image.setOverridesBorderWidths(value.m_overridesBorderWidths);
 }
 
-LengthBox CSSToStyleMap::mapNinePieceImageQuad(CSSValue& value)
+LengthBox CSSToStyleMap::mapNinePieceImageQuad(const CSSValue& value)
 {
     if (!is<CSSPrimitiveValue>(value))
         return LengthBox();
@@ -580,7 +580,7 @@ LengthBox CSSToStyleMap::mapNinePieceImageQuad(CSSValue& value)
     return mapNinePieceImageQuad(quad);
 }
 
-LengthBox CSSToStyleMap::mapNinePieceImageQuad(Quad& quad)
+LengthBox CSSToStyleMap::mapNinePieceImageQuad(const Quad& quad)
 {
     CSSToLengthConversionData conversionData = m_builderState.cssToLengthConversionData();
 
@@ -625,7 +625,7 @@ LengthBox CSSToStyleMap::mapNinePieceImageQuad(Quad& quad)
     return box;
 }
 
-void CSSToStyleMap::mapNinePieceImageRepeat(CSSValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageRepeat(const CSSValue& value, NinePieceImage& image)
 {
     if (!is<CSSPrimitiveValue>(value))
         return;
@@ -633,7 +633,7 @@ void CSSToStyleMap::mapNinePieceImageRepeat(CSSValue& value, NinePieceImage& ima
     mapNinePieceImageRepeat(downcast<CSSPrimitiveValue>(value), image);
 }
 
-void CSSToStyleMap::mapNinePieceImageRepeat(CSSPrimitiveValue& value, NinePieceImage& image)
+void CSSToStyleMap::mapNinePieceImageRepeat(const CSSPrimitiveValue& value, NinePieceImage& image)
 {
     Pair* pair = value.pairValue();
     if (!pair || !pair->first() || !pair->second())
