@@ -667,18 +667,10 @@ bool CSSPropertyParser::consumeFont(bool important)
     if (!fontFamily || !range.atEnd())
         return false;
 
-    auto reset = [&] (CSSPropertyID property, CSSValueID initialValue) {
-        ASSERT(initialValue != CSSValueInvalid);
-        addProperty(property, CSSPropertyFont, CSSPrimitiveValue::create(initialValue), important, true);
-    };
-    auto add = [&] (CSSPropertyID property, RefPtr<CSSValue>& value) {
-        if (value)
-            addProperty(property, CSSPropertyFont, value.releaseNonNull(), important);
-        else
-            reset(property, CSSValueNormal);
-    };
-
     // This must be in the same order as the list of shorthands in CSSProperties.json.
+    auto add = [&] (CSSPropertyID property, RefPtr<CSSValue>& value) {
+        addProperty(property, CSSPropertyFont, WTFMove(value), important);
+    };
     add(CSSPropertyFontStyle, fontStyle);
     add(CSSPropertyFontVariantCaps, fontVariantCaps);
     add(CSSPropertyFontWeight, fontWeight);
@@ -686,8 +678,13 @@ bool CSSPropertyParser::consumeFont(bool important)
     add(CSSPropertyFontSize, fontSize);
     add(CSSPropertyLineHeight, lineHeight);
     add(CSSPropertyFontFamily, fontFamily);
-    for (auto [property, initialValue] : fontShorthandSubpropertiesResetToInitialValues)
-        reset(property, initialValue);
+    bool pastFontFamily = false;
+    for (auto longhand : fontShorthand()) {
+        if (longhand == CSSPropertyFontFamily)
+            pastFontFamily = true;
+        else if (pastFontFamily)
+            addProperty(longhand, CSSPropertyFont, nullptr, important, true);
+    }
 
     m_range = range;
     return true;
