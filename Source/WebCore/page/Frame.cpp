@@ -35,7 +35,6 @@
 #include "BackForwardController.h"
 #include "CSSComputedStyleDeclaration.h"
 #include "CSSPropertyNames.h"
-#include "CSSValuePool.h"
 #include "CachedCSSStyleSheet.h"
 #include "CachedResourceLoader.h"
 #include "Chrome.h"
@@ -159,7 +158,6 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
     , m_eventHandler(makeUniqueRef<EventHandler>(*this))
 {
     ProcessWarming::initializeNames();
-    StaticCSSValuePool::init();
 
     if (ownerElement) {
         if (auto* localMainFrame = dynamicDowncast<LocalFrame>(mainFrame()))
