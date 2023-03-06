@@ -44,6 +44,17 @@
 
 namespace WebCore {
 
+// Scale factor for fixed point fraction.
+// This number was determined by testing common values in CSS.
+// If the scale factor is too large, then there are too few bits left
+// in the scalar to store large values. But larger numbers let us cover
+// more fractional values. Tried powers of 2 and powers of 10, and these
+// values (10 for 32-bit, and 10^9 for 64-bit) worked the best for
+// covering many CSS numeric values. Specifically the 32-bit value
+// worked for 108578 out of 120944 test values (89.8%) and the 64-bit
+// value worked for 120635 out of 120944 test values (99.7%).
+static constexpr uintptr_t ScalarFixedPointScaleFactor = sizeof(uintptr_t) < 4 ? 10 : 1000000000ULL;
+
 static inline bool isValidCSSUnitTypeForDoubleConversion(CSSUnitType unitType)
 {
     switch (unitType) {
@@ -306,9 +317,9 @@ template<> LayoutUnit CSSPrimitiveValue::computeLength(const CSSToLengthConversi
     return LayoutUnit(computeLengthDouble(conversionData));
 }
 
-inline uintptr_t CSSPrimitiveValue::scalarInteger() const
+inline uintptr_t CSSPrimitiveValue::scalarFixedPointNumber() const
 {
-    return scalar() >> IntegerShift;
+    return scalar() >> FixedPointShift;
 }
 
 inline double CSSPrimitiveValue::number() const
@@ -750,7 +761,7 @@ std::optional<bool> CSSPrimitiveValue::isZero() const
     if (isCalculated())
         return std::nullopt;
     if (hasScalarInPointer())
-        return !scalarInteger();
+        return !scalarFixedPointNumber();
     return !opaque(this)->m_value.number;
 }
 

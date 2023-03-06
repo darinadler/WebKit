@@ -158,9 +158,9 @@ public:
 private:
     // Encode values in the scalar.
     static constexpr uintptr_t UnitShift = PayloadShift;
-    static constexpr uintptr_t IntegerShift = UnitShift + UnitBits;
+    static constexpr uintptr_t FixedPointShift = UnitShift + UnitBits;
     static CSSPrimitiveValue* scalarValue(double value, CSSUnitType);
-    uintptr_t scalarInteger() const;
+    intptr_t scalarFixedPointNumber() const;
 
     CSSPrimitiveValue(double, CSSUnitType);
     explicit CSSPrimitiveValue(Ref<CSSCalcValue>&&);
