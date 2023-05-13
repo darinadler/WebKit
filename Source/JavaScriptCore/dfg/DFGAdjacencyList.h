@@ -186,15 +186,10 @@ public:
         return result;
     }
     
-    bool operator==(const AdjacencyList& other) const
-    {
-        return child1() == other.child1()
-            && child2() == other.child2()
-            && child3() == other.child3();
-    }
-    
+    friend bool operator==(const AdjacencyList&, const AdjacencyList&) = default;
+
 private:
-    Edge m_words[Size];
+    std::array<Edge, Size> m_words;
 };
 
 } } // namespace JSC::DFG

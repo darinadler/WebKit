@@ -51,11 +51,7 @@ struct Kind {
     {
     }
     
-    bool operator==(const Kind& other) const
-    {
-        return opcode == other.opcode
-            && effects == other.effects;
-    }
+    friend bool operator==(const Kind&, const Kind&) = default;
     
     unsigned hash() const
     {

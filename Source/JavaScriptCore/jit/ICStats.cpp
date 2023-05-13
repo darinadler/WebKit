@@ -28,23 +28,32 @@
 
 namespace JSC {
 
-bool ICEvent::operator<(const ICEvent& other) const
+static std::strong_ordering makeStrongOrdering(int numericComparisonResult)
+{
+    if (numericComparisonResult < 0)
+        return std::strong_ordering::less;
+    if (numericComparisonResult > 0)
+        return std::strong_ordering::greater;
+    return std::strong_ordering::equal;
+}
+
+std::weak_ordering ICEvent::operator<=>(const ICEvent& other) const
 {
     if (m_classInfo != other.m_classInfo) {
         if (!m_classInfo)
-            return true;
+            return std::weak_ordering::less;
         if (!other.m_classInfo)
-            return false;
-        return strcmp(m_classInfo->className, other.m_classInfo->className) < 0;
+            return std::weak_ordering::greater;
+        return makeStrongOrdering(strcmp(m_classInfo->className, other.m_classInfo->className));
     }
     
     if (m_propertyName != other.m_propertyName)
-        return codePointCompare(m_propertyName.string(), other.m_propertyName.string()) < 0;
+        return makeStrongOrdering(codePointCompare(m_propertyName.string(), other.m_propertyName.string()));
 
     if (m_kind != other.m_kind)
-        return m_kind < other.m_kind;
+        return m_kind <=> other.m_kind;
 
-    return m_propertyLocation < other.m_propertyLocation;
+    return m_propertyLocation <=> other.m_propertyLocation;
 }
 
 void ICEvent::dump(PrintStream& out) const

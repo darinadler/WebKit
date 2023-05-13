@@ -42,12 +42,7 @@ class SourceCode;
 
 class CodeBlockHash {
 public:
-    CodeBlockHash()
-        : m_hash(0)
-    {
-    }
-    
-    explicit CodeBlockHash(unsigned hash)
+    explicit CodeBlockHash(unsigned hash = 0)
         : m_hash(hash)
     {
     }
@@ -63,12 +58,8 @@ public:
     
     void dump(PrintStream&) const;
     
-    // Comparison methods useful for bisection.
-    bool operator==(const CodeBlockHash& other) const { return hash() == other.hash(); }
-    bool operator<(const CodeBlockHash& other) const { return hash() < other.hash(); }
-    bool operator>(const CodeBlockHash& other) const { return hash() > other.hash(); }
-    bool operator<=(const CodeBlockHash& other) const { return hash() <= other.hash(); }
-    bool operator>=(const CodeBlockHash& other) const { return hash() >= other.hash(); }
+    // Comparison useful for bisection.
+    friend auto operator<=>(const CodeBlockHash&, const CodeBlockHash&) = default;
     
 private:
     unsigned m_hash;

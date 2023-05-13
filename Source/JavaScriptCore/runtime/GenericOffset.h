@@ -60,26 +60,7 @@ public:
         return m_offset;
     }
     
-    bool operator==(const GenericOffset& other) const
-    {
-        return m_offset == other.m_offset;
-    }
-    bool operator<(const GenericOffset& other) const
-    {
-        return m_offset < other.m_offset;
-    }
-    bool operator>(const GenericOffset& other) const
-    {
-        return m_offset > other.m_offset;
-    }
-    bool operator<=(const GenericOffset& other) const
-    {
-        return m_offset <= other.m_offset;
-    }
-    bool operator>=(const GenericOffset& other) const
-    {
-        return m_offset >= other.m_offset;
-    }
+    friend auto operator<=>(const GenericOffset&, const GenericOffset&) = default;
     
     T operator+(int value) const
     {

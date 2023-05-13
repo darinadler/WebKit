@@ -77,26 +77,11 @@ public:
         return m_word == other.m_word;
     }
     
-    bool operator<(NodeFlowProjection other) const
+    std::strong_ordering operator<=>(NodeFlowProjection other) const
     {
         if (kind() != other.kind())
-            return kind() < other.kind();
-        return node() < other.node();
-    }
-    
-    bool operator>(NodeFlowProjection other) const
-    {
-        return other < *this;
-    }
-    
-    bool operator<=(NodeFlowProjection other) const
-    {
-        return !(*this > other);
-    }
-    
-    bool operator>=(NodeFlowProjection other) const
-    {
-        return !(*this < other);
+            return kind() <=> other.kind();
+        return node() <=> other.node();
     }
     
     bool isHashTableDeletedValue() const

@@ -42,17 +42,14 @@ struct ResolvedURL {
     URL resolvedURL;
 
     bool isLocalURL() const;
+
+    friend bool operator==(const ResolvedURL&, const ResolvedURL&) = default;
 };
 
 inline ResolvedURL makeResolvedURL(URL&& resolvedURL)
 {
     auto string = resolvedURL.string();
     return { WTFMove(string), WTFMove(resolvedURL) };
-}
-
-inline bool operator==(const ResolvedURL& a, const ResolvedURL& b)
-{
-    return a.specifiedURLString == b.specifiedURLString && a.resolvedURL == b.resolvedURL;
 }
 
 struct CSSParserContext {
@@ -101,9 +98,9 @@ struct CSSParserContext {
     CSSParserContext(CSSParserMode, const URL& baseURL = URL());
     WEBCORE_EXPORT CSSParserContext(const Document&, const URL& baseURL = URL(), const String& charset = emptyString());
     ResolvedURL completeURL(const String&) const;
-};
 
-bool operator==(const CSSParserContext&, const CSSParserContext&);
+    friend bool operator==(const CSSParserContext&, const CSSParserContext&) = default;
+};
 
 void add(Hasher&, const CSSParserContext&);
 

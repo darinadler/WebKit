@@ -60,30 +60,7 @@ public:
         return MonotonicObjectIdentifier { *identifier };
     }
 
-    bool operator==(const MonotonicObjectIdentifier& other) const
-    {
-        return m_identifier == other.m_identifier;
-    }
-
-    bool operator>(const MonotonicObjectIdentifier& other) const
-    {
-        return m_identifier > other.m_identifier;
-    }
-
-    bool operator>=(const MonotonicObjectIdentifier& other) const
-    {
-        return m_identifier >= other.m_identifier;
-    }
-
-    bool operator<(const MonotonicObjectIdentifier& other) const
-    {
-        return m_identifier < other.m_identifier;
-    }
-
-    bool operator<=(const MonotonicObjectIdentifier& other) const
-    {
-        return m_identifier <= other.m_identifier;
-    }
+    friend auto operator<=>(const MonotonicObjectIdentifier&, const MonotonicObjectIdentifier&) = default;
 
     MonotonicObjectIdentifier& increment()
     {

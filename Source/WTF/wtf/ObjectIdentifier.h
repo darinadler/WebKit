@@ -173,27 +173,9 @@ bool operator==(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectI
 }
 
 template<typename T, typename ThreadSafety>
-bool operator>(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectIdentifierGeneric<T, ThreadSafety>& b)
+auto operator<=>(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectIdentifierGeneric<T, ThreadSafety>& b)
 {
-    return a.toUInt64() > b.toUInt64();
-}
-
-template<typename T, typename ThreadSafety>
-bool operator>=(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectIdentifierGeneric<T, ThreadSafety>& b)
-{
-    return a.toUInt64() >= b.toUInt64();
-}
-
-template<typename T, typename ThreadSafety>
-bool operator<(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectIdentifierGeneric<T, ThreadSafety>& b)
-{
-    return a.toUInt64() < b.toUInt64();
-}
-
-template<typename T, typename ThreadSafety>
-bool operator<=(const ObjectIdentifierGeneric<T, ThreadSafety>& a, const ObjectIdentifierGeneric<T, ThreadSafety>& b)
-{
-    return a.toUInt64() <= b.toUInt64();
+    return a.toUInt64() <=> b.toUInt64();
 }
 
 } // namespace WTF

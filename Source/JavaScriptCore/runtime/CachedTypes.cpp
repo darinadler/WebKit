@@ -43,7 +43,6 @@
 #include "UnlinkedModuleProgramCodeBlock.h"
 #include "UnlinkedProgramCodeBlock.h"
 #include <wtf/MallocPtr.h>
-#include <wtf/Packed.h>
 #include <wtf/RobinHoodHashMap.h>
 #include <wtf/UUID.h>
 #include <wtf/text/AtomStringImpl.h>

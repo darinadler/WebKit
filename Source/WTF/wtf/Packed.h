@@ -100,6 +100,9 @@ public:
         set(t1);
     }
 
+    bool operator==(const Packed& other) const { return get() == other.get(); }
+    auto operator<=>(const Packed& other) const { return get() <=> other.get(); }
+
 private:
     std::array<uint8_t, sizeof(T)> m_storage;
 };

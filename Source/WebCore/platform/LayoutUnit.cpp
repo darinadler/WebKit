@@ -30,7 +30,7 @@
 
 namespace WebCore {
 
-TextStream& operator<<(TextStream& ts, const LayoutUnit& v)
+TextStream& operator<<(TextStream& ts, LayoutUnit v)
 {
     return ts << TextStream::FormatNumberRespectingIntegers(v.toFloat());
 }

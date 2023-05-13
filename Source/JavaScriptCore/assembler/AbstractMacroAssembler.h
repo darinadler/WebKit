@@ -435,9 +435,10 @@ public:
             masm->invalidateAllTempRegisters();
         }
 
-        bool operator==(const Label& other) const { return m_label == other.m_label; }
+        friend bool operator==(const Label&, const Label&) = default;
 
         bool isSet() const { return m_label.isSet(); }
+
     private:
         AssemblerLabel m_label;
     };

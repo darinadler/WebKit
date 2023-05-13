@@ -153,26 +153,7 @@ public:
         return m_epochNanoseconds >= ExactTime::minValue && m_epochNanoseconds <= ExactTime::maxValue;
     }
 
-    constexpr bool operator<(ExactTime other) const
-    {
-        return m_epochNanoseconds < other.m_epochNanoseconds;
-    }
-    constexpr bool operator<=(ExactTime other) const
-    {
-        return m_epochNanoseconds <= other.m_epochNanoseconds;
-    }
-    constexpr bool operator==(ExactTime other) const
-    {
-        return m_epochNanoseconds == other.m_epochNanoseconds;
-    }
-    constexpr bool operator>=(ExactTime other) const
-    {
-        return m_epochNanoseconds >= other.m_epochNanoseconds;
-    }
-    constexpr bool operator>(ExactTime other) const
-    {
-        return m_epochNanoseconds > other.m_epochNanoseconds;
-    }
+    friend auto operator<=>(const ExactTime&, const ExactTime&) = default;
 
     std::optional<ExactTime> add(Duration) const;
     Int128 difference(ExactTime other, unsigned increment, TemporalUnit, RoundingMode) const;

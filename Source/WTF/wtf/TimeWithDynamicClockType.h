@@ -116,18 +116,11 @@ public:
     
     WTF_EXPORT_PRIVATE Seconds operator-(const TimeWithDynamicClockType&) const;
     
-    bool operator==(const TimeWithDynamicClockType& other) const
-    {
-        return m_value == other.m_value
-            && m_type == other.m_type;
-    }
-    
+    friend bool operator==(const TimeWithDynamicClockType&, const TimeWithDynamicClockType&) = default;
+
     // To do relative comparisons, you must be using times with the same clock type.
-    WTF_EXPORT_PRIVATE bool operator<(const TimeWithDynamicClockType&) const;
-    WTF_EXPORT_PRIVATE bool operator>(const TimeWithDynamicClockType&) const;
-    WTF_EXPORT_PRIVATE bool operator<=(const TimeWithDynamicClockType&) const;
-    WTF_EXPORT_PRIVATE bool operator>=(const TimeWithDynamicClockType&) const;
-    
+    WTF_EXPORT_PRIVATE friend std::partial_ordering operator<=>(const TimeWithDynamicClockType&, const TimeWithDynamicClockType&);
+
     WTF_EXPORT_PRIVATE void dump(PrintStream&) const;
     
 private:

@@ -108,10 +108,7 @@ private:
 bool operator==(const VisiblePosition&, const VisiblePosition&);
 
 WEBCORE_EXPORT std::partial_ordering documentOrder(const VisiblePosition&, const VisiblePosition&);
-bool operator<(const VisiblePosition&, const VisiblePosition&);
-bool operator>(const VisiblePosition&, const VisiblePosition&);
-bool operator<=(const VisiblePosition&, const VisiblePosition&);
-bool operator>=(const VisiblePosition&, const VisiblePosition&);
+std::partial_ordering operator<=>(const VisiblePosition&, const VisiblePosition&);
 
 WEBCORE_EXPORT std::optional<BoundaryPoint> makeBoundaryPoint(const VisiblePosition&);
 
@@ -152,24 +149,9 @@ inline bool operator==(const VisiblePosition& a, const VisiblePosition& b)
     return a.deepEquivalent() == b.deepEquivalent();
 }
 
-inline bool operator<(const VisiblePosition& a, const VisiblePosition& b)
+inline std::partial_ordering operator<=>(const VisiblePosition& a, const VisiblePosition& b)
 {
-    return is_lt(documentOrder(a, b));
-}
-
-inline bool operator>(const VisiblePosition& a, const VisiblePosition& b)
-{
-    return is_gt(documentOrder(a, b));
-}
-
-inline bool operator<=(const VisiblePosition& a, const VisiblePosition& b)
-{
-    return is_lteq(documentOrder(a, b));
-}
-
-inline bool operator>=(const VisiblePosition& a, const VisiblePosition& b)
-{
-    return is_gteq(documentOrder(a, b));
+    return documentOrder(a, b);
 }
 
 } // namespace WebCore

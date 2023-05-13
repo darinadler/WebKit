@@ -68,12 +68,7 @@ public:
 
         explicit Key(const Air::Inst&);
 
-        bool operator==(const Key& other) const
-        {
-            return m_kind == other.m_kind
-                && m_numArgs == other.m_numArgs
-                && m_stackmapRole == other.m_stackmapRole;
-        }
+        friend bool operator==(const Key&, const Key&) = default;
 
         explicit operator bool() const { return *this != Key(); }
 

@@ -39,8 +39,8 @@ struct AvailabilityMap {
     
     void dump(PrintStream& out) const;
     
-    bool operator==(const AvailabilityMap& other) const;
-    
+    friend bool operator==(const AvailabilityMap&, const AvailabilityMap&) = default;
+
     void merge(const AvailabilityMap& other);
     
     template<typename Functor>

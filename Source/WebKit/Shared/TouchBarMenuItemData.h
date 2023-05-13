@@ -27,14 +27,7 @@
 
 #if HAVE(TOUCH_BAR)
 
-#include "ArgumentCoders.h"
-#include <wtf/EnumTraits.h>
 #include <wtf/text/WTFString.h>
-
-namespace IPC {
-class Decoder;
-class Encoder;
-}
 
 namespace WebCore {
 class HTMLMenuItemElement;
@@ -48,35 +41,20 @@ enum class ItemType : uint8_t {
 };
 
 struct TouchBarMenuItemData {
-    explicit TouchBarMenuItemData() = default;
+    TouchBarMenuItemData() = default;
     explicit TouchBarMenuItemData(const WebCore::HTMLMenuItemElement&);
-    explicit TouchBarMenuItemData(ItemType, String&& identifier, float priority);
+    TouchBarMenuItemData(ItemType, String&& identifier, float priority);
     
     ItemType type { ItemType::Button };
     String identifier;
     float priority { 0.0 };
     bool validTouchBarDisplay { true };
 };
-    
+
 // Touch Bar Menu Items will be ordered based on priority.
-inline bool operator<(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)
+inline std::partial_ordering operator<=>(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)
 {
-    return lhs.priority < rhs.priority;
-}
-
-inline bool operator>(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)
-{
-    return rhs < lhs;
-}
-
-inline bool operator<=(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)
-{
-    return !(lhs > rhs);
-}
-
-inline bool operator>=(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)
-{
-    return !(lhs < rhs);
+    return lhs.priority <=> rhs.priority;
 }
 
 inline bool operator==(const TouchBarMenuItemData& lhs, const TouchBarMenuItemData& rhs)

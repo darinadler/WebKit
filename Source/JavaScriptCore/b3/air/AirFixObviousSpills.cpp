@@ -355,16 +355,7 @@ private:
             return !!reg;
         }
         
-        bool operator==(const RegConst& other) const
-        {
-            return reg == other.reg
-                && constant == other.constant;
-        }
-
-        bool operator<(const RegConst& other) const
-        {
-            return reg < other.reg || (reg == other.reg && constant < other.constant);
-        }
+        friend auto operator<=>(const RegConst&, const RegConst&) = default;
 
         void dump(PrintStream& out) const
         {
@@ -448,16 +439,7 @@ private:
             return slot;
         }
         
-        bool operator==(const SlotConst& other) const
-        {
-            return slot == other.slot
-                && constant == other.constant;
-        }
-
-        bool operator<(const SlotConst& other) const
-        {
-            return slot < other.slot || (slot == other.slot && constant < other.constant);
-        }
+        friend auto operator<=>(const SlotConst&, const SlotConst&) = default;
 
         void dump(PrintStream& out) const
         {

@@ -53,17 +53,8 @@ using InlineLayoutRect = LayoutRect;
 struct Position {
     operator LayoutUnit() const { return value; }
     LayoutUnit value;
+    friend auto operator<=>(const Position&, const Position&) = default;
 };
-
-inline bool operator<(const Position& a, const Position& b)
-{
-    return a.value < b.value;
-}
-
-inline bool operator==(const Position& a, const Position& b)
-{
-    return a.value == b.value;
-}
 
 struct Point {
     // FIXME: Use Position<Horizontal>, Position<Vertical> to avoid top/left vs. x/y confusion.
@@ -196,6 +187,7 @@ inline InlineLayoutUnit maxInlineLayoutUnit()
 struct SlotPosition {
     SlotPosition() = default;
     SlotPosition(size_t column, size_t row);
+    friend bool operator==(const SlotPosition&, const SlotPosition&) = default;
 
     size_t column { 0 };
     size_t row { 0 };
@@ -205,11 +197,6 @@ inline SlotPosition::SlotPosition(size_t column, size_t row)
     : column(column)
     , row(row)
 {
-}
-
-inline bool operator==(const SlotPosition& a, const SlotPosition& b)
-{
-    return a.column == b.column && a.row == b.row;
 }
 
 struct CellSpan {

@@ -41,8 +41,7 @@ public:
     int zeroBasedInt() const { return m_zeroBasedValue; }
     int oneBasedInt() const { return m_zeroBasedValue + 1; }
 
-    bool operator==(OrdinalNumber other) const { return m_zeroBasedValue == other.m_zeroBasedValue; }
-    bool operator>(OrdinalNumber other) const { return m_zeroBasedValue > other.m_zeroBasedValue; }
+    friend auto operator<=>(const OrdinalNumber&, const OrdinalNumber&) = default;
 
 private:
     OrdinalNumber(int zeroBasedInt) : m_zeroBasedValue(zeroBasedInt) { }

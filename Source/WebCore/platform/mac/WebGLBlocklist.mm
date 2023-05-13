@@ -49,25 +49,7 @@ struct OSBuildInfo {
     {
     }
 
-    bool operator==(const OSBuildInfo& other) const
-    {
-        return major == other.major && minor == other.minor && build == other.build;
-    }
-
-    bool operator>(const OSBuildInfo& other) const
-    {
-        return std::tie(major, minor, build) > std::tie(other.major, other.minor, other.build);
-    }
-
-    bool operator<=(const OSBuildInfo& other) const
-    {
-        return std::tie(major, minor, build) <= std::tie(other.major, other.minor, other.build);
-    }
-
-    bool operator<(const OSBuildInfo& other) const
-    {
-        return std::tie(major, minor, build) < std::tie(other.major, other.minor, other.build);
-    }
+    friend auto operator<=>(const OSBuildInfo&, const OSBuildInfo&) = default;
 
     int major; // Represents the 13 in 13C64.
     int minor; // Represents the C in 13C64 (as a number where A == 1, i.e. 3).

@@ -104,17 +104,7 @@ public:
         {
         }
 
-        bool operator<(const InsertionPoint& other) const
-        {
-            if (bytecodeOffset == other.bytecodeOffset)
-                return position < other.position;
-            return bytecodeOffset < other.bytecodeOffset;
-        }
-
-        bool operator==(const InsertionPoint& other) const
-        {
-            return bytecodeOffset == other.bytecodeOffset && position == other.position;
-        }
+        friend auto operator<=>(const InsertionPoint&, const InsertionPoint&) = default;
     };
 
 private:

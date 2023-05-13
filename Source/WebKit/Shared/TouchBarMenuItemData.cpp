@@ -29,9 +29,6 @@
 
 #include "TouchBarMenuItemData.h"
 
-#include "Decoder.h"
-#include "Encoder.h"
-#include "WebCoreArgumentCoders.h"
 #include <WebCore/ElementInlines.h>
 #include <WebCore/HTMLMenuItemElement.h>
 #include <WebCore/HTMLNames.h>
@@ -53,7 +50,7 @@ TouchBarMenuItemData::TouchBarMenuItemData(const WebCore::HTMLMenuItemElement& e
 
 TouchBarMenuItemData::TouchBarMenuItemData(ItemType type, String&& identifier, float priority)
     : type(type)
-    , identifier(identifier)
+    , identifier(WTFMove(identifier))
     , priority(priority)
 {
 }

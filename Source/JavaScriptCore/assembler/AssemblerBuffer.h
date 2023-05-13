@@ -71,7 +71,7 @@ namespace JSC {
             return AssemblerLabel(this->offset() + offset);
         }
 
-        bool operator==(const AssemblerLabel& other) const { return offset() == other.offset(); }
+        friend bool operator==(const AssemblerLabel&, const AssemblerLabel&) = default;
 
         inline uint32_t offset() const
         {

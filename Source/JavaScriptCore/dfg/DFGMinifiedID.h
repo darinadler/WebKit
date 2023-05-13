@@ -45,12 +45,9 @@ public:
     
     bool operator!() const { return m_index.get() == invalidIndex(); }
     
-    bool operator==(const MinifiedID& other) const { return m_index.get() == other.m_index.get(); }
-    bool operator<(const MinifiedID& other) const { return m_index.get() < other.m_index.get(); }
-    bool operator>(const MinifiedID& other) const { return m_index.get() > other.m_index.get(); }
-    bool operator<=(const MinifiedID& other) const { return m_index.get() <= other.m_index.get(); }
-    bool operator>=(const MinifiedID& other) const { return m_index.get() >= other.m_index.get(); }
-    
+    friend bool operator==(MinifiedID, MinifiedID) = default;
+    friend auto operator<=>(MinifiedID, MinifiedID) = default;
+
     unsigned hash() const { return WTF::IntHash<unsigned>::hash(m_index.get()); }
     
     void dump(PrintStream& out) const { out.print(m_index.get()); }

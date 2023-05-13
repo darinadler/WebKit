@@ -39,7 +39,6 @@
 #include <iterator>
 #include <wtf/Noncopyable.h>
 #include <wtf/Nonmovable.h>
-#include <wtf/Packed.h>
 
 namespace WTF {
 

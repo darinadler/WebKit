@@ -221,10 +221,7 @@ bool operator==(const Position&, const Position&);
 
 template<TreeType treeType> std::partial_ordering treeOrder(const Position&, const Position&);
 WEBCORE_EXPORT std::partial_ordering documentOrder(const Position&, const Position&);
-bool operator<(const Position&, const Position&);
-bool operator>(const Position&, const Position&);
-bool operator>=(const Position&, const Position&);
-bool operator<=(const Position&, const Position&);
+std::partial_ordering operator<=>(const Position&, const Position&);
 
 Position makeContainerOffsetPosition(Node*, unsigned offset);
 WEBCORE_EXPORT Position makeContainerOffsetPosition(const BoundaryPoint&);
@@ -278,24 +275,9 @@ inline bool operator==(const Position& a, const Position& b)
     return a.anchorNode() == b.anchorNode() && a.deprecatedEditingOffset() == b.deprecatedEditingOffset() && a.anchorType() == b.anchorType();
 }
 
-inline bool operator<(const Position& a, const Position& b)
+inline std::partial_ordering operator<=>(const Position& a, const Position& b)
 {
-    return is_lt(documentOrder(a, b));
-}
-
-inline bool operator>(const Position& a, const Position& b) 
-{
-    return is_gt(documentOrder(a, b));
-}
-
-inline bool operator>=(const Position& a, const Position& b) 
-{
-    return is_gteq(documentOrder(a, b));
-}
-
-inline bool operator<=(const Position& a, const Position& b) 
-{
-    return is_lteq(documentOrder(a, b));
+    return documentOrder(a, b);
 }
 
 // positionBeforeNode and positionAfterNode return neighbor-anchored positions, construction is O(1)

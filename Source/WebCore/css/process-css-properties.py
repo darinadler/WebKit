@@ -2741,20 +2741,6 @@ class GenerateCSSPropertyNames:
         to.write(f"}}")
         to.newline()
 
-    def _generate_css_property_settings_operator_equal(self, *, to):
-        first, *middle, last = (f"a.{flag} == b.{flag}" for flag in self.properties_and_descriptors.settings_flags)
-
-        to.write(f"bool operator==(const CSSPropertySettings& a, const CSSPropertySettings& b)")
-        to.write(f"{{")
-        with to.indent():
-            to.write(f"return {first}")
-            with to.indent():
-                to.write_lines((f"&& {expression}" for expression in middle))
-                to.write(f"&& {last};")
-
-        to.write(f"}}")
-        to.newline()
-
     def _generate_css_property_settings_hasher(self, *, to):
         first, *middle, last = (f"settings.{flag} << {i}" for (i, flag) in enumerate(self.properties_and_descriptors.settings_flags))
 
@@ -2902,10 +2888,6 @@ class GenerateCSSPropertyNames:
                 to=writer
             )
 
-            self._generate_css_property_settings_operator_equal(
-                to=writer
-            )
-
             self._generate_css_property_settings_hasher(
                 to=writer
             )
@@ -2999,10 +2981,10 @@ class GenerateCSSPropertyNames:
 
             to.write(f"CSSPropertySettings() = default;")
             to.write(f"explicit CSSPropertySettings(const Settings&);")
+            to.write(f"friend bool operator==(const CSSPropertySettings&, const CSSPropertySettings&) = default;")
         to.write(f"}};")
         to.newline()
 
-        to.write(f"bool operator==(const CSSPropertySettings&, const CSSPropertySettings&);")
         to.write(f"void add(Hasher&, const CSSPropertySettings&);")
         to.newline()
 

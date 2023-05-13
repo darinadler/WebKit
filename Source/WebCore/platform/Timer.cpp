@@ -174,6 +174,8 @@ public:
     TimerHeapReference operator[](ptrdiff_t i) const { return TimerHeapReference(m_pointer[i]); }
     RefPtr<ThreadTimerHeapItem>& operator->() const { return *m_pointer; }
 
+    friend auto operator<=>(const TimerHeapIterator&, const TimerHeapIterator&) = default;
+
 private:
     void checkConsistency(ptrdiff_t offset = 0) const
     {
@@ -183,12 +185,6 @@ private:
         ASSERT_UNUSED(offset, m_pointer + offset <= threadGlobalTimerHeap().data() + threadGlobalTimerHeap().size());
     }
 
-    friend bool operator==(TimerHeapIterator, TimerHeapIterator);
-    friend bool operator<(TimerHeapIterator, TimerHeapIterator);
-    friend bool operator>(TimerHeapIterator, TimerHeapIterator);
-    friend bool operator<=(TimerHeapIterator, TimerHeapIterator);
-    friend bool operator>=(TimerHeapIterator, TimerHeapIterator);
-    
     friend TimerHeapIterator operator+(TimerHeapIterator, size_t);
     friend TimerHeapIterator operator+(size_t, TimerHeapIterator);
     
@@ -197,12 +193,6 @@ private:
 
     RefPtr<ThreadTimerHeapItem>* m_pointer;
 };
-
-inline bool operator==(TimerHeapIterator a, TimerHeapIterator b) { return a.m_pointer == b.m_pointer; }
-inline bool operator<(TimerHeapIterator a, TimerHeapIterator b) { return a.m_pointer < b.m_pointer; }
-inline bool operator>(TimerHeapIterator a, TimerHeapIterator b) { return a.m_pointer > b.m_pointer; }
-inline bool operator<=(TimerHeapIterator a, TimerHeapIterator b) { return a.m_pointer <= b.m_pointer; }
-inline bool operator>=(TimerHeapIterator a, TimerHeapIterator b) { return a.m_pointer >= b.m_pointer; }
 
 inline TimerHeapIterator operator+(TimerHeapIterator a, size_t b) { return TimerHeapIterator(a.m_pointer + b); }
 inline TimerHeapIterator operator+(size_t a, TimerHeapIterator b) { return TimerHeapIterator(a + b.m_pointer); }

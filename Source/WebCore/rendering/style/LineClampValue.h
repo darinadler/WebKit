@@ -43,16 +43,11 @@ public:
     }
     
     constexpr int value() const { return m_value; }
-    
     constexpr bool isPercentage() const { return m_type == LineClamp::Percentage; }
-
     constexpr bool isNone() const { return m_value == -1; }
 
-    constexpr bool operator==(const LineClampValue& o) const
-    {
-        return value() == o.value() && isPercentage() == o.isPercentage();
-    }
-    
+    friend bool operator==(const LineClampValue&, const LineClampValue&) = default;
+
 private:
     LineClamp m_type;
     int m_value;

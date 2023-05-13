@@ -89,20 +89,7 @@ struct ScrollableAreaParameters {
 
     bool useDarkAppearanceForScrollbars { false };
 
-    bool operator==(const ScrollableAreaParameters& other) const
-    {
-        return horizontalScrollElasticity == other.horizontalScrollElasticity
-            && verticalScrollElasticity == other.verticalScrollElasticity
-            && horizontalScrollbarMode == other.horizontalScrollbarMode
-            && verticalScrollbarMode == other.verticalScrollbarMode
-            && horizontalOverscrollBehavior == other.horizontalOverscrollBehavior
-            && verticalOverscrollBehavior == other.verticalOverscrollBehavior
-            && allowsHorizontalScrolling == other.allowsHorizontalScrolling
-            && allowsVerticalScrolling == other.allowsVerticalScrolling
-            && horizontalNativeScrollbarVisibility == other.horizontalNativeScrollbarVisibility
-            && verticalNativeScrollbarVisibility == other.verticalNativeScrollbarVisibility
-            && useDarkAppearanceForScrollbars == other.useDarkAppearanceForScrollbars;
-    }
+    friend bool operator==(const ScrollableAreaParameters&, const ScrollableAreaParameters&) = default;
 };
 
 enum class ViewportRectStability {
@@ -126,15 +113,7 @@ struct RequestedScrollData {
 
     void merge(RequestedScrollData&&);
 
-    bool operator==(const RequestedScrollData& other) const
-    {
-        return requestType == other.requestType
-            && scrollPosition == other.scrollPosition
-            && scrollType == other.scrollType
-            && clamping == other.clamping
-            && animated == other.animated
-            && requestedDataBeforeAnimatedScroll == other.requestedDataBeforeAnimatedScroll;
-    }
+    friend bool operator==(const RequestedScrollData&, const RequestedScrollData&) = default;
 };
 
 enum class KeyboardScrollAction : uint8_t {
@@ -147,10 +126,7 @@ struct RequestedKeyboardScrollData {
     KeyboardScrollAction action { KeyboardScrollAction::StartAnimation };
     std::optional<KeyboardScroll> keyboardScroll;
 
-    bool operator==(const RequestedKeyboardScrollData& other) const
-    {
-        return action == other.action && keyboardScroll == other.keyboardScroll;
-    }
+    friend bool operator==(const RequestedKeyboardScrollData&, const RequestedKeyboardScrollData&) = default;
 };
 
 enum class ScrollUpdateType : uint8_t {

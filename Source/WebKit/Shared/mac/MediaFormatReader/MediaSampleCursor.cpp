@@ -350,6 +350,15 @@ OSStatus MediaSampleCursor::stepByPresentationTime(CMTime time, Boolean* wasPinn
     return stepInPresentationTime(PAL::toMediaTime(time), *wasPinned);
 }
 
+static CFComparisonResult makeComparisonResult(std::weak_ordering order)
+{
+    if (is_lt(order))
+        return kCFCompareLessThan;
+    if (is_gt(order))
+        return kCFCompareGreaterThan;
+    return kCFCompareEqualTo;
+}
+
 CFComparisonResult MediaSampleCursor::compareInDecodeOrder(MTPluginSampleCursorRef otherCursorRef) const
 {
     MediaSampleCursor* otherCursor = unwrap(otherCursorRef);
@@ -371,14 +380,7 @@ CFComparisonResult MediaSampleCursor::compareInDecodeOrder(MTPluginSampleCursorR
         otherPresentationTime = timing.presentationTime;
     });
 
-    switch (presentationTime.compare(otherPresentationTime)) {
-    case MediaTime::LessThan:
-        return kCFCompareLessThan;
-    case MediaTime::EqualTo:
-        return kCFCompareEqualTo;
-    case MediaTime::GreaterThan:
-        return kCFCompareGreaterThan;
-    }
+    return makeComparisonResult(presentationTime <=> otherPresentationTime);
 }
 
 OSStatus MediaSampleCursor::getSampleTiming(CMSampleTimingInfo* sampleTiming) const

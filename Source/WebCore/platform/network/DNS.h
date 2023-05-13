@@ -66,35 +66,22 @@ public:
     const struct in_addr& ipv4Address() const { return std::get<struct in_addr>(m_address); }
     const struct in6_addr& ipv6Address() const { return std::get<struct in6_addr>(m_address); }
 
-    enum class ComparisonResult : uint8_t {
-        CannotCompare,
-        Less,
-        Equal,
-        Greater
-    };
-
-    ComparisonResult compare(const IPAddress& other) const
+    std::partial_ordering operator<=>(const IPAddress& other) const
     {
-        auto comparisonResult = [](int result) {
-            if (!result)
-                return ComparisonResult::Equal;
+        auto ordering = [](int result) {
             if (result < 0)
-                return ComparisonResult::Less;
-            return ComparisonResult::Greater;
+                return std::partial_ordering::less;
+            if (result > 0)
+                return std::partial_ordering::greater;
+            return std::partial_ordering::equivalent;
         };
-
         if (isIPv4() && other.isIPv4())
-            return comparisonResult(memcmp(&ipv4Address(), &other.ipv4Address(), sizeof(struct in_addr)));
-
+            return ordering(memcmp(&ipv4Address(), &other.ipv4Address(), sizeof(struct in_addr)));
         if (isIPv6() && other.isIPv6())
-            return comparisonResult(memcmp(&ipv6Address(), &other.ipv6Address(), sizeof(struct in6_addr)));
-
-        return ComparisonResult::CannotCompare;
+            return ordering(memcmp(&ipv6Address(), &other.ipv6Address(), sizeof(struct in6_addr)));
+        return std::partial_ordering::unordered;
     }
-
-    bool operator<(const IPAddress& other) const { return compare(other) == ComparisonResult::Less; }
-    bool operator>(const IPAddress& other) const { return compare(other) == ComparisonResult::Greater; }
-    bool operator==(const IPAddress& other) const { return compare(other) == ComparisonResult::Equal; }
+    bool operator==(const IPAddress& other) const { return *this <=> other == 0; }
 
 private:
     std::variant<WTF::HashTableEmptyValueType, struct in_addr, struct in6_addr> m_address;

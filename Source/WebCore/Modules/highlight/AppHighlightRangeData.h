@@ -45,26 +45,7 @@ public:
         String textData;
         uint32_t pathIndex { 0 };
 
-        NodePathComponent(String&& elementIdentifier, String&& name, String&& data, uint32_t index)
-            : identifier(WTFMove(elementIdentifier))
-            , nodeName(WTFMove(name))
-            , textData(WTFMove(data))
-            , pathIndex(index)
-        {
-        }
-
-        NodePathComponent(const String& elementIdentifier, const String& name, const String& data, uint32_t index)
-            : identifier(elementIdentifier)
-            , nodeName(name)
-            , textData(data)
-            , pathIndex(index)
-        {
-        }
-
-        bool operator==(const NodePathComponent& other) const
-        {
-            return identifier == other.identifier && nodeName == other.nodeName && textData == other.textData && pathIndex == other.pathIndex;
-        }
+        friend bool operator==(const NodePathComponent&, const NodePathComponent&) = default;
     };
 
     using NodePath = Vector<NodePathComponent>;

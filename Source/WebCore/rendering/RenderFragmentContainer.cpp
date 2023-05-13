@@ -77,8 +77,7 @@ LayoutPoint RenderFragmentContainer::mapFragmentPointIntoFragmentedFlowCoordinat
     LayoutUnit fragmentedFlowPortionLeftBound(isHorizontalWritingMode() ? m_fragmentedFlowPortionRect.width() : m_fragmentedFlowPortionRect.height());
     LayoutUnit fragmentedFlowPortionTopMax(isHorizontalWritingMode() ? m_fragmentedFlowPortionRect.maxY() : m_fragmentedFlowPortionRect.maxX());
     LayoutUnit fragmentedFlowPortionLeftMax(isHorizontalWritingMode() ? m_fragmentedFlowPortionRect.maxX() : m_fragmentedFlowPortionRect.maxY());
-    LayoutUnit effectiveFixedPointDenominator;
-    effectiveFixedPointDenominator.setRawValue(1);
+    LayoutUnit effectiveFixedPointDenominator = LayoutUnit::fromRawValue(1);
 
     if (pointLogicalTop < 0) {
         LayoutPoint pointInThread(0_lu, fragmentedFlowLogicalTop);

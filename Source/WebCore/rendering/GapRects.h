@@ -26,33 +26,30 @@
 
 namespace WebCore {
 
-    struct GapRects {
-        const LayoutRect& left() const { return m_left; }
-        const LayoutRect& center() const { return m_center; }
-        const LayoutRect& right() const { return m_right; }
-        
-        void uniteLeft(const LayoutRect& r) { m_left.unite(r); }
-        void uniteCenter(const LayoutRect& r) { m_center.unite(r); }
-        void uniteRight(const LayoutRect& r) { m_right.unite(r); }
-        void unite(const GapRects& o) { uniteLeft(o.left()); uniteCenter(o.center()); uniteRight(o.right()); }
+struct GapRects {
+    const LayoutRect& left() const { return m_left; }
+    const LayoutRect& center() const { return m_center; }
+    const LayoutRect& right() const { return m_right; }
 
-        operator LayoutRect() const
-        {
-            LayoutRect result = m_left;
-            result.unite(m_center);
-            result.unite(m_right);
-            return result;
-        }
+    void uniteLeft(const LayoutRect& r) { m_left.unite(r); }
+    void uniteCenter(const LayoutRect& r) { m_center.unite(r); }
+    void uniteRight(const LayoutRect& r) { m_right.unite(r); }
+    void unite(const GapRects& o) { uniteLeft(o.left()); uniteCenter(o.center()); uniteRight(o.right()); }
 
-        bool operator==(const GapRects& other) const
-        {
-            return m_left == other.left() && m_center == other.center() && m_right == other.right();
-        }
+    operator LayoutRect() const
+    {
+        LayoutRect result = m_left;
+        result.unite(m_center);
+        result.unite(m_right);
+        return result;
+    }
 
-    private:
-        LayoutRect m_left;
-        LayoutRect m_center;
-        LayoutRect m_right;
-    };
+    friend bool operator==(const GapRects&, const GapRects&) = default;
+
+private:
+    LayoutRect m_left;
+    LayoutRect m_center;
+    LayoutRect m_right;
+};
 
 } // namespace WebCore

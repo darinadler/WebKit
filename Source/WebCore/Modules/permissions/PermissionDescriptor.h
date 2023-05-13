@@ -26,14 +26,13 @@
 #pragma once
 
 #include "PermissionName.h"
-#include <optional>
 
 namespace WebCore {
 
 struct PermissionDescriptor {
     PermissionName name;
 
-    bool operator==(const PermissionDescriptor& descriptor) const { return name == descriptor.name; }
+    friend bool operator==(const PermissionDescriptor&, const PermissionDescriptor&) = default;
 };
 
 } // namespace WebCore

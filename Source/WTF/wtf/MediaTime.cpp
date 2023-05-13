@@ -327,98 +327,75 @@ MediaTime::operator bool() const
         && !isInvalid();
 }
 
-MediaTime::ComparisonFlags MediaTime::compare(const MediaTime& rhs) const
+std::weak_ordering MediaTime::operator<=>(const MediaTime& rhs) const
 {
     auto andFlags = m_timeFlags & rhs.m_timeFlags;
     if (andFlags & (PositiveInfinite | NegativeInfinite | Indefinite))
-        return EqualTo;
+        return std::weak_ordering::equivalent;
 
     auto orFlags = m_timeFlags | rhs.m_timeFlags;
     if (!(orFlags & Valid))
-        return EqualTo;
+        return std::weak_ordering::equivalent;
 
     if (!(andFlags & Valid))
-        return isInvalid() ? GreaterThan : LessThan;
+        return isInvalid() ? std::weak_ordering::greater : std::weak_ordering::less;
 
     if (orFlags & NegativeInfinite)
-        return isNegativeInfinite() ? LessThan : GreaterThan;
+        return isNegativeInfinite() ? std::weak_ordering::less : std::weak_ordering::greater;
 
     if (orFlags & PositiveInfinite)
-        return isPositiveInfinite() ? GreaterThan : LessThan;
+        return isPositiveInfinite() ? std::weak_ordering::greater : std::weak_ordering::less;
 
     if (orFlags & Indefinite)
-        return isIndefinite() ? GreaterThan : LessThan;
+        return isIndefinite() ? std::weak_ordering::greater : std::weak_ordering::less;
 
-    if (andFlags & DoubleValue) {
-        if (m_timeValueAsDouble == rhs.m_timeValueAsDouble)
-            return EqualTo;
+    if (andFlags & DoubleValue)
+        return std::weak_order(m_timeValueAsDouble, rhs.m_timeValueAsDouble);
 
-        return m_timeValueAsDouble < rhs.m_timeValueAsDouble ? LessThan : GreaterThan;
-    }
-
-    if (orFlags & DoubleValue) {
-        double a = toDouble();
-        double b = rhs.toDouble();
-        if (a > b)
-            return GreaterThan;
-        if (a < b)
-            return LessThan;
-        return EqualTo;
-    }
+    if (orFlags & DoubleValue)
+        return std::weak_order(toDouble(), rhs.toDouble());
 
     if ((m_timeValue < 0) != (rhs.m_timeValue < 0))
-        return m_timeValue < 0 ? LessThan : GreaterThan;
+        return m_timeValue < 0 ? std::weak_ordering::less : std::weak_ordering::greater;
 
     if (!m_timeValue && !rhs.m_timeValue)
-        return EqualTo;
+        return std::weak_ordering::equivalent;
 
-    if (m_timeScale == rhs.m_timeScale) {
-        if (m_timeValue == rhs.m_timeValue)
-            return EqualTo;
-        return m_timeValue < rhs.m_timeValue ? LessThan : GreaterThan;
-    }
+    if (m_timeScale == rhs.m_timeScale)
+        return m_timeValue <=> rhs.m_timeValue;
 
     if (m_timeValue == rhs.m_timeValue)
-        return m_timeScale < rhs.m_timeScale ? GreaterThan : LessThan;
+        return m_timeScale <=> rhs.m_timeScale;
 
     if (m_timeValue >= 0) {
         if (m_timeValue < rhs.m_timeValue && m_timeScale > rhs.m_timeScale)
-            return LessThan;
-
+            return std::weak_ordering::less;
         if (m_timeValue > rhs.m_timeValue && m_timeScale < rhs.m_timeScale)
-            return GreaterThan;
+            return std::weak_ordering::greater;
     } else {
         if (m_timeValue < rhs.m_timeValue && m_timeScale < rhs.m_timeScale)
-            return LessThan;
-
+            return std::weak_ordering::less;
         if (m_timeValue > rhs.m_timeValue && m_timeScale > rhs.m_timeScale)
-            return GreaterThan;
+            return std::weak_ordering::greater;
     }
 
     int64_t lhsFactor;
     int64_t rhsFactor;
     if (safeMultiply(m_timeValue, static_cast<int64_t>(rhs.m_timeScale), lhsFactor)
-        && safeMultiply(rhs.m_timeValue, static_cast<int64_t>(m_timeScale), rhsFactor)) {
-        if (lhsFactor == rhsFactor)
-            return EqualTo;
-        return lhsFactor < rhsFactor ? LessThan : GreaterThan;
-    }
+        && safeMultiply(rhs.m_timeValue, static_cast<int64_t>(m_timeScale), rhsFactor))
+        return lhsFactor <=> rhsFactor;
 
     int64_t rhsWhole = rhs.m_timeValue / rhs.m_timeScale;
     int64_t lhsWhole = m_timeValue / m_timeScale;
-    if (lhsWhole > rhsWhole)
-        return GreaterThan;
-    if (lhsWhole < rhsWhole)
-        return LessThan;
+    if (lhsWhole != rhsWhole)
+        return lhsWhole <=> rhsWhole;
 
     int64_t rhsRemain = rhs.m_timeValue % rhs.m_timeScale;
     int64_t lhsRemain = m_timeValue % m_timeScale;
     lhsFactor = lhsRemain * rhs.m_timeScale;
     rhsFactor = rhsRemain * m_timeScale;
 
-    if (lhsFactor == rhsFactor)
-        return EqualTo;
-    return lhsFactor > rhsFactor ? GreaterThan : LessThan;
+    return lhsFactor <=> rhsFactor;
 }
 
 bool MediaTime::isBetween(const MediaTime& a, const MediaTime& b) const

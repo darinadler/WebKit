@@ -142,24 +142,9 @@ public:
         return m_index == other.m_index;
     }
 
-    constexpr bool operator<(const Reg& other) const
+    friend constexpr auto operator<=>(const Reg& a, const Reg& b)
     {
-        return m_index < other.m_index;
-    }
-
-    constexpr bool operator>(const Reg& other) const
-    {
-        return m_index > other.m_index;
-    }
-
-    constexpr bool operator<=(const Reg& other) const
-    {
-        return m_index <= other.m_index;
-    }
-
-    constexpr bool operator>=(const Reg& other) const
-    {
-        return m_index >= other.m_index;
+        return a.index() <=> b.index();
     }
 
     constexpr unsigned hash() const

@@ -79,12 +79,9 @@ enum class BlendMode : uint8_t {
 struct CompositeMode {
     CompositeOperator operation;
     BlendMode blendMode;
-};
 
-inline bool operator==(const CompositeMode& a, const CompositeMode& b)
-{
-    return a.operation == b.operation && a.blendMode == b.blendMode;
-}
+    friend bool operator==(const CompositeMode&, const CompositeMode&) = default;
+};
 
 enum class DocumentMarkerLineStyleMode : uint8_t {
     TextCheckingDictationPhraseWithAlternatives,
@@ -115,12 +112,9 @@ struct DropShadow {
     bool isVisible() const { return color.isVisible(); }
     bool isBlurred() const { return isVisible() && blurRadius; }
     bool hasOutsets() const { return isBlurred() || (isVisible() && !offset.isZero()); }
-};
 
-inline bool operator==(const DropShadow& a, const DropShadow& b)
-{
-    return a.offset == b.offset && a.blurRadius == b.blurRadius && a.color == b.color && a.radiusMode == b.radiusMode;
-}
+    friend bool operator==(const DropShadow&, const DropShadow&) = default;
+};
 
 enum class GradientSpreadMethod : uint8_t {
     Pad,
