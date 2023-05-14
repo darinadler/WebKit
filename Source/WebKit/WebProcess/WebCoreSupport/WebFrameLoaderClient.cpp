@@ -26,7 +26,11 @@
 #include "config.h"
 #include "WebFrameLoaderClient.h"
 
+#include "APIInjectedBundleFormClient.h"
+#include "APIInjectedBundlePageLoaderClient.h"
+#include "APIInjectedBundlePageResourceLoadClient.h"
 #include "AuthenticationManager.h"
+#include "CallbackID.h"
 #include "DataReference.h"
 #include "DrawingArea.h"
 #include "FindController.h"
@@ -1780,8 +1784,7 @@ ObjectContentType WebFrameLoaderClient::objectContentType(const URL& url, const 
         return ObjectContentType::Image;
 
     if (WebPage* webPage = m_frame->page()) {
-        auto allowedPluginTypes = webFrame().coreFrame()->arePluginsEnabled()
-            ? PluginData::AllPlugins : PluginData::OnlyApplicationPlugins;
+        auto allowedPluginTypes = webFrame().coreFrame()->arePluginsEnabled() ? AllPlugins : OnlyApplicationPlugins;
         if (webPage->corePage()->pluginData().supportsMimeType(mimeType, allowedPluginTypes))
             return ObjectContentType::PlugIn;
     }

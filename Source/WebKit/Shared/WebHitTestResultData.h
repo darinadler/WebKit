@@ -55,7 +55,7 @@ struct WebHitTestResultPlatformData {
     RetainPtr<WKDDActionContext> detectedDataActionContext;
     WebCore::FloatRect detectedDataBoundingBox;
     RefPtr<WebCore::TextIndicator> detectedDataTextIndicator;
-    WebCore::PageOverlay::PageOverlayID detectedDataOriginatingPageOverlay;
+    WebCore::PageOverlayID detectedDataOriginatingPageOverlay;
 };
 #endif
 

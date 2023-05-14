@@ -32,6 +32,7 @@
 #include "UserMessage.h"
 #include "WebKitUserMessage.h"
 #include "WebKitWebPagePrivate.h"
+#include "WebPageInternals.h"
 #include "WebPageProxyMessages.h"
 #include "WebProcessExtensionManager.h"
 #include <WebCore/Editor.h>
@@ -56,14 +57,12 @@ using namespace WebCore;
 
 void WebPage::platformInitialize(const WebPageCreationParameters&)
 {
-#if USE(ATSPI)
+#if USE(ATSPI) && !(PLATFORM(GTK) && USE(GTK4))
     // Create the accessible object (the plug) that will serve as the
     // entry point to the Web process, and send a message to the UI
     // process to connect the two worlds through the accessibility
     // object there specifically placed for that purpose (the socket).
-#if PLATFORM(GTK) && USE(GTK4)
     // FIXME: we need a way to connect DOM and app a11y tree in GTK4.
-#else
     if (auto* page = corePage()) {
         m_accessibilityRootObject = AccessibilityRootAtspi::create(*page);
         m_accessibilityRootObject->registerObject([&](const String& plugID) {
@@ -71,7 +70,6 @@ void WebPage::platformInitialize(const WebPageCreationParameters&)
                 send(Messages::WebPageProxy::BindAccessibilityTree(plugID));
         });
     }
-#endif
 #endif
 }
 
@@ -165,11 +163,10 @@ void WebPage::getPlatformEditorState(LocalFrame& frame, EditorState& result) con
     }
 }
 
-static std::optional<InputMethodState> inputMethodSateForElement(Element* element)
+static std::optional<InputMethodState> inputMethodState(Element* element)
 {
     if (!element || !element->shouldUseInputMethod())
         return std::nullopt;
-
     InputMethodState state;
     if (is<HTMLInputElement>(*element)) {
         auto& inputElement = downcast<HTMLInputElement>(*element);
@@ -184,20 +181,17 @@ static std::optional<InputMethodState> inputMethodSateForElement(Element* elemen
         state.addHintsForAutocapitalizeType(htmlElement.autocapitalizeType());
 #endif
     }
-
     if (element->isSpellCheckingEnabled())
         state.hints.add(InputMethodState::Hint::Spellcheck);
-
     return state;
 }
 
 void WebPage::setInputMethodState(Element* element)
 {
-    auto state = inputMethodSateForElement(element);
-    if (m_inputMethodState == state)
+    auto state = inputMethodState(element);
+    if (internals().inputMethodState == state)
         return;
-
-    m_inputMethodState = state;
+    internals().inputMethodState = state;
     send(Messages::WebPageProxy::SetInputMethodState(state));
 }
 

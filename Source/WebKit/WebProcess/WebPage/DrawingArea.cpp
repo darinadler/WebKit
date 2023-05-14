@@ -279,4 +279,46 @@ void DrawingArea::setShouldScaleViewToFitDocument(bool shouldScaleView)
     triggerRenderingUpdate();
 }
 
+std::optional<WebCore::DestinationColorSpace> DrawingArea::displayColorSpace() const
+{
+    return std::nullopt;
+}
+
+void DrawingArea::activityStateDidChange(OptionSet<WebCore::ActivityState>, ActivityStateChangeID, CompletionHandler<void()>&& handler)
+{
+    handler();
+}
+
+void DrawingArea::setColorSpace(std::optional<WebCore::DestinationColorSpace>)
+{
+}
+
+void DrawingArea::acceleratedAnimationDidStart(WebCore::PlatformLayerIdentifier, const String&, MonotonicTime)
+{
+}
+
+void DrawingArea::acceleratedAnimationDidEnd(WebCore::PlatformLayerIdentifier, const String&)
+{
+}
+
+void DrawingArea::adjustTransientZoom(double scale, WebCore::FloatPoint)
+{
+}
+
+void DrawingArea::commitTransientZoom(double scale, WebCore::FloatPoint)
+{
+}
+
+void DrawingArea::addRootFrame(WebCore::FrameIdentifier)
+{
+}
+
+void DrawingArea::mainFrameContentSizeChanged(WebCore::FrameIdentifier, const WebCore::IntSize&)
+{
+}
+
+void DrawingArea::attachViewOverlayGraphicsLayer(WebCore::FrameIdentifier, WebCore::GraphicsLayer*)
+{
+}
+
 } // namespace WebKit
